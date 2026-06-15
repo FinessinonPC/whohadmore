@@ -19,11 +19,17 @@ interface CardPairProps {
 function statusFor(
   side: Side,
   phase: GamePhase,
-  chosenSide: Side | null
+  chosenSide: Side | null,
+  higher: Side | "both"
 ): CardStatus {
-  if (chosenSide !== side) return "idle";
-  if (phase === "reveal-correct") return "correct";
-  if (phase === "reveal-wrong") return "wrong";
+  if (phase === "reveal-correct") {
+    return side === chosenSide ? "correct" : "idle";
+  }
+  if (phase === "reveal-wrong") {
+    if (side === chosenSide) return "wrong";
+    // Show the answer they should have picked.
+    return higher === "both" || higher === side ? "correct" : "idle";
+  }
   return "idle";
 }
 
@@ -54,6 +60,10 @@ export function CardPair({
   const enter = isRow ? { x: 80, y: 0 } : { x: 0, y: 64 };
   const exit = isRow ? { x: -100, y: 0 } : { x: 0, y: -84 };
 
+  const lv = pair.left.stat_value;
+  const rv = pair.right.stat_value;
+  const higher: Side | "both" = lv === rv ? "both" : lv > rv ? "left" : "right";
+
   return (
     <div className="relative flex flex-col items-stretch gap-3 sm:flex-row sm:gap-4">
       <AnimatePresence mode="popLayout">
@@ -82,7 +92,7 @@ export function CardPair({
                 statUnit={statUnit}
                 revealValue={side === "left" ? true : revealRight}
                 animateValue={side === "right"}
-                status={statusFor(side, phase, chosenSide)}
+                status={statusFor(side, phase, chosenSide, higher)}
                 shake={phase === "reveal-wrong" && chosenSide === side}
                 disabled={interactionLocked}
                 onSelect={() => onGuess(side)}

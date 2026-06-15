@@ -30,7 +30,7 @@ const config: Config = {
         "display-sm": ["2.5rem", { lineHeight: "1", fontWeight: "800" }],
       },
       maxWidth: {
-        game: "480px",
+        game: "540px",
       },
       keyframes: {
         shake: {

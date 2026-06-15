@@ -27,12 +27,15 @@ export default function AdminPage() {
 
         <GameCalendar />
 
-        <div className="mt-6 flex items-center justify-center gap-4 text-xs text-ink-secondary">
+        <div className="mt-6 flex items-center justify-center gap-3 text-xs text-ink-secondary">
           <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-correct" /> Published
+            <span className="h-3 w-3 rounded border border-correct/45 bg-correct/10" /> Published
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#FFB300]" /> Draft
+            <span className="h-3 w-3 rounded border border-[#FFB300]/55 bg-[#FFB300]/10" /> Draft
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded border border-border bg-surface/60" /> Empty
           </span>
         </div>
       </main>

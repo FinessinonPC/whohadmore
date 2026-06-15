@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Badge, categoryLabel } from "@/components/ui/Badge";
+import { BrandMark } from "@/components/ui/Logo";
 import { STARTING_LIVES, maxScore } from "@/lib/gameLogic";
 import { formatDisplayDate, isToday } from "@/lib/date";
 import type { FullGame } from "@/types";
@@ -28,7 +29,15 @@ export function StartScreen({ game, date, gameNumber, onStart }: StartScreenProp
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       >
-        <p className="small-caps text-xs text-ink-secondary">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", damping: 16, stiffness: 220, delay: 0.05 }}
+        >
+          <BrandMark className="h-20 w-20 drop-shadow-sm" />
+        </motion.div>
+
+        <p className="mt-7 small-caps text-xs text-ink-secondary">
           {formatDisplayDate(date)}
           {!isToday(date) ? " · Archive" : ""}
         </p>
@@ -36,7 +45,7 @@ export function StartScreen({ game, date, gameNumber, onStart }: StartScreenProp
           Game No. {gameNumber}
         </p>
 
-        <h1 className="mt-6 text-balance text-3xl font-extrabold leading-tight tracking-tight text-ink">
+        <h1 className="mt-5 text-balance text-3xl font-extrabold leading-tight tracking-tight text-ink">
           {game.topic_label}
         </h1>
 
@@ -63,8 +72,9 @@ export function StartScreen({ game, date, gameNumber, onStart }: StartScreenProp
 function TopBar() {
   return (
     <header className="flex items-center justify-between">
-      <Link href="/" className="text-sm font-extrabold tracking-tight text-ink">
-        WhoHadMore
+      <Link href="/" className="inline-flex items-center gap-1.5">
+        <BrandMark className="h-5 w-5" />
+        <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
       </Link>
       <Link
         href="/archive"

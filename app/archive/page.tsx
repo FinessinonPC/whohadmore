@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArchiveBrowser } from "@/components/archive/ArchiveBrowser";
+import { BrandMark } from "@/components/ui/Logo";
 import { getPublishedGamesWithNumbers } from "@/lib/games";
 import { todayISO } from "@/lib/date";
 
@@ -12,8 +13,9 @@ export default async function ArchivePage() {
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-8">
       <header className="mb-8 flex items-center justify-between">
-        <Link href="/" className="text-sm font-extrabold tracking-tight text-ink">
-          WhoHadMore
+        <Link href="/" className="inline-flex items-center gap-1.5">
+          <BrandMark className="h-5 w-5" />
+          <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
         </Link>
         <Link
           href="/play"

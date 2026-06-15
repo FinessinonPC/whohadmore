@@ -11,23 +11,35 @@ interface AiPromptPanelProps {
   onLoad: (game: AiGameJson) => void;
 }
 
-const PROMPT = `You are planning a daily higher/lower trivia game. The game shows players two cards side by side and they must pick which has the higher statistic. Generate a complete game in the following JSON format. Return ONLY the JSON, no explanation.
+const PROMPT = `You are the creative director for a daily higher/lower game. Players see two cards side by side and tap whichever has the higher value of a single stat. Your job is to invent ONE genuinely surprising, delightful game.
 
-Topic should be specific, timely, and interesting — ideally tied to current events, recent sports, pop culture, or surprising facts. The stat should be something most people have rough intuition about but will still be surprised by the exact number. Avoid topics where the order is too obvious.
+Be CREATIVE and unexpected. The best topics make people go "huh, I never thought about that." Roam widely across domains — and do NOT default to mainstream sports:
+- Pop culture & internet: most-streamed songs, YouTube subscribers, box office, Wikipedia page views, Taylor Swift tour grosses, video game sales
+- Food & drink: calories in fast-food items, caffeine in drinks, Scoville heat units, national dish prices
+- Geography oddities: country coastlines, average elevation, number of islands, time zones spanned
+- Money & business: brand valuations, CEO pay, app downloads, IPO sizes, vending-machine density
+- Science & nature: animal top speeds, lifespans, genome size, bite force, gestation length
+- History: years a structure took to build, length of reigns, age of universities
+- Everyday absurdities: emoji usage, IKEA store size, roller-coaster drops, hot-dog eating records
 
-Return this exact structure:
+Rules for a great game:
+- Pick a stat people have rough intuition about but will STILL get surprised by.
+- Avoid orderings that are too obvious. Mix in a couple of upsets.
+- 15 entities. Values must be ACCURATE and the SAME unit/scale.
+- Order the cards randomly, NOT sorted by value.
+- Prefer entities with strong Wikipedia pages so images auto-populate (use the exact Wikipedia article title as entity_name).
+
+Return ONLY this JSON, no explanation, no markdown fences:
 {
-  "topic_label": "string",
+  "topic_label": "string",        // specific & catchy, e.g. "Most-Streamed Songs on Spotify"
   "topic_category": "sports|geography|entertainment|science|current_events",
-  "stat_label": "string",
-  "stat_unit": "string",
+  "stat_label": "string",         // e.g. "All-Time Streams"
+  "stat_unit": "string",          // e.g. "billion"
   "cards": [
     { "entity_name": "string", "stat_value": number }
     // 15 total
   ]
-}
-
-Make the values accurate. Order the cards randomly, not by value. Pick entities that have good Wikipedia pages so images will auto-populate.`;
+}`;
 
 function coerceCategory(value: unknown): TopicCategory {
   return TOPIC_CATEGORIES.includes(value as TopicCategory)

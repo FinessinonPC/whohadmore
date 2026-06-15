@@ -13,9 +13,8 @@ import {
 import type { GameCard } from "@/types";
 
 // Timings (ms) — tuned so the count-up fully lands before we move on.
-const REVEAL_HOLD = 950; // pause on a correct reveal before sliding
+const REVEAL_HOLD = 1050; // pause on a reveal so the result lands before sliding
 const SLIDE_DURATION = 480; // matches the CardPair slide transition
-const WRONG_HOLD = 1150; // pause after a wrong guess before retrying
 
 export type GamePhase =
   | "idle"
@@ -96,39 +95,34 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
         pair.right.stat_value
       );
       setChosenSide(side);
+      // Both outcomes reveal the right card's value (count-up) so every guess
+      // pays off; a wrong guess simply costs a life and we move on — no retry.
+      setPhase(correct ? "reveal-correct" : "reveal-wrong");
 
-      if (correct) {
-        // Reveal the right card (count-up), hold, then slide the chain forward.
-        setPhase("reveal-correct");
-        schedule(() => {
+      schedule(() => {
+        let willComplete = isLastPair(currentIndex, total);
+
+        if (correct) {
           setScore((s) => s + 1);
-          if (isLastPair(currentIndex, total)) {
-            setPhase("complete");
-            return;
-          }
-          // Advancing the index drives the slide: old left exits, old right
-          // (now revealed) moves into the left slot, a fresh hidden right enters.
-          setCurrentIndex((i) => i + 1);
-          setPhase("transitioning");
-          schedule(() => {
-            setChosenSide(null);
-            setPhase("idle");
-          }, SLIDE_DURATION);
-        }, REVEAL_HOLD);
-      } else {
-        setPhase("reveal-wrong");
-        const remaining = lives - 1;
-        setLives(remaining);
+        } else {
+          const remaining = lives - 1;
+          setLives(remaining);
+          if (remaining <= 0) willComplete = true;
+        }
+
+        if (willComplete) {
+          setPhase("complete");
+          return;
+        }
+
+        // Slide the chain forward to the next pair.
+        setCurrentIndex((i) => i + 1);
+        setPhase("transitioning");
         schedule(() => {
-          if (remaining <= 0) {
-            setPhase("complete");
-          } else {
-            // Same pair — value stays hidden so the reveal still pays off.
-            setChosenSide(null);
-            setPhase("idle");
-          }
-        }, WRONG_HOLD);
-      }
+          setChosenSide(null);
+          setPhase("idle");
+        }, SLIDE_DURATION);
+      }, REVEAL_HOLD);
     },
     [phase, pair, currentIndex, total, lives, schedule]
   );
@@ -154,9 +148,9 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
     onCompleteRef.current?.({ score, best, lives, timeSeconds: seconds });
   }, [phase, score, best, lives]);
 
-  // Only the pair being judged reveals its right value. Once the index
-  // advances (transitioning), the incoming right card stays hidden.
-  const revealRight = phase === "reveal-correct";
+  // The pair being judged reveals its right value on either outcome. Once the
+  // index advances (transitioning), the incoming right card stays hidden.
+  const revealRight = phase === "reveal-correct" || phase === "reveal-wrong";
 
   return {
     cards,

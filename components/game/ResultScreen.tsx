@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { BrandMark } from "@/components/ui/Logo";
 import { LivesDisplay } from "./LivesDisplay";
 import { formatDisplayDate, isToday } from "@/lib/date";
 
@@ -71,8 +72,9 @@ export function ResultScreen({
     <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-5 pb-10 pt-5">
       {mode === "play" && (
         <header className="flex items-center justify-between">
-          <Link href="/" className="text-sm font-extrabold tracking-tight text-ink">
-            WhoHadMore
+          <Link href="/" className="inline-flex items-center gap-1.5">
+            <BrandMark className="h-5 w-5" />
+            <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
           </Link>
           <Link
             href="/archive"

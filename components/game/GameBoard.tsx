@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { CardPair } from "./CardPair";
 import { LivesDisplay } from "./LivesDisplay";
 import { ProgressBar } from "./ProgressBar";
+import { BrandMark } from "@/components/ui/Logo";
 import { useGame, type GamePhase, type GameResultSummary } from "@/hooks/useGame";
 import { formatShortDate } from "@/lib/date";
 import type { FullGame } from "@/types";
@@ -22,12 +23,13 @@ interface GameBoardProps {
 function hintFor(phase: GamePhase): { text: string; tone: string } {
   switch (phase) {
     case "reveal-correct":
-    case "transitioning":
       return { text: "Correct", tone: "text-correct" };
     case "reveal-wrong":
-      return { text: "Not quite — try the other one", tone: "text-wrong" };
-    default:
+      return { text: "Wrong", tone: "text-wrong" };
+    case "idle":
       return { text: "Tap whoever had more", tone: "text-ink-secondary" };
+    default:
+      return { text: "", tone: "text-ink-secondary" };
   }
 }
 
@@ -64,8 +66,11 @@ export function GameBoard({
               <span className="text-sm font-extrabold tracking-tight text-ink">Preview</span>
             ) : (
               <>
-                <Link href="/" className="text-sm font-extrabold tracking-tight text-ink">
-                  WhoHadMore
+                <Link href="/" className="inline-flex items-center gap-1.5">
+                  <BrandMark className="h-5 w-5" />
+                  <span className="text-sm font-extrabold tracking-tight text-ink">
+                    WhoHadMore
+                  </span>
                 </Link>
                 <Link
                   href="/archive"
@@ -110,9 +115,9 @@ export function GameBoard({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.18 }}
-                className={`text-sm font-semibold ${hint.tone}`}
+                className={`text-sm font-bold uppercase tracking-wide ${hint.tone}`}
               >
-                {state.phase === "complete" ? "" : hint.text}
+                {hint.text}
               </motion.p>
             </AnimatePresence>
           </div>

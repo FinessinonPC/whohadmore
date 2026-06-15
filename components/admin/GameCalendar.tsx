@@ -94,29 +94,28 @@ export function GameCalendar() {
           const game = games[dateStr];
           const isToday = dateStr === today;
 
+          // Full-cell color coding: green = published, amber = draft, grey = empty.
+          const stateClass = game?.published
+            ? "border-correct/45 bg-correct/10 hover:bg-correct/15"
+            : game
+              ? "border-[#FFB300]/55 bg-[#FFB300]/10 hover:bg-[#FFB300]/15"
+              : "border-border bg-surface/60 hover:bg-surface";
+
           return (
             <button
               key={dateStr}
-              onDoubleClick={() => router.push(`/admin/${dateStr}`)}
-              onKeyDown={(e) => e.key === "Enter" && router.push(`/admin/${dateStr}`)}
-              title="Double-click to edit"
-              className={`flex aspect-square flex-col items-start gap-1 rounded-xl border p-2 text-left transition-colors hover:border-ink/30 ${
-                isToday ? "border-ink/40 ring-1 ring-ink/20" : "border-border"
-              } ${game ? "bg-surface" : "bg-background"}`}
+              onClick={() => router.push(`/admin/${dateStr}`)}
+              title="Open editor"
+              className={`flex aspect-square flex-col items-start gap-1 rounded-xl border p-2 text-left transition-colors ${stateClass} ${
+                isToday ? "ring-2 ring-ink/30" : ""
+              }`}
             >
               <span className={`text-xs font-bold ${game ? "text-ink" : "text-ink-secondary"}`}>
                 {day}
               </span>
               {game && (
-                <span className="flex min-w-0 items-center gap-1">
-                  <span
-                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                      game.published ? "bg-correct" : "bg-[#FFB300]"
-                    }`}
-                  />
-                  <span className="truncate text-[10px] leading-tight text-ink-secondary">
-                    {game.topic_label.slice(0, 20)}
-                  </span>
+                <span className="line-clamp-2 text-[10px] font-medium leading-tight text-ink/80">
+                  {game.topic_label}
                 </span>
               )}
             </button>
@@ -125,7 +124,7 @@ export function GameCalendar() {
       </div>
 
       <p className="mt-4 text-center text-xs text-ink-secondary">
-        {loading ? "Loading…" : "Double-click a day to plan its game."}
+        {loading ? "Loading…" : "Click a day to plan its game."}
       </p>
     </div>
   );
