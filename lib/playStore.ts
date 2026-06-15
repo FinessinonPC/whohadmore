@@ -46,3 +46,13 @@ export function saveLocalResult(date: string, result: StoredResult): void {
     /* storage full / disabled — non-fatal */
   }
 }
+
+/** Clear a saved result so the date can be replayed. (Testing helper for now.) */
+export function clearLocalResult(date: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(resultKey(date));
+  } catch {
+    /* non-fatal */
+  }
+}

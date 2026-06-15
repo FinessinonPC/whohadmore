@@ -8,6 +8,7 @@ import { StartScreen } from "./StartScreen";
 import { ResultScreen } from "./ResultScreen";
 import { getBrowserSupabase } from "@/lib/supabase";
 import {
+  clearLocalResult,
   getLocalResult,
   getSessionId,
   saveLocalResult,
@@ -100,6 +101,15 @@ export function PlayExperience({
   }
   const game = initialGame as FullGame;
 
+  // Testing-only: wipe this date's saved result and return to the start screen.
+  // Remove the onReset prop (and the button) before the public launch.
+  const resetForTesting = () => {
+    clearLocalResult(date);
+    setResult(null);
+    setAlreadyPlayed(false);
+    setMode("start");
+  };
+
   if (mode === "completed" && result) {
     return (
       <ResultScreen
@@ -112,6 +122,7 @@ export function PlayExperience({
         gameNumber={gameNumber}
         mode="play"
         alreadyPlayed={alreadyPlayed}
+        onReset={resetForTesting}
       />
     );
   }

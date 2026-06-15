@@ -6,7 +6,6 @@ import { useEffect } from "react";
 import { CardPair } from "./CardPair";
 import { LivesDisplay } from "./LivesDisplay";
 import { ProgressBar } from "./ProgressBar";
-import { SoundToggle } from "./SoundToggle";
 import { BrandMark } from "@/components/ui/Logo";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 import { useGame, type GamePhase, type GameResultSummary } from "@/hooks/useGame";
@@ -106,10 +105,7 @@ export function GameBoard({
               </>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <SoundToggle />
-            <LivesDisplay lives={state.lives} />
-          </div>
+          <LivesDisplay lives={state.lives} />
         </header>
 
         {/* Date + game number + topic */}

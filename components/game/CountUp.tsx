@@ -16,7 +16,7 @@ interface CountUpProps {
  * the line, settling into the final figure. This is the hero beat of every
  * reveal, so the easing is deliberately weighty rather than linear.
  */
-export function CountUp({ value, run, duration = 0.75, className }: CountUpProps) {
+export function CountUp({ value, run, duration = 1.4, className }: CountUpProps) {
   const mv = useMotionValue(0);
   // Match the target's precision: integers count as integers, decimals to 0.1.
   const decimals = Number.isInteger(value) ? 0 : 1;

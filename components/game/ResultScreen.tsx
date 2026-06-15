@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { BrandMark } from "@/components/ui/Logo";
 import { LivesDisplay } from "./LivesDisplay";
-import { feedbackFinish } from "@/lib/feedback";
 import { formatDisplayDate, isToday } from "@/lib/date";
 
 interface ResultScreenProps {
@@ -21,6 +20,8 @@ interface ResultScreenProps {
   alreadyPlayed?: boolean;
   onPlayAgain?: () => void;
   onClose?: () => void;
+  /** Testing helper: clear this date's result and replay. Remove before launch. */
+  onReset?: () => void;
 }
 
 function formatClock(seconds: number): string {
@@ -49,15 +50,10 @@ export function ResultScreen({
   alreadyPlayed = false,
   onPlayAgain,
   onClose,
+  onReset,
 }: ResultScreenProps) {
   const [copied, setCopied] = useState(false);
   const daily = isToday(date);
-
-  // Celebrate a fresh finish (not when re-opening a locked score or previewing).
-  useEffect(() => {
-    if (mode === "play" && !alreadyPlayed) feedbackFinish(score > 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   async function share() {
     const text = `WhoHadMore No. ${gameNumber} — ${topicLabel}\nScore ${score}/${best} · ${lives} lives left · ${formatClock(
@@ -152,6 +148,14 @@ export function ResultScreen({
                   ? "A new game drops at midnight. Sign in soon to keep your stats & streaks."
                   : "Sign in soon to review past games and track your stats."}
               </p>
+              {onReset && (
+                <button
+                  onClick={onReset}
+                  className="mt-1 text-xs font-semibold text-ink-secondary underline underline-offset-2 transition-colors hover:text-ink"
+                >
+                  Reset &amp; replay (testing)
+                </button>
+              )}
             </>
           )}
         </div>

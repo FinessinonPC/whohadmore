@@ -12,12 +12,15 @@ import {
 } from "@/lib/gameLogic";
 import type { GameCard } from "@/types";
 
-// Timings (ms) — tuned so the count-up fully lands before we move on.
-const REVEAL_HOLD = 1050; // pause on a reveal so the result lands before sliding
+// Timings (ms). The count-up runs first with NO verdict (suspense); only after
+// it lands do we reveal correct/wrong.
+const COUNT_DURATION = 1900; // ~1.4s count-up + a ~0.5s suspense beat before the verdict
+const VERDICT_HOLD = 800; // how long the verdict holds before sliding on
 const SLIDE_DURATION = 480; // matches the CardPair slide transition
 
 export type GamePhase =
   | "idle"
+  | "counting"
   | "reveal-correct"
   | "reveal-wrong"
   | "transitioning"
@@ -94,35 +97,35 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
         pair.left.stat_value,
         pair.right.stat_value
       );
+      const livesAtGuess = lives;
+      const idx = currentIndex;
+
       setChosenSide(side);
-      // Both outcomes reveal the right card's value (count-up) so every guess
-      // pays off; a wrong guess simply costs a life and we move on — no retry.
-      setPhase(correct ? "reveal-correct" : "reveal-wrong");
+      // 1) Count the value up with no verdict yet — pure suspense.
+      setPhase("counting");
 
       schedule(() => {
-        let willComplete = isLastPair(currentIndex, total);
+        // 2) The number has landed; now show the verdict and apply its effect.
+        setPhase(correct ? "reveal-correct" : "reveal-wrong");
+        if (correct) setScore((s) => s + 1);
+        else setLives((l) => l - 1);
 
-        if (correct) {
-          setScore((s) => s + 1);
-        } else {
-          const remaining = lives - 1;
-          setLives(remaining);
-          if (remaining <= 0) willComplete = true;
-        }
-
-        if (willComplete) {
-          setPhase("complete");
-          return;
-        }
-
-        // Slide the chain forward to the next pair.
-        setCurrentIndex((i) => i + 1);
-        setPhase("transitioning");
         schedule(() => {
-          setChosenSide(null);
-          setPhase("idle");
-        }, SLIDE_DURATION);
-      }, REVEAL_HOLD);
+          // 3) Either end the game or slide on to the next pair.
+          const willComplete =
+            isLastPair(idx, total) || (!correct && livesAtGuess - 1 <= 0);
+          if (willComplete) {
+            setPhase("complete");
+            return;
+          }
+          setCurrentIndex((i) => i + 1);
+          setPhase("transitioning");
+          schedule(() => {
+            setChosenSide(null);
+            setPhase("idle");
+          }, SLIDE_DURATION);
+        }, VERDICT_HOLD);
+      }, COUNT_DURATION);
     },
     [phase, pair, currentIndex, total, lives, schedule]
   );
@@ -148,9 +151,12 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
     onCompleteRef.current?.({ score, best, lives, timeSeconds: seconds });
   }, [phase, score, best, lives]);
 
-  // The pair being judged reveals its right value on either outcome. Once the
-  // index advances (transitioning), the incoming right card stays hidden.
-  const revealRight = phase === "reveal-correct" || phase === "reveal-wrong";
+  // The right value is visible while it counts up and through the verdict. Once
+  // the index advances (transitioning), the incoming right card stays hidden.
+  const revealRight =
+    phase === "counting" ||
+    phase === "reveal-correct" ||
+    phase === "reveal-wrong";
 
   return {
     cards,
