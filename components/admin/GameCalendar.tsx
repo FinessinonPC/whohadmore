@@ -96,9 +96,9 @@ export function GameCalendar() {
 
           // Full-cell color coding: green = published, amber = draft, grey = empty.
           const stateClass = game?.published
-            ? "border-correct/45 bg-correct/10 hover:bg-correct/15"
+            ? "border-correct bg-correct/20 hover:bg-correct/30"
             : game
-              ? "border-[#FFB300]/55 bg-[#FFB300]/10 hover:bg-[#FFB300]/15"
+              ? "border-[#FFB300] bg-[#FFB300]/25 hover:bg-[#FFB300]/35"
               : "border-border bg-surface/60 hover:bg-surface";
 
           return (
@@ -106,15 +106,13 @@ export function GameCalendar() {
               key={dateStr}
               onClick={() => router.push(`/admin/${dateStr}`)}
               title="Open editor"
-              className={`flex aspect-square flex-col items-start gap-1 rounded-xl border p-2 text-left transition-colors ${stateClass} ${
-                isToday ? "ring-2 ring-ink/30" : ""
+              className={`flex aspect-square flex-col items-start gap-1 rounded-xl border-2 p-2 text-left transition-colors ${stateClass} ${
+                isToday ? "ring-2 ring-ink/40 ring-offset-1" : ""
               }`}
             >
-              <span className={`text-xs font-bold ${game ? "text-ink" : "text-ink-secondary"}`}>
-                {day}
-              </span>
+              <span className="text-xs font-bold text-ink">{day}</span>
               {game && (
-                <span className="line-clamp-2 text-[10px] font-medium leading-tight text-ink/80">
+                <span className="line-clamp-2 text-[10px] font-semibold leading-tight text-ink/90">
                   {game.topic_label}
                 </span>
               )}

@@ -35,16 +35,73 @@ export async function getWikimediaThumbnail(
       next: { revalidate: 60 * 60 * 24 },
     });
 
-    if (!res.ok) return null;
+    if (res.ok) {
+      const data = (await res.json()) as {
+        thumbnail?: { source?: string };
+        originalimage?: { source?: string };
+      };
+      const direct = data.thumbnail?.source ?? data.originalimage?.source ?? null;
+      if (direct) return direct;
+    }
+  } catch {
+    /* fall through to search */
+  }
+
+  // No exact-title hit — fall back to a search so near-misses still resolve.
+  const results = await searchWikimediaImages(title);
+  return results[0]?.imageUrl ?? null;
+}
+
+export interface WikimediaResult {
+  title: string;
+  imageUrl: string;
+}
+
+/**
+ * Server-side: search Wikipedia and return several candidate images (ranked by
+ * search relevance). Powers the admin image picker's "pick from results" grid.
+ */
+export async function searchWikimediaImages(
+  query: string,
+  limit = 9
+): Promise<WikimediaResult[]> {
+  const q = query.trim();
+  if (!q) return [];
+
+  const params = new URLSearchParams({
+    action: "query",
+    format: "json",
+    generator: "search",
+    gsrsearch: q,
+    gsrlimit: String(limit),
+    prop: "pageimages",
+    piprop: "thumbnail",
+    pithumbsize: "400",
+  });
+
+  try {
+    const res = await fetch(`https://en.wikipedia.org/w/api.php?${params}`, {
+      headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
+      next: { revalidate: 60 * 60 * 24 },
+    });
+    if (!res.ok) return [];
 
     const data = (await res.json()) as {
-      thumbnail?: { source?: string };
-      originalimage?: { source?: string };
+      query?: {
+        pages?: Record<
+          string,
+          { title: string; index: number; thumbnail?: { source?: string } }
+        >;
+      };
     };
 
-    return data.thumbnail?.source ?? data.originalimage?.source ?? null;
+    const pages = Object.values(data.query?.pages ?? {});
+    return pages
+      .filter((p) => p.thumbnail?.source)
+      .sort((a, b) => a.index - b.index)
+      .map((p) => ({ title: p.title, imageUrl: p.thumbnail!.source! }));
   } catch {
-    return null;
+    return [];
   }
 }
 
@@ -65,6 +122,24 @@ export async function fetchImageForEntity(
     return data.imageUrl ?? null;
   } catch {
     return null;
+  }
+}
+
+/** Browser-side: fetch several candidate images for a query (via our proxy). */
+export async function searchImagesForEntity(
+  query: string
+): Promise<WikimediaResult[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+  try {
+    const res = await fetch(
+      `/api/wikimedia/search?query=${encodeURIComponent(trimmed)}`
+    );
+    if (!res.ok) return [];
+    const data = (await res.json()) as { results: WikimediaResult[] };
+    return data.results ?? [];
+  } catch {
+    return [];
   }
 }
 
