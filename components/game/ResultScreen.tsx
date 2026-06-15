@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { BrandMark } from "@/components/ui/Logo";
 import { LivesDisplay } from "./LivesDisplay";
+import { Confetti } from "./Confetti";
 import { formatDisplayDate, isToday } from "@/lib/date";
 
 interface ResultScreenProps {
@@ -54,6 +55,8 @@ export function ResultScreen({
 }: ResultScreenProps) {
   const [copied, setCopied] = useState(false);
   const daily = isToday(date);
+  // Celebrate clearing the whole chain on a fresh finish.
+  const clearedChain = mode === "play" && !alreadyPlayed && best > 0 && score >= best;
 
   async function share() {
     const text = `WhoHadMore No. ${gameNumber} — ${topicLabel}\nScore ${score}/${best} · ${lives} lives left · ${formatClock(
@@ -73,6 +76,7 @@ export function ResultScreen({
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-5 pb-10 pt-5">
+      {clearedChain && <Confetti />}
       {mode === "play" && (
         <header className="flex items-center justify-between">
           <Link href="/" className="inline-flex items-center gap-1.5">

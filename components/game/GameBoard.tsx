@@ -109,16 +109,16 @@ export function GameBoard({
         </header>
 
         {/* Date + game number + topic */}
-        <div className="mt-5 text-center">
+        <div className="mt-4 text-center">
           <p className="small-caps text-[11px] text-ink-secondary">
             {formatShortDate(date)} · {embedded ? "Preview" : `Game No. ${gameNumber}`}
           </p>
-          <p className="mt-2 small-caps text-xs text-ink-secondary">{game.topic_label}</p>
+          <p className="mt-1.5 small-caps text-xs text-ink-secondary">{game.topic_label}</p>
           <p className="mt-1 text-[13px] text-ink-secondary">{game.stat_label}</p>
         </div>
 
-        {/* The two cards */}
-        <div className="flex flex-1 flex-col justify-center py-4 sm:py-6">
+        {/* The two cards — fill all remaining space */}
+        <div className="relative flex min-h-0 flex-1 flex-col py-4">
           {state.pair && (
             <CardPair
               pair={state.pair}
@@ -129,22 +129,22 @@ export function GameBoard({
               onGuess={state.guess}
             />
           )}
+        </div>
 
-          {/* Status / hint line */}
-          <div className="mt-6 flex h-6 items-center justify-center">
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={hint.text}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.18 }}
-                className={`text-sm font-bold uppercase tracking-wide ${hint.tone}`}
-              >
-                {hint.text}
-              </motion.p>
-            </AnimatePresence>
-          </div>
+        {/* Status / hint line */}
+        <div className="flex h-7 items-center justify-center">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={hint.text}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.18 }}
+              className={`text-sm font-bold uppercase tracking-wide ${hint.tone}`}
+            >
+              {hint.text}
+            </motion.p>
+          </AnimatePresence>
         </div>
       </main>
     </>

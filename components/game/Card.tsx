@@ -12,9 +12,7 @@ export type CardStatus = "idle" | "correct" | "wrong";
 interface CardProps {
   card: GameCard;
   statUnit: string | null;
-  /** Show the numeric value (left = always; right = only once it's revealed). */
   revealValue: boolean;
-  /** Animate the value counting up from 0 when revealed. */
   animateValue: boolean;
   status: CardStatus;
   shake: boolean;
@@ -23,16 +21,15 @@ interface CardProps {
 }
 
 const BORDER_COLOR: Record<CardStatus, string> = {
-  idle: "#E8E8E8",
+  idle: "#111111",
   correct: "#00C853",
   wrong: "#FF3B30",
 };
 
-// Verdict wash over the photo — green for the right answer, red for a miss.
 const TINT_COLOR: Record<CardStatus, string> = {
   idle: "rgba(0,0,0,0)",
-  correct: "rgba(0,200,83,0.32)",
-  wrong: "rgba(255,59,48,0.32)",
+  correct: "rgba(0,200,83,0.34)",
+  wrong: "rgba(255,59,48,0.34)",
 };
 
 export function Card({
@@ -54,21 +51,21 @@ export function Card({
       onClick={onSelect}
       disabled={disabled}
       aria-label={`Choose ${card.entity_name}`}
-      className="group relative flex aspect-[4/3] w-full flex-col justify-end overflow-hidden rounded-3xl border-2 bg-border/40 text-left will-change-transform disabled:cursor-default sm:aspect-[3/4]"
+      className="group relative flex h-full w-full flex-col justify-end overflow-hidden border-[3px] bg-ink text-left will-change-transform disabled:cursor-default"
       animate={{
-        x: shake ? [0, -9, 9, -7, 7, 0] : 0,
+        x: shake ? [0, -10, 10, -8, 8, 0] : 0,
         borderColor: BORDER_COLOR[status],
-        scale: status === "correct" ? [1, 1.03, 1] : 1,
+        scale: status === "correct" ? [1, 1.025, 1] : 1,
       }}
       transition={{
         x: { duration: 0.42, ease: "easeInOut" },
         scale: { duration: 0.45, ease: "easeOut" },
         borderColor: { duration: 0.2 },
       }}
-      whileHover={!disabled ? { scale: 1.02 } : undefined}
+      whileHover={!disabled ? { scale: 1.015 } : undefined}
       whileTap={!disabled ? { scale: 0.99 } : undefined}
     >
-      {/* Image fills the whole card */}
+      {/* Full-bleed photo */}
       {hasImage ? (
         // eslint-disable-next-line @next/next/no-img-element -- arbitrary remote hosts (manual overrides) can't be statically allow-listed
         <img
@@ -79,15 +76,15 @@ export function Card({
           onError={() => setImgFailed(true)}
         />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center text-6xl font-black text-ink-secondary">
+        <div className="absolute inset-0 flex items-center justify-center bg-border/50 font-condensed text-7xl font-bold text-ink-secondary">
           {initialsFor(card.entity_name)}
         </div>
       )}
 
-      {/* Readability scrim, strongest at the bottom where the text sits */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/0" />
+      {/* Scrim for legibility (heaviest at the bottom) */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/0" />
 
-      {/* Verdict color wash */}
+      {/* Verdict wash */}
       <motion.div
         className="pointer-events-none absolute inset-0"
         initial={false}
@@ -95,12 +92,15 @@ export function Card({
         transition={{ duration: 0.25 }}
       />
 
-      {/* Name + value, overlaid at the bottom */}
-      <div className="relative z-10 flex flex-col items-center gap-1 px-3 pb-4 pt-3 text-center">
-        <span className="line-clamp-2 text-base font-bold leading-tight text-white drop-shadow sm:text-lg">
+      {/* Thin keyline frame — editorial print detail */}
+      <div className="pointer-events-none absolute inset-[10px] border border-white/25" />
+
+      {/* Caption block */}
+      <div className="relative z-10 flex flex-col items-start gap-1 p-4 sm:p-5">
+        <span className="line-clamp-2 text-left text-[11px] font-bold uppercase tracking-[0.18em] text-white/85 sm:text-xs">
           {card.entity_name}
         </span>
-        <span className="tabular text-[2.75rem] font-black leading-none text-white drop-shadow-md sm:text-[3.25rem]">
+        <span className="font-condensed text-[3.25rem] font-bold leading-[0.9] tracking-tight text-white drop-shadow-md sm:text-[5rem]">
           {!revealValue ? (
             "?"
           ) : animateValue ? (
@@ -110,7 +110,7 @@ export function Card({
           )}
         </span>
         {statUnit && revealValue && (
-          <span className="text-xs font-semibold uppercase tracking-wide text-white/70">
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/65 sm:text-xs">
             {statUnit}
           </span>
         )}

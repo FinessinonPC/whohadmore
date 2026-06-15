@@ -23,6 +23,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        condensed: ["var(--font-oswald)", "var(--font-inter)", "sans-serif"],
       },
       fontSize: {
         // Display values — the hero of every card

@@ -22,12 +22,9 @@ function statusFor(
   chosenSide: Side | null,
   higher: Side | "both"
 ): CardStatus {
-  if (phase === "reveal-correct") {
-    return side === chosenSide ? "correct" : "idle";
-  }
+  if (phase === "reveal-correct") return side === chosenSide ? "correct" : "idle";
   if (phase === "reveal-wrong") {
     if (side === chosenSide) return "wrong";
-    // Show the answer they should have picked.
     return higher === "both" || higher === side ? "correct" : "idle";
   }
   return "idle";
@@ -41,11 +38,8 @@ export function CardPair({
   revealRight,
   onGuess,
 }: CardPairProps) {
-  // Desktop: cards sit side-by-side and slide horizontally.
-  // Mobile: cards stack and slide vertically.
   const isRow = useMediaQuery("(min-width: 640px)");
 
-  // First paint uses a staggered fade-up; later swaps use the directional slide.
   const mounted = useRef(false);
   useEffect(() => {
     mounted.current = true;
@@ -57,15 +51,15 @@ export function CardPair({
   ];
 
   const interactionLocked = phase !== "idle";
-  const enter = isRow ? { x: 80, y: 0 } : { x: 0, y: 64 };
-  const exit = isRow ? { x: -100, y: 0 } : { x: 0, y: -84 };
+  const enter = isRow ? { x: 90, y: 0 } : { x: 0, y: 70 };
+  const exit = isRow ? { x: -110, y: 0 } : { x: 0, y: -90 };
 
   const lv = pair.left.stat_value;
   const rv = pair.right.stat_value;
   const higher: Side | "both" = lv === rv ? "both" : lv > rv ? "left" : "right";
 
   return (
-    <div className="relative flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:gap-5">
+    <div className="relative flex h-full flex-col items-stretch gap-2 sm:flex-row">
       <AnimatePresence mode="popLayout">
         {slots.map(({ card, side }, i) => {
           const firstLoad = !mounted.current;
@@ -73,11 +67,9 @@ export function CardPair({
             <motion.div
               key={card.id}
               layout
-              className="will-change-transform sm:flex-1"
+              className="relative flex-1 will-change-transform"
               initial={
-                firstLoad
-                  ? { opacity: 0, y: 20 }
-                  : { opacity: 0, scale: 0.96, ...enter }
+                firstLoad ? { opacity: 0, y: 24 } : { opacity: 0, scale: 0.96, ...enter }
               }
               animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96, ...exit }}
@@ -102,9 +94,9 @@ export function CardPair({
         })}
       </AnimatePresence>
 
-      {/* VS divider — purely decorative, sits over the gap (works stacked or side-by-side) */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-[11px] font-extrabold tracking-wide text-ink-secondary shadow-sm">
+      {/* Angular VS tag on the seam */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
+        <div className="flex h-12 w-12 -rotate-6 items-center justify-center bg-ink font-condensed text-lg font-bold tracking-wider text-white shadow-lg ring-2 ring-white">
           VS
         </div>
       </div>
