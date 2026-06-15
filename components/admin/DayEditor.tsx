@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CardEditor } from "./CardEditor";
 import { ImagePicker } from "./ImagePicker";
 import { AiPromptPanel } from "./AiPromptPanel";
+import { PreviewPlayer } from "./PreviewPlayer";
 import { CARD_COUNT, emptyCard, padToCount, type DraftCard } from "./draft";
 import { Button } from "@/components/ui/Button";
 import { Badge, categoryLabel } from "@/components/ui/Badge";
@@ -43,6 +44,7 @@ export function DayEditor({ date }: DayEditorProps) {
 
   const [pickerIndex, setPickerIndex] = useState<number | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   // --- Load existing game (incl. drafts) -----------------------------------
   useEffect(() => {
@@ -213,6 +215,32 @@ export function DayEditor({ date }: DayEditorProps) {
     (c) => c.entity_name.trim() && c.stat_value.trim()
   ).length;
 
+  // Build a playable game from the current draft (filled rows only) for preview.
+  function buildPreviewGame(): FullGame {
+    const filled = cards.filter((c) => c.entity_name.trim() && c.stat_value.trim());
+    const now = new Date().toISOString();
+    return {
+      id: "preview",
+      play_date: date,
+      topic_label: topicLabel || "Untitled",
+      topic_category: category,
+      stat_label: statLabel || "Stat",
+      stat_unit: statUnit || null,
+      published: false,
+      created_at: now,
+      cards: filled.map((c, i) => ({
+        id: c.key,
+        game_id: "preview",
+        position: i,
+        entity_name: c.entity_name.trim(),
+        stat_value: Number(c.stat_value),
+        image_url: c.image_url,
+        image_source: c.image_source,
+        created_at: now,
+      })),
+    };
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
@@ -287,9 +315,20 @@ export function DayEditor({ date }: DayEditorProps) {
             <h3 className="text-sm font-bold text-ink">
               Cards <span className="text-ink-secondary">({filledCount}/{CARD_COUNT})</span>
             </h3>
-            <Button variant="secondary" size="sm" onClick={() => setAiOpen(true)}>
-              Generate with AI
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setPreviewOpen(true)}
+                disabled={filledCount < 2}
+                title={filledCount < 2 ? "Add at least 2 cards to preview" : "Play this game"}
+              >
+                Preview
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setAiOpen(true)}>
+                Generate with AI
+              </Button>
+            </div>
           </div>
 
           <Reorder.Group
@@ -388,6 +427,14 @@ export function DayEditor({ date }: DayEditorProps) {
       />
 
       <AiPromptPanel open={aiOpen} onClose={() => setAiOpen(false)} onLoad={loadAiGame} />
+
+      {previewOpen && (
+        <PreviewPlayer
+          game={buildPreviewGame()}
+          date={date}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
     </main>
   );
 }

@@ -59,3 +59,22 @@ export function isToday(value: string): boolean {
 export function isFuture(value: string): boolean {
   return value > todayISO();
 }
+
+/**
+ * Milliseconds from now until the next midnight in the game timezone. Used to
+ * auto-roll the daily game over to the next day at 12am ET without a reload.
+ */
+export function msUntilNextGameMidnight(): number {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: GAME_TZ,
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(now); // "HH:MM:SS" (00..23)
+  const [h, m, s] = parts.split(":").map(Number);
+  const msIntoDay = ((h % 24) * 3600 + m * 60 + s) * 1000 + now.getMilliseconds();
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return Math.max(1000, msPerDay - msIntoDay);
+}

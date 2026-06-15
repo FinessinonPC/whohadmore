@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getBrowserSupabase } from "@/lib/supabase";
 import {
   getPairAt,
   isCorrectGuess,
@@ -14,9 +13,9 @@ import {
 import type { GameCard } from "@/types";
 
 // Timings (ms) — tuned so the count-up fully lands before we move on.
-const REVEAL_HOLD = 1000; // pause on a correct reveal before sliding
-const SLIDE_DURATION = 520; // matches the CardPair slide transition
-const WRONG_HOLD = 1200; // pause after a wrong guess before retrying
+const REVEAL_HOLD = 950; // pause on a correct reveal before sliding
+const SLIDE_DURATION = 480; // matches the CardPair slide transition
+const WRONG_HOLD = 1150; // pause after a wrong guess before retrying
 
 export type GamePhase =
   | "idle"
@@ -24,6 +23,17 @@ export type GamePhase =
   | "reveal-wrong"
   | "transitioning"
   | "complete";
+
+export interface GameResultSummary {
+  score: number;
+  best: number;
+  lives: number;
+  timeSeconds: number;
+}
+
+interface UseGameOptions {
+  onComplete?: (result: GameResultSummary) => void;
+}
 
 export interface UseGameState {
   cards: GameCard[];
@@ -35,27 +45,14 @@ export interface UseGameState {
   pair: ActivePair | null;
   total: number;
   best: number;
-  /** Right card reveals its value during a correct reveal / transition. */
+  /** Right card reveals its value during a correct reveal. */
   revealRight: boolean;
   elapsedSeconds: number;
   guess: (side: Side) => void;
   restart: () => void;
 }
 
-const SESSION_KEY = "whohadmore_session_id";
-
-/** Stable anonymous id, persisted in localStorage. (Swapped for user_id later.) */
-function getSessionId(): string {
-  if (typeof window === "undefined") return "";
-  let id = window.localStorage.getItem(SESSION_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    window.localStorage.setItem(SESSION_KEY, id);
-  }
-  return id;
-}
-
-export function useGame(cards: GameCard[], playDate: string): UseGameState {
+export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameState {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lives, setLives] = useState(STARTING_LIVES);
   const [score, setScore] = useState(0);
@@ -66,7 +63,13 @@ export function useGame(cards: GameCard[], playDate: string): UseGameState {
   // Pending timers, cleared on unmount / restart so callbacks never fire late.
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const startedAt = useRef<number>(Date.now());
-  const savedRef = useRef(false);
+  const completedRef = useRef(false);
+
+  // Keep the latest onComplete without re-arming effects.
+  const onCompleteRef = useRef(opts.onComplete);
+  useEffect(() => {
+    onCompleteRef.current = opts.onComplete;
+  });
 
   const total = cards.length;
   const best = maxScore(total);
@@ -132,7 +135,7 @@ export function useGame(cards: GameCard[], playDate: string): UseGameState {
 
   const restart = useCallback(() => {
     clearTimers();
-    savedRef.current = false;
+    completedRef.current = false;
     startedAt.current = Date.now();
     setCurrentIndex(0);
     setLives(STARTING_LIVES);
@@ -142,34 +145,14 @@ export function useGame(cards: GameCard[], playDate: string): UseGameState {
     setElapsedSeconds(0);
   }, [clearTimers]);
 
-  // Persist the result once, the moment the game completes.
+  // Freeze the clock and emit the result the moment the game completes (once).
   useEffect(() => {
-    if (phase !== "complete" || savedRef.current) return;
-    savedRef.current = true;
-
+    if (phase !== "complete" || completedRef.current) return;
+    completedRef.current = true;
     const seconds = Math.max(0, Math.round((Date.now() - startedAt.current) / 1000));
     setElapsedSeconds(seconds);
-
-    const livesRemaining = lives;
-    const finalScore = score;
-
-    // TODO: replace session_id with user_id when auth is implemented.
-    void (async () => {
-      try {
-        const supabase = getBrowserSupabase();
-        await supabase.from("game_results").insert({
-          play_date: playDate,
-          session_id: getSessionId(),
-          score: finalScore,
-          lives_remaining: livesRemaining,
-          completed: true,
-          time_seconds: seconds,
-        });
-      } catch {
-        // Result tracking is best-effort; never block the end screen on it.
-      }
-    })();
-  }, [phase, lives, score, playDate]);
+    onCompleteRef.current?.({ score, best, lives, timeSeconds: seconds });
+  }, [phase, score, best, lives]);
 
   // Only the pair being judged reveals its right value. Once the index
   // advances (transitioning), the incoming right card stays hidden.

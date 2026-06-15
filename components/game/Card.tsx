@@ -47,47 +47,46 @@ export function Card({
       onClick={onSelect}
       disabled={disabled}
       aria-label={`Choose ${card.entity_name}`}
-      className="group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border-2 bg-surface text-left disabled:cursor-default"
+      className="group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border-2 bg-surface text-left will-change-transform disabled:cursor-default"
       animate={{
-        x: shake ? [0, -8, 8, -6, 6, 0] : 0,
+        x: shake ? [0, -9, 9, -7, 7, 0] : 0,
         borderColor: BORDER_COLOR[status],
-        scale: status === "correct" ? [1, 1.03, 1] : 1,
+        scale: status === "correct" ? [1, 1.035, 1] : 1,
       }}
       transition={{
-        x: { duration: 0.4, ease: "easeInOut" },
-        scale: { duration: 0.5, ease: "easeOut" },
+        x: { duration: 0.42, ease: "easeInOut" },
+        scale: { duration: 0.45, ease: "easeOut" },
         borderColor: { duration: 0.2 },
       }}
-      whileHover={!disabled ? { scale: 1.02 } : undefined}
+      whileHover={!disabled ? { scale: 1.025 } : undefined}
       whileTap={!disabled ? { scale: 0.99 } : undefined}
-      style={{ boxShadow: "0 1px 0 rgba(0,0,0,0.02)" }}
     >
-      {/* Image — top portion of the card */}
-      <div className="relative aspect-square w-full overflow-hidden bg-border/40">
+      {/* Image — the dominant element of the card */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-border/40 sm:aspect-square">
         {hasImage ? (
           // eslint-disable-next-line @next/next/no-img-element -- arbitrary remote hosts (manual overrides) can't be statically allow-listed
           <img
             src={card.image_url ?? ""}
             alt={card.entity_name}
             className="h-full w-full object-cover"
-            loading="lazy"
+            draggable={false}
             onError={() => setImgFailed(true)}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-border/40 text-2xl font-extrabold text-ink-secondary">
+          <div className="flex h-full w-full items-center justify-center bg-border/40 text-4xl font-extrabold text-ink-secondary">
             {initialsFor(card.entity_name)}
           </div>
         )}
       </div>
 
       {/* Name + value */}
-      <div className="flex flex-1 flex-col items-center gap-2 px-3 py-4">
-        <span className="line-clamp-2 text-center text-sm font-bold leading-tight text-ink">
+      <div className="flex flex-1 flex-col items-center justify-center gap-1.5 px-3 py-4">
+        <span className="line-clamp-2 text-center text-[15px] font-bold leading-tight text-ink sm:text-base">
           {card.entity_name}
         </span>
 
         <div className="flex flex-col items-center">
-          <span className="tabular text-display-sm font-extrabold leading-none text-ink">
+          <span className="tabular text-[2.5rem] font-black leading-none text-ink sm:text-[3rem]">
             {!revealValue ? (
               <span className="text-ink-secondary">?</span>
             ) : animateValue ? (

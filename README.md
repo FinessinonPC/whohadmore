@@ -51,15 +51,26 @@ It creates `daily_games`, `game_cards`, `game_results`, and the scaffold tables
 ## How it works
 
 ### Playing
-- `/` redirects to `/play` (today's game, anchored to US Eastern).
-- `/play/[date]` plays any archived day — same component, an archive banner is
-  the only difference.
+- `/` redirects to `/play` (today's game, anchored to US Eastern). Pages are
+  **server-rendered** (no client fetch waterfall) for instant first paint.
+- Every game opens on a **start screen** (date, game number, topic, rules) with
+  a **Start game** button — it never drops you straight in.
+- `/play/[date]` plays any archived day — same `PlayExperience` component.
 - Game state lives in [`hooks/useGame.ts`](hooks/useGame.ts): 15-card chain,
   3 lives, score, and a phase machine
   (`idle → reveal-correct/wrong → transitioning → complete`).
 - A wrong guess costs a life and lets you retry the same pair; ties count as
-  correct. On completion the result is saved to `game_results` keyed by an
-  anonymous `session_id` (localStorage) — swapped for `user_id` when auth lands.
+  correct.
+- **One-and-done:** when you finish, the result is stored locally per date and
+  the game shows your score instead of letting you replay. (Reviewing past
+  games / cross-device history arrives with sign-in.) Results are also written,
+  best-effort, to `game_results` keyed by an anonymous `session_id` — swapped
+  for `user_id` when auth lands.
+- **Game number** = the Nth published game in date order (first published = #1).
+- **Midnight roll-over:** the daily game auto-advances to the next day at 12am
+  ET (`router.refresh()` on a timer) without a manual reload.
+- On mobile the two cards **stack** (and slide vertically); on wider screens
+  they sit side-by-side (and slide horizontally).
 
 ### The count-up
 The number reveal ([`components/game/CountUp.tsx`](components/game/CountUp.tsx))
@@ -73,11 +84,14 @@ the final figure. It's the hero beat of every reveal.
   list (drag handles), live deck preview, and **Save / Publish**.
 - Type an entity name → on blur it auto-fetches a Wikipedia image. The
   **Image** button opens a picker for manual URLs or a custom Wikimedia search.
+- **Preview** plays the current draft in a full-screen overlay (no result is
+  saved) so you can feel the game before publishing.
 - **Generate with AI** opens a drawer with a ready-to-copy prompt; paste the
   model's JSON back and it populates all 15 cards and fetches every image at
   once.
-- Gated by `ADMIN_PASSWORD` (stored in `sessionStorage`). If unset, admin is
-  open for local development.
+- Gated by `ADMIN_PASSWORD` (stored in `sessionStorage`). **Security default:
+  if `ADMIN_PASSWORD` is not set, admin is locked** (access denied) — you must
+  configure a password to use it.
 
 ### Wikimedia
 The browser never calls Wikipedia directly. Image lookups go through
@@ -92,7 +106,7 @@ entity initials).
 ```
 app/            routes (play, archive, admin) + API route handlers
 components/     game/, admin/, ui/, archive/ — all hand-built, Tailwind only
-hooks/          useGame, useDailyGame, useStreak (stub)
+hooks/          useGame, useMediaQuery, useStreak (stub)
 lib/            supabase, wikimedia, gameLogic, seed, date, admin helpers
 types/          shared DB + API types
 supabase/       SQL migration

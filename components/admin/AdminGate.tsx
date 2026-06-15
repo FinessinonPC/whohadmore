@@ -7,7 +7,7 @@ import {
   storeAdminPassword,
 } from "@/lib/adminClient";
 
-type Status = "checking" | "locked" | "unlocked";
+type Status = "checking" | "locked" | "unconfigured" | "unlocked";
 
 /** Wraps admin pages with a sessionStorage password gate (build-time only). */
 export function AdminGate({ children }: { children: React.ReactNode }) {
@@ -16,22 +16,26 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  async function verify(pw: string): Promise<boolean> {
+  async function verify(pw: string): Promise<{ ok: boolean; configured: boolean }> {
     const res = await fetch("/api/admin/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password: pw }),
     });
-    const data = (await res.json()) as { ok: boolean };
-    return data.ok;
+    return (await res.json()) as { ok: boolean; configured: boolean };
   }
 
-  // On mount, try the stored password (or empty, which passes when unconfigured).
+  // On mount, try the stored password.
   useEffect(() => {
     (async () => {
       const stored = getStoredAdminPassword() ?? "";
-      const ok = await verify(stored).catch(() => false);
-      setStatus(ok ? "unlocked" : "locked");
+      try {
+        const { ok, configured } = await verify(stored);
+        if (!configured) setStatus("unconfigured");
+        else setStatus(ok ? "unlocked" : "locked");
+      } catch {
+        setStatus("locked");
+      }
     })();
   }, []);
 
@@ -39,13 +43,20 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
-    const ok = await verify(password).catch(() => false);
-    setSubmitting(false);
-    if (ok) {
-      storeAdminPassword(password);
-      setStatus("unlocked");
-    } else {
-      setError("Incorrect password");
+    try {
+      const { ok, configured } = await verify(password);
+      if (!configured) {
+        setStatus("unconfigured");
+      } else if (ok) {
+        storeAdminPassword(password);
+        setStatus("unlocked");
+      } else {
+        setError("Incorrect password");
+      }
+    } catch {
+      setError("Something went wrong");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -53,6 +64,19 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-ink" />
+      </div>
+    );
+  }
+
+  if (status === "unconfigured") {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-sm flex-col items-center justify-center px-6 text-center">
+        <h1 className="text-xl font-extrabold text-ink">Admin is locked</h1>
+        <p className="mt-2 text-sm text-ink-secondary">
+          Set an <code className="rounded bg-surface px-1 py-0.5">ADMIN_PASSWORD</code>{" "}
+          environment variable (and redeploy) to enable the admin panel. Until
+          then, access is denied.
+        </p>
       </div>
     );
   }

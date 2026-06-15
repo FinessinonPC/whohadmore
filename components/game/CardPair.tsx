@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { Card, type CardStatus } from "./Card";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { GamePhase } from "@/hooks/useGame";
 import type { ActivePair, Side } from "@/lib/gameLogic";
 
@@ -34,7 +35,11 @@ export function CardPair({
   revealRight,
   onGuess,
 }: CardPairProps) {
-  // First paint uses a staggered fade-up; later card swaps use the slide.
+  // Desktop: cards sit side-by-side and slide horizontally.
+  // Mobile: cards stack and slide vertically.
+  const isRow = useMediaQuery("(min-width: 640px)");
+
+  // First paint uses a staggered fade-up; later swaps use the directional slide.
   const mounted = useRef(false);
   useEffect(() => {
     mounted.current = true;
@@ -46,9 +51,11 @@ export function CardPair({
   ];
 
   const interactionLocked = phase !== "idle";
+  const enter = isRow ? { x: 80, y: 0 } : { x: 0, y: 64 };
+  const exit = isRow ? { x: -100, y: 0 } : { x: 0, y: -84 };
 
   return (
-    <div className="relative flex items-stretch gap-3 sm:gap-4">
+    <div className="relative flex flex-col items-stretch gap-3 sm:flex-row sm:gap-4">
       <AnimatePresence mode="popLayout">
         {slots.map(({ card, side }, i) => {
           const firstLoad = !mounted.current;
@@ -56,18 +63,18 @@ export function CardPair({
             <motion.div
               key={card.id}
               layout
-              className="flex-1"
+              className="flex-1 will-change-transform"
               initial={
                 firstLoad
                   ? { opacity: 0, y: 20 }
-                  : { opacity: 0, x: 72, scale: 0.96 }
+                  : { opacity: 0, scale: 0.96, ...enter }
               }
               animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-              exit={{ opacity: 0, x: -96, scale: 0.96 }}
+              exit={{ opacity: 0, scale: 0.96, ...exit }}
               transition={
                 firstLoad
                   ? { duration: 0.4, delay: i * 0.08, ease: "easeOut" }
-                  : { type: "spring", damping: 30, stiffness: 280 }
+                  : { type: "spring", damping: 30, stiffness: 320, mass: 0.8 }
               }
             >
               <Card
@@ -85,9 +92,9 @@ export function CardPair({
         })}
       </AnimatePresence>
 
-      {/* VS divider — purely decorative, sits over the gap */}
+      {/* VS divider — purely decorative, sits over the gap (works stacked or side-by-side) */}
       <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-[11px] font-extrabold tracking-wide text-ink-secondary shadow-sm">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-[11px] font-extrabold tracking-wide text-ink-secondary shadow-sm">
           VS
         </div>
       </div>

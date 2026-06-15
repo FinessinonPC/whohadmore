@@ -2,18 +2,21 @@
 
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { CardPair } from "./CardPair";
 import { LivesDisplay } from "./LivesDisplay";
 import { ProgressBar } from "./ProgressBar";
-import { ResultSheet } from "./ResultSheet";
-import { useGame, type GamePhase } from "@/hooks/useGame";
-import { formatDisplayDate } from "@/lib/date";
+import { useGame, type GamePhase, type GameResultSummary } from "@/hooks/useGame";
+import { formatShortDate } from "@/lib/date";
 import type { FullGame } from "@/types";
 
 interface GameBoardProps {
   game: FullGame;
-  isArchive: boolean;
+  date: string;
+  gameNumber: number;
+  onComplete: (result: GameResultSummary) => void;
+  /** Embedded in the admin preview — hide site nav so nothing navigates away. */
+  embedded?: boolean;
 }
 
 function hintFor(phase: GamePhase): { text: string; tone: string } {
@@ -28,15 +31,24 @@ function hintFor(phase: GamePhase): { text: string; tone: string } {
   }
 }
 
-export function GameBoard({ game, isArchive }: GameBoardProps) {
-  const state = useGame(game.cards, game.play_date);
-  const [sheetOpen, setSheetOpen] = useState(false);
+export function GameBoard({
+  game,
+  date,
+  gameNumber,
+  onComplete,
+  embedded = false,
+}: GameBoardProps) {
+  const state = useGame(game.cards, { onComplete });
 
-  // Open the end sheet when the game completes; a peek/reopen control handles
-  // the case where the player dismisses it to look at the final board.
+  // Preload every card image so slides reveal instantly instead of popping in.
   useEffect(() => {
-    if (state.phase === "complete") setSheetOpen(true);
-  }, [state.phase]);
+    game.cards.forEach((c) => {
+      if (c.image_url) {
+        const img = new window.Image();
+        img.src = c.image_url;
+      }
+    });
+  }, [game]);
 
   const hint = hintFor(state.phase);
 
@@ -47,24 +59,32 @@ export function GameBoard({ game, isArchive }: GameBoardProps) {
       <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-4 pb-10 pt-5">
         {/* Header */}
         <header className="flex items-center justify-between">
-          <Link href="/" className="text-sm font-extrabold tracking-tight text-ink">
-            WhoHadMore
-          </Link>
+          <div className="flex items-center gap-2">
+            {embedded ? (
+              <span className="text-sm font-extrabold tracking-tight text-ink">Preview</span>
+            ) : (
+              <>
+                <Link href="/" className="text-sm font-extrabold tracking-tight text-ink">
+                  WhoHadMore
+                </Link>
+                <Link
+                  href="/archive"
+                  className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
+                >
+                  Archive
+                </Link>
+              </>
+            )}
+          </div>
           <LivesDisplay lives={state.lives} />
         </header>
 
-        {isArchive && (
-          <div className="mt-3 rounded-xl border border-border bg-surface px-3 py-2 text-center text-xs text-ink-secondary">
-            You&apos;re playing the archive —{" "}
-            <span className="font-semibold text-ink">
-              {formatDisplayDate(game.play_date)}
-            </span>
-          </div>
-        )}
-
-        {/* Topic + stat */}
-        <div className="mt-8 text-center">
-          <p className="small-caps text-xs text-ink-secondary">{game.topic_label}</p>
+        {/* Date + game number + topic */}
+        <div className="mt-7 text-center">
+          <p className="small-caps text-[11px] text-ink-secondary">
+            {formatShortDate(date)} · {embedded ? "Preview" : `Game No. ${gameNumber}`}
+          </p>
+          <p className="mt-2 small-caps text-xs text-ink-secondary">{game.topic_label}</p>
           <p className="mt-1 text-[13px] text-ink-secondary">{game.stat_label}</p>
         </div>
 
@@ -97,33 +117,7 @@ export function GameBoard({ game, isArchive }: GameBoardProps) {
             </AnimatePresence>
           </div>
         </div>
-
-        {/* Reopen control if the end sheet was dismissed */}
-        {state.phase === "complete" && !sheetOpen && (
-          <button
-            onClick={() => setSheetOpen(true)}
-            className="mx-auto rounded-full border border-border bg-surface px-5 py-2 text-sm font-semibold text-ink"
-          >
-            Show results
-          </button>
-        )}
       </main>
-
-      <ResultSheet
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        score={state.score}
-        best={state.best}
-        lives={state.lives}
-        timeSeconds={state.elapsedSeconds}
-        topicLabel={game.topic_label}
-        playDate={game.play_date}
-        isArchive={isArchive}
-        onRestart={() => {
-          setSheetOpen(false);
-          state.restart();
-        }}
-      />
     </>
   );
 }

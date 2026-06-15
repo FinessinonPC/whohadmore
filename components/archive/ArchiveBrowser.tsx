@@ -1,48 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { Badge, categoryLabel } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { getLocalResult } from "@/lib/playStore";
 import { formatShortDate } from "@/lib/date";
 import type { DailyGame } from "@/types";
 
+type NumberedGame = DailyGame & { game_number: number };
+
 interface ArchiveBrowserProps {
-  games: DailyGame[]; // published, newest first
+  games: NumberedGame[]; // newest first
 }
-
-interface MonthGroup {
-  key: string; // "2026-06"
-  label: string; // "June 2026"
-  games: DailyGame[];
-}
-
-function groupByMonth(games: DailyGame[]): MonthGroup[] {
-  const map = new Map<string, DailyGame[]>();
-  for (const g of games) {
-    const key = g.play_date.slice(0, 7);
-    (map.get(key) ?? map.set(key, []).get(key)!).push(g);
-  }
-  return Array.from(map.entries()).map(([key, list]) => {
-    const [y, m] = key.split("-").map(Number);
-    return {
-      key,
-      label: new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-US", {
-        timeZone: "UTC",
-        month: "long",
-        year: "numeric",
-      }),
-      games: list,
-    };
-  });
-}
-
-const PAGE = 1; // months revealed per "load more"
 
 export function ArchiveBrowser({ games }: ArchiveBrowserProps) {
-  const months = useMemo(() => groupByMonth(games), [games]);
-  const [visible, setVisible] = useState(PAGE);
+  // Played status lives in localStorage, so resolve it after mount.
+  const [played, setPlayed] = useState<Record<string, { score: number; best: number }>>({});
+
+  useEffect(() => {
+    const map: Record<string, { score: number; best: number }> = {};
+    for (const g of games) {
+      const r = getLocalResult(g.play_date);
+      if (r) map[g.play_date] = { score: r.score, best: r.best };
+    }
+    setPlayed(map);
+  }, [games]);
 
   if (games.length === 0) {
     return (
@@ -52,56 +34,43 @@ export function ArchiveBrowser({ games }: ArchiveBrowserProps) {
     );
   }
 
-  const shown = months.slice(0, visible);
-  const hasMore = visible < months.length;
-
   return (
-    <div className="flex flex-col gap-10">
-      {shown.map((month) => (
-        <section key={month.key}>
-          <h2 className="mb-3 small-caps text-xs text-ink-secondary">
-            {month.label}
-          </h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {month.games.map((game, i) => (
-              <motion.div
-                key={game.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: Math.min(i * 0.03, 0.3) }}
-              >
-                <Link
-                  href={`/play/${game.play_date}`}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-4 transition-colors hover:bg-border/30"
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-ink-secondary">
-                        {formatShortDate(game.play_date)}
-                      </span>
-                      <Badge tone="category">{categoryLabel(game.topic_category)}</Badge>
-                    </div>
-                    <p className="mt-1 truncate text-sm font-bold text-ink">
-                      {game.topic_label}
-                    </p>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-cta px-4 py-1.5 text-xs font-semibold text-white">
-                    Play
-                  </span>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-      ))}
+    <ul className="divide-y divide-border border-y border-border">
+      {games.map((game) => {
+        const result = played[game.play_date];
+        return (
+          <li key={game.id}>
+            <Link
+              href={`/play/${game.play_date}`}
+              className="flex items-center gap-3 py-3.5 transition-colors hover:bg-surface"
+            >
+              <span className="w-12 shrink-0 text-center tabular text-xs font-bold text-ink-secondary">
+                {game.game_number}
+              </span>
 
-      {hasMore && (
-        <div className="flex justify-center">
-          <Button variant="secondary" onClick={() => setVisible((v) => v + PAGE)}>
-            Load earlier months
-          </Button>
-        </div>
-      )}
-    </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold text-ink">{game.topic_label}</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="text-xs text-ink-secondary">
+                    {formatShortDate(game.play_date)}
+                  </span>
+                  <Badge tone="category">{categoryLabel(game.topic_category)}</Badge>
+                </div>
+              </div>
+
+              {result ? (
+                <span className="shrink-0 rounded-full border border-correct/30 bg-correct/10 px-3 py-1 text-xs font-semibold text-correct">
+                  {result.score}/{result.best}
+                </span>
+              ) : (
+                <span className="shrink-0 rounded-full bg-cta px-4 py-1.5 text-xs font-semibold text-white">
+                  Play
+                </span>
+              )}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
