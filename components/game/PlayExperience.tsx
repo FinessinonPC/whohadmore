@@ -6,7 +6,6 @@ import { useCallback, useEffect, useState } from "react";
 import { GameBoard } from "./GameBoard";
 import { StartScreen } from "./StartScreen";
 import { ResultScreen } from "./ResultScreen";
-import { getBrowserSupabase } from "@/lib/supabase";
 import {
   clearLocalResult,
   getLocalResult,
@@ -76,22 +75,22 @@ export function PlayExperience({
       setAlreadyPlayed(false);
       setMode("completed");
 
-      // Best-effort remote record. TODO: replace session_id with user_id when
-      // auth is implemented.
-      void (async () => {
-        try {
-          await getBrowserSupabase().from("game_results").insert({
-            play_date: date,
-            session_id: getSessionId(),
-            score: summary.score,
-            lives_remaining: summary.lives,
-            completed: true,
-            time_seconds: summary.timeSeconds,
-          });
-        } catch {
-          /* never block the end screen on result tracking */
-        }
-      })();
+      // Record the result + update leaderboard stats (best-effort; the route is
+      // idempotent per session+date). Identity is the anonymous session_id.
+      void fetch("/api/profile/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: getSessionId(),
+          play_date: date,
+          score: summary.score,
+          best: summary.best,
+          lives: summary.lives,
+          time_seconds: summary.timeSeconds,
+        }),
+      }).catch(() => {
+        /* never block the end screen on result tracking */
+      });
     },
     [date]
   );

@@ -56,6 +56,19 @@ export function isToday(value: string): boolean {
   return value === todayISO();
 }
 
+/** "2026-06-15" -> "2026-06-14" */
+export function previousISODate(value: string): string {
+  const [y, m, d] = value.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - 1);
+  return dt.toISOString().slice(0, 10);
+}
+
+/** "2026-06-15" -> "2026-06" (leaderboard period key) */
+export function monthPeriod(value: string): string {
+  return value.slice(0, 7);
+}
+
 export function isFuture(value: string): boolean {
   return value > todayISO();
 }

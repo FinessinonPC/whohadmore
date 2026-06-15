@@ -76,12 +76,20 @@ function TopBar() {
         <BrandMark className="h-5 w-5" />
         <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
       </Link>
-      <Link
-        href="/archive"
-        className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
-      >
-        Archive
-      </Link>
+      <nav className="flex items-center gap-4">
+        <Link
+          href="/leaderboard"
+          className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
+        >
+          Leaderboard
+        </Link>
+        <Link
+          href="/archive"
+          className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
+        >
+          Archive
+        </Link>
+      </nav>
     </header>
   );
 }

@@ -83,12 +83,20 @@ export function ResultScreen({
             <BrandMark className="h-5 w-5" />
             <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
           </Link>
-          <Link
-            href="/archive"
-            className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
-          >
-            Archive
-          </Link>
+          <nav className="flex items-center gap-4">
+            <Link
+              href="/leaderboard"
+              className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
+            >
+              Leaderboard
+            </Link>
+            <Link
+              href="/archive"
+              className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
+            >
+              Archive
+            </Link>
+          </nav>
         </header>
       )}
 
@@ -142,15 +150,21 @@ export function ResultScreen({
               <Button size="lg" onClick={share} className="w-full">
                 {copied ? "Copied to clipboard" : "Share result"}
               </Button>
-              <Link href="/archive" className="contents">
+              <Link href="/leaderboard" className="contents">
                 <Button variant="secondary" size="lg" className="w-full">
-                  Browse the archive
+                  Leaderboard
                 </Button>
               </Link>
-              <p className="mt-2 text-xs text-ink-secondary">
+              <Link
+                href="/archive"
+                className="text-sm font-semibold text-ink-secondary underline underline-offset-2 transition-colors hover:text-ink"
+              >
+                Browse the archive
+              </Link>
+              <p className="mt-1 text-xs text-ink-secondary">
                 {daily
-                  ? "A new game drops at midnight. Sign in soon to keep your stats & streaks."
-                  : "Sign in soon to review past games and track your stats."}
+                  ? "A new game drops at midnight. Pick a username on the leaderboard to keep your streak & stats."
+                  : "Pick a username on the leaderboard to track your stats."}
               </p>
               {onReset && (
                 <button

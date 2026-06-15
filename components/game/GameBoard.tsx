@@ -97,10 +97,10 @@ export function GameBoard({
                   </span>
                 </Link>
                 <Link
-                  href="/archive"
+                  href="/leaderboard"
                   className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
                 >
-                  Archive
+                  Leaderboard
                 </Link>
               </>
             )}
