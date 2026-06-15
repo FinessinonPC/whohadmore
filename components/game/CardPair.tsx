@@ -65,7 +65,7 @@ export function CardPair({
   const higher: Side | "both" = lv === rv ? "both" : lv > rv ? "left" : "right";
 
   return (
-    <div className="relative flex flex-col items-stretch gap-3 sm:flex-row sm:gap-4">
+    <div className="relative flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:gap-5">
       <AnimatePresence mode="popLayout">
         {slots.map(({ card, side }, i) => {
           const firstLoad = !mounted.current;
@@ -73,7 +73,7 @@ export function CardPair({
             <motion.div
               key={card.id}
               layout
-              className="flex-1 will-change-transform"
+              className="will-change-transform sm:flex-1"
               initial={
                 firstLoad
                   ? { opacity: 0, y: 20 }

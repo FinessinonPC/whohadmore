@@ -82,7 +82,7 @@ export function GameBoard({
     <>
       <ProgressBar value={state.score} max={state.best} />
 
-      <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-4 pb-10 pt-5">
+      <main className="mx-auto flex min-h-dvh w-full max-w-board flex-col px-4 pb-8 pt-5">
         {/* Header */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -109,7 +109,7 @@ export function GameBoard({
         </header>
 
         {/* Date + game number + topic */}
-        <div className="mt-7 text-center">
+        <div className="mt-5 text-center">
           <p className="small-caps text-[11px] text-ink-secondary">
             {formatShortDate(date)} · {embedded ? "Preview" : `Game No. ${gameNumber}`}
           </p>
@@ -118,7 +118,7 @@ export function GameBoard({
         </div>
 
         {/* The two cards */}
-        <div className="flex flex-1 flex-col justify-center py-6">
+        <div className="flex flex-1 flex-col justify-center py-4 sm:py-6">
           {state.pair && (
             <CardPair
               pair={state.pair}
@@ -131,7 +131,7 @@ export function GameBoard({
           )}
 
           {/* Status / hint line */}
-          <div className="mt-7 flex h-6 items-center justify-center">
+          <div className="mt-6 flex h-6 items-center justify-center">
             <AnimatePresence mode="wait">
               <motion.p
                 key={hint.text}

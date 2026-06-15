@@ -12,7 +12,7 @@ export type CardStatus = "idle" | "correct" | "wrong";
 interface CardProps {
   card: GameCard;
   statUnit: string | null;
-  /** Show the numeric value (left = always; right = only after a correct reveal). */
+  /** Show the numeric value (left = always; right = only once it's revealed). */
   revealValue: boolean;
   /** Animate the value counting up from 0 when revealed. */
   animateValue: boolean;
@@ -28,11 +28,11 @@ const BORDER_COLOR: Record<CardStatus, string> = {
   wrong: "#FF3B30",
 };
 
-// Subtle surface tint on reveal — a touch of betting-app energy.
-const BG_COLOR: Record<CardStatus, string> = {
-  idle: "#F8F8F8",
-  correct: "rgba(0, 200, 83, 0.07)",
-  wrong: "rgba(255, 59, 48, 0.07)",
+// Verdict wash over the photo — green for the right answer, red for a miss.
+const TINT_COLOR: Record<CardStatus, string> = {
+  idle: "rgba(0,0,0,0)",
+  correct: "rgba(0,200,83,0.32)",
+  wrong: "rgba(255,59,48,0.32)",
 };
 
 export function Card({
@@ -54,61 +54,66 @@ export function Card({
       onClick={onSelect}
       disabled={disabled}
       aria-label={`Choose ${card.entity_name}`}
-      className="group relative flex h-full w-full flex-col overflow-hidden rounded-3xl border-2 text-left will-change-transform disabled:cursor-default"
+      className="group relative flex aspect-[4/3] w-full flex-col justify-end overflow-hidden rounded-3xl border-2 bg-border/40 text-left will-change-transform disabled:cursor-default sm:aspect-[3/4]"
       animate={{
         x: shake ? [0, -9, 9, -7, 7, 0] : 0,
         borderColor: BORDER_COLOR[status],
-        backgroundColor: BG_COLOR[status],
-        scale: status === "correct" ? [1, 1.035, 1] : 1,
+        scale: status === "correct" ? [1, 1.03, 1] : 1,
       }}
       transition={{
         x: { duration: 0.42, ease: "easeInOut" },
         scale: { duration: 0.45, ease: "easeOut" },
         borderColor: { duration: 0.2 },
       }}
-      whileHover={!disabled ? { scale: 1.025 } : undefined}
+      whileHover={!disabled ? { scale: 1.02 } : undefined}
       whileTap={!disabled ? { scale: 0.99 } : undefined}
     >
-      {/* Image — the dominant element of the card */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-border/40 sm:aspect-[4/5]">
-        {hasImage ? (
-          // eslint-disable-next-line @next/next/no-img-element -- arbitrary remote hosts (manual overrides) can't be statically allow-listed
-          <img
-            src={card.image_url ?? ""}
-            alt={card.entity_name}
-            className="h-full w-full object-cover"
-            draggable={false}
-            onError={() => setImgFailed(true)}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-border/40 text-5xl font-extrabold text-ink-secondary">
-            {initialsFor(card.entity_name)}
-          </div>
-        )}
-      </div>
+      {/* Image fills the whole card */}
+      {hasImage ? (
+        // eslint-disable-next-line @next/next/no-img-element -- arbitrary remote hosts (manual overrides) can't be statically allow-listed
+        <img
+          src={card.image_url ?? ""}
+          alt={card.entity_name}
+          className="absolute inset-0 h-full w-full object-cover"
+          draggable={false}
+          onError={() => setImgFailed(true)}
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center text-6xl font-black text-ink-secondary">
+          {initialsFor(card.entity_name)}
+        </div>
+      )}
 
-      {/* Name + value */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-2 px-3 py-5">
-        <span className="line-clamp-2 text-center text-base font-bold leading-tight text-ink sm:text-lg">
+      {/* Readability scrim, strongest at the bottom where the text sits */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/0" />
+
+      {/* Verdict color wash */}
+      <motion.div
+        className="pointer-events-none absolute inset-0"
+        initial={false}
+        animate={{ backgroundColor: TINT_COLOR[status] }}
+        transition={{ duration: 0.25 }}
+      />
+
+      {/* Name + value, overlaid at the bottom */}
+      <div className="relative z-10 flex flex-col items-center gap-1 px-3 pb-4 pt-3 text-center">
+        <span className="line-clamp-2 text-base font-bold leading-tight text-white drop-shadow sm:text-lg">
           {card.entity_name}
         </span>
-
-        <div className="flex flex-col items-center">
-          <span className="tabular text-[2.75rem] font-black leading-none text-ink sm:text-[3.5rem]">
-            {!revealValue ? (
-              <span className="text-ink-secondary">?</span>
-            ) : animateValue ? (
-              <CountUp value={card.stat_value} run={revealValue} />
-            ) : (
-              formatStat(card.stat_value)
-            )}
-          </span>
-          {statUnit && revealValue && (
-            <span className="mt-1.5 text-xs font-semibold uppercase tracking-wide text-ink-secondary">
-              {statUnit}
-            </span>
+        <span className="tabular text-[2.75rem] font-black leading-none text-white drop-shadow-md sm:text-[3.25rem]">
+          {!revealValue ? (
+            "?"
+          ) : animateValue ? (
+            <CountUp value={card.stat_value} run={revealValue} />
+          ) : (
+            formatStat(card.stat_value)
           )}
-        </div>
+        </span>
+        {statUnit && revealValue && (
+          <span className="text-xs font-semibold uppercase tracking-wide text-white/70">
+            {statUnit}
+          </span>
+        )}
       </div>
     </motion.button>
   );

@@ -31,6 +31,7 @@ const config: Config = {
       },
       maxWidth: {
         game: "540px",
+        board: "720px",
       },
       keyframes: {
         shake: {
