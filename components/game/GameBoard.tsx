@@ -6,7 +6,9 @@ import { useEffect } from "react";
 import { CardPair } from "./CardPair";
 import { LivesDisplay } from "./LivesDisplay";
 import { ProgressBar } from "./ProgressBar";
+import { SoundToggle } from "./SoundToggle";
 import { BrandMark } from "@/components/ui/Logo";
+import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 import { useGame, type GamePhase, type GameResultSummary } from "@/hooks/useGame";
 import { formatShortDate } from "@/lib/date";
 import type { FullGame } from "@/types";
@@ -52,6 +54,29 @@ export function GameBoard({
     });
   }, [game]);
 
+  // Sound + haptics on each reveal.
+  useEffect(() => {
+    if (state.phase === "reveal-correct") feedbackCorrect();
+    else if (state.phase === "reveal-wrong") feedbackWrong();
+  }, [state.phase]);
+
+  // Keyboard controls (desktop): ←/A/1 = left, →/D/2 = right.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (state.phase !== "idle") return;
+      const k = e.key.toLowerCase();
+      if (k === "arrowleft" || k === "a" || k === "1") {
+        e.preventDefault();
+        state.guess("left");
+      } else if (k === "arrowright" || k === "d" || k === "2") {
+        e.preventDefault();
+        state.guess("right");
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [state.phase, state.guess]);
+
   const hint = hintFor(state.phase);
 
   return (
@@ -81,7 +106,10 @@ export function GameBoard({
               </>
             )}
           </div>
-          <LivesDisplay lives={state.lives} />
+          <div className="flex items-center gap-2">
+            <SoundToggle />
+            <LivesDisplay lives={state.lives} />
+          </div>
         </header>
 
         {/* Date + game number + topic */}

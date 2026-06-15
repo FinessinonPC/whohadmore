@@ -9,11 +9,27 @@ const inter = Inter({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
+const description =
+  "A daily higher/lower game. Two cards, one stat — tap the bigger number.";
+
 export const metadata: Metadata = {
-  title: "WhoHadMore",
-  description:
-    "A daily higher/lower game. Two cards, one stat — tap the bigger number.",
+  metadataBase: new URL(siteUrl),
+  title: { default: "WhoHadMore", template: "%s · WhoHadMore" },
+  description,
   applicationName: "WhoHadMore",
+  appleWebApp: { capable: true, title: "WhoHadMore", statusBarStyle: "default" },
+  openGraph: {
+    type: "website",
+    siteName: "WhoHadMore",
+    title: "WhoHadMore",
+    description,
+    url: "/",
+  },
+  twitter: { card: "summary_large_image", title: "WhoHadMore", description },
 };
 
 export const viewport: Viewport = {

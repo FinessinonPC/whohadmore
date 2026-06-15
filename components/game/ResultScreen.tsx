@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { BrandMark } from "@/components/ui/Logo";
 import { LivesDisplay } from "./LivesDisplay";
+import { feedbackFinish } from "@/lib/feedback";
 import { formatDisplayDate, isToday } from "@/lib/date";
 
 interface ResultScreenProps {
@@ -51,6 +52,12 @@ export function ResultScreen({
 }: ResultScreenProps) {
   const [copied, setCopied] = useState(false);
   const daily = isToday(date);
+
+  // Celebrate a fresh finish (not when re-opening a locked score or previewing).
+  useEffect(() => {
+    if (mode === "play" && !alreadyPlayed) feedbackFinish(score > 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function share() {
     const text = `WhoHadMore No. ${gameNumber} — ${topicLabel}\nScore ${score}/${best} · ${lives} lives left · ${formatClock(
