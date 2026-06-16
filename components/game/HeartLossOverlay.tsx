@@ -13,8 +13,12 @@ export interface HeartLossEvent {
 
 function Heart({ className }: { className: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className}>
-      <path d={HEART} fill="#FF3B30" />
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      style={{ filter: "drop-shadow(0 3px 7px rgba(0,0,0,0.55))" }}
+    >
+      <path d={HEART} fill="#FF3B30" stroke="#FFFFFF" strokeWidth="1.6" strokeLinejoin="round" />
     </svg>
   );
 }

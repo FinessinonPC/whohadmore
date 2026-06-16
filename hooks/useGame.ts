@@ -15,7 +15,8 @@ import type { GameCard } from "@/types";
 // Timings (ms). The count-up runs first with NO verdict (suspense); only after
 // it lands do we reveal correct/wrong.
 const COUNT_DURATION = 1900; // ~1.4s count-up + a ~0.5s suspense beat before the verdict
-const VERDICT_HOLD = 800; // how long the verdict holds before sliding on
+const VERDICT_HOLD = 800; // correct: snappy move-on
+const WRONG_HOLD = 1700; // wrong: linger so the heart-loss flourish fully plays
 const SLIDE_DURATION = 480; // matches the CardPair slide transition
 
 export type GamePhase =
@@ -50,6 +51,8 @@ export interface UseGameState {
   /** Right card reveals its value during a correct reveal. */
   revealRight: boolean;
   elapsedSeconds: number;
+  /** Round indices (0-based pairs) the player got wrong — for the timeline. */
+  wrongRounds: number[];
   guess: (side: Side) => void;
   restart: () => void;
 }
@@ -61,6 +64,7 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
   const [phase, setPhase] = useState<GamePhase>("idle");
   const [chosenSide, setChosenSide] = useState<Side | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [wrongRounds, setWrongRounds] = useState<number[]>([]);
 
   // Pending timers, cleared on unmount / restart so callbacks never fire late.
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -108,8 +112,12 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
         // 2) The number has landed; now show the verdict and apply its effect.
         setPhase(correct ? "reveal-correct" : "reveal-wrong");
         if (correct) setScore((s) => s + 1);
-        else setLives((l) => l - 1);
+        else {
+          setLives((l) => l - 1);
+          setWrongRounds((w) => [...w, idx]);
+        }
 
+        // Linger after a miss so the player can watch the heart break.
         schedule(() => {
           // 3) Either end the game or slide on to the next pair.
           const willComplete =
@@ -124,7 +132,7 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
             setChosenSide(null);
             setPhase("idle");
           }, SLIDE_DURATION);
-        }, VERDICT_HOLD);
+        }, correct ? VERDICT_HOLD : WRONG_HOLD);
       }, COUNT_DURATION);
     },
     [phase, pair, currentIndex, total, lives, schedule]
@@ -140,6 +148,7 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
     setChosenSide(null);
     setPhase("idle");
     setElapsedSeconds(0);
+    setWrongRounds([]);
   }, [clearTimers]);
 
   // Freeze the clock and emit the result the moment the game completes (once).
@@ -170,6 +179,7 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
     best,
     revealRight,
     elapsedSeconds,
+    wrongRounds,
     guess,
     restart,
   };

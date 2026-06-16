@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { CardPair } from "./CardPair";
 import { LivesDisplay } from "./LivesDisplay";
-import { ChainProgress } from "./ChainProgress";
+import { ChainTimeline } from "./ChainTimeline";
 import { HeartLossOverlay, type HeartLossEvent } from "./HeartLossOverlay";
 import { BrandMark } from "@/components/ui/Logo";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
@@ -98,7 +98,6 @@ export function GameBoard({
 
   return (
     <>
-      <ChainProgress value={roundsDone} max={rounds} />
       <HeartLossOverlay event={lossEvent} max={STARTING_LIVES} />
 
       <main className="mx-auto flex h-dvh w-full max-w-board flex-col overflow-hidden px-4 pb-5 pt-5">
@@ -165,6 +164,9 @@ export function GameBoard({
             </motion.p>
           </AnimatePresence>
         </div>
+
+        {/* Lesson-style progress timeline */}
+        <ChainTimeline position={roundsDone} total={rounds} wrongRounds={state.wrongRounds} />
       </main>
     </>
   );
