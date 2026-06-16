@@ -65,16 +65,27 @@ export function Card({
       whileHover={!disabled ? { scale: 1.015 } : undefined}
       whileTap={!disabled ? { scale: 0.99 } : undefined}
     >
-      {/* Full-bleed photo */}
+      {/* Image — blurred backdrop fills the card; the subject shows in full
+          (object-contain) so landscape/food/square images aren't cropped badly. */}
       {hasImage ? (
-        // eslint-disable-next-line @next/next/no-img-element -- arbitrary remote hosts (manual overrides) can't be statically allow-listed
-        <img
-          src={card.image_url ?? ""}
-          alt={card.entity_name}
-          className="absolute inset-0 h-full w-full object-cover"
-          draggable={false}
-          onError={() => setImgFailed(true)}
-        />
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={card.image_url ?? ""}
+            alt=""
+            aria-hidden
+            className="absolute inset-0 h-full w-full scale-125 object-cover blur-2xl brightness-[0.55]"
+            draggable={false}
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={card.image_url ?? ""}
+            alt={card.entity_name}
+            className="absolute inset-0 h-full w-full object-contain"
+            draggable={false}
+            onError={() => setImgFailed(true)}
+          />
+        </>
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-border/50 font-condensed text-7xl font-bold text-ink-secondary">
           {initialsFor(card.entity_name)}

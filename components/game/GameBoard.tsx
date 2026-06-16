@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CardPair } from "./CardPair";
 import { LivesDisplay } from "./LivesDisplay";
-import { ProgressBar } from "./ProgressBar";
+import { ChainProgress } from "./ChainProgress";
+import { HeartLossOverlay, type HeartLossEvent } from "./HeartLossOverlay";
 import { BrandMark } from "@/components/ui/Logo";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 import { useGame, type GamePhase, type GameResultSummary } from "@/hooks/useGame";
+import { STARTING_LIVES } from "@/lib/gameLogic";
 import { formatShortDate } from "@/lib/date";
 import type { FullGame } from "@/types";
 
@@ -76,11 +78,28 @@ export function GameBoard({
     return () => window.removeEventListener("keydown", onKey);
   }, [state.phase, state.guess]);
 
+  // Fire the dramatic overlay whenever a life is lost.
+  const [lossEvent, setLossEvent] = useState<HeartLossEvent | null>(null);
+  const prevLives = useRef(state.lives);
+  const lossKey = useRef(0);
+  useEffect(() => {
+    if (state.lives < prevLives.current) {
+      lossKey.current += 1;
+      setLossEvent({ key: lossKey.current, before: prevLives.current });
+    }
+    prevLives.current = state.lives;
+  }, [state.lives]);
+
+  // Bottom bar tracks position through the chain (not score).
+  const rounds = Math.max(1, state.total - 1);
+  const roundsDone = state.phase === "complete" ? rounds : state.currentIndex;
+
   const hint = hintFor(state.phase);
 
   return (
     <>
-      <ProgressBar value={state.score} max={state.best} />
+      <ChainProgress value={roundsDone} max={rounds} />
+      <HeartLossOverlay event={lossEvent} max={STARTING_LIVES} />
 
       <main className="mx-auto flex h-dvh w-full max-w-board flex-col overflow-hidden px-4 pb-5 pt-5">
         {/* Header */}
