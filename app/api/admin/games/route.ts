@@ -20,15 +20,18 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Invalid month" }, { status: 400 });
   }
 
+  // Bound by [first of month, first of next month). Using "${month}-31" would
+  // produce an invalid date (e.g. 2026-06-31) and error the whole query.
+  const [y, m] = month.split("-").map(Number); // m is 1-based
   const start = `${month}-01`;
-  const end = `${month}-31`; // string compare on ISO dates is safe within a month
+  const nextStart = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
 
   const supabase = getServiceSupabase();
   const { data, error } = await supabase
     .from("daily_games")
     .select("*")
     .gte("play_date", start)
-    .lte("play_date", end)
+    .lt("play_date", nextStart)
     .order("play_date", { ascending: true })
     .returns<DailyGame[]>();
 
