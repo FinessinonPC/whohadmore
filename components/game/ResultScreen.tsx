@@ -24,6 +24,8 @@ interface ResultScreenProps {
   gameNumber: number;
   mode: "play" | "preview";
   alreadyPlayed?: boolean;
+  /** Set to the new level if this run pushed a signed-in player up a level. */
+  levelUp?: number | null;
   onPlayAgain?: () => void;
   onClose?: () => void;
   onReset?: () => void;
@@ -55,6 +57,7 @@ export function ResultScreen({
   gameNumber,
   mode,
   alreadyPlayed = false,
+  levelUp = null,
   onPlayAgain,
   onClose,
   onReset,
@@ -134,6 +137,19 @@ export function ResultScreen({
           </span>
           <span className="text-xs font-semibold text-correct/80">earned</span>
         </div>
+
+        {/* Level-up moment */}
+        {levelUp != null && (
+          <motion.div
+            className="mt-3 inline-flex items-center gap-2 rounded-full bg-cta px-4 py-2 text-white"
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: [0.6, 1.12, 1], opacity: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut", delay: 0.6 }}
+          >
+            <span className="text-base">⭐</span>
+            <span className="text-sm font-extrabold">Level {levelUp}!</span>
+          </motion.div>
+        )}
 
         {/* Meta */}
         <div className="mt-4 flex items-center gap-4 text-xs text-ink-secondary">

@@ -35,7 +35,7 @@ export function PreviewPlayer({ game, date, onClose }: PreviewPlayerProps) {
           lives={result.lives}
           timeSeconds={result.timeSeconds}
           wrongRounds={result.wrongRounds}
-          xpEarned={pointsForGame(result.reached, result.rounds, 0)}
+          xpEarned={pointsForGame(result.reached, result.rounds, result.timeSeconds, 0)}
           topicLabel={game.topic_label}
           date={date}
           gameNumber={0}

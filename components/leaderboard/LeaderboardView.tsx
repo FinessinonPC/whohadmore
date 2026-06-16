@@ -8,11 +8,10 @@ import { BrandMark } from "@/components/ui/Logo";
 import { useProfile } from "@/hooks/useProfile";
 import {
   ACHIEVEMENTS,
-  XP_PER_LEVEL,
   levelFromXp,
+  levelInfo,
   rankTitle,
   streakMultiplier,
-  xpIntoLevel,
   type LeaderboardRow,
 } from "@/lib/leaderboard";
 
@@ -40,8 +39,7 @@ export function LeaderboardView() {
   }
 
   const xp = profile?.xp ?? 0;
-  const level = levelFromXp(xp);
-  const into = xpIntoLevel(xp);
+  const { level, into, needed } = levelInfo(xp);
   const streak = profile?.current_streak ?? 0;
   const hasName = Boolean(profile?.username);
 
@@ -120,12 +118,12 @@ export function LeaderboardView() {
             <motion.div
               className="h-full rounded-full bg-correct"
               initial={{ width: 0 }}
-              animate={{ width: `${(into / XP_PER_LEVEL) * 100}%` }}
+              animate={{ width: `${(into / needed) * 100}%` }}
               transition={{ type: "spring", damping: 24, stiffness: 180 }}
             />
           </div>
           <p className="mt-2 text-center text-xs text-ink-secondary">
-            <span className="font-bold text-ink">{into}</span> / {XP_PER_LEVEL} XP
+            <span className="font-bold text-ink">{into}</span> / {needed} XP
           </p>
         </div>
       </section>

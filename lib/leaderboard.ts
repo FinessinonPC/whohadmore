@@ -30,14 +30,31 @@ export interface LeaderboardRow {
 }
 
 // --- Levels ------------------------------------------------------------------
+// Rising curve: early levels come quickly (rewarding), later ones take longer.
+// XP to go from level L to L+1 = 200 + (L-1)*100  (L1->2: 200, L2->3: 300, …).
 
-export const XP_PER_LEVEL = 150;
+export function xpForLevel(level: number): number {
+  return 200 + (Math.max(1, level) - 1) * 100;
+}
+
+export interface LevelInfo {
+  level: number;
+  into: number; // XP into the current level
+  needed: number; // XP needed to finish the current level
+}
+
+export function levelInfo(xp: number): LevelInfo {
+  let level = 1;
+  let remaining = Math.max(0, Math.floor(xp));
+  while (remaining >= xpForLevel(level)) {
+    remaining -= xpForLevel(level);
+    level += 1;
+  }
+  return { level, into: remaining, needed: xpForLevel(level) };
+}
 
 export function levelFromXp(xp: number): number {
-  return Math.floor(Math.max(0, xp) / XP_PER_LEVEL) + 1;
-}
-export function xpIntoLevel(xp: number): number {
-  return Math.max(0, xp) % XP_PER_LEVEL;
+  return levelInfo(xp).level;
 }
 
 const RANKS: { min: number; title: string }[] = [
@@ -66,10 +83,32 @@ export function computeStars(reached: number, rounds: number): number {
   return 0;
 }
 
-/** Base XP from distance traveled, with a bonus for going the full distance. */
-export function basePoints(reached: number, rounds: number): number {
-  const cleared = rounds > 0 && reached >= rounds ? 500 : 0;
-  return Math.max(0, reached) * 100 + cleared;
+// XP weights. Distance is the bulk; clearing adds a bonus; speed is a smaller
+// component that breaks ties between players who get equally far.
+const DISTANCE_XP = 10; // per round reached
+const CLEAR_BONUS = 50; // for going the full distance
+const SPEED_XP = 6; // max per round, scaled by how fast you decided
+const SPEED_FAST_SEC = 3; // <= this many sec/round => full speed bonus
+const SPEED_SLOW_SEC = 9; // >= this many sec/round => no speed bonus
+
+const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
+
+/** 0..1 — how fast the player decided, per round. */
+export function speedFactor(timeSeconds: number, reached: number): number {
+  if (reached <= 0 || timeSeconds <= 0) return 0;
+  const perRound = timeSeconds / reached;
+  return clamp01((SPEED_SLOW_SEC - perRound) / (SPEED_SLOW_SEC - SPEED_FAST_SEC));
+}
+
+export function speedBonus(reached: number, timeSeconds: number): number {
+  return Math.round(Math.max(0, reached) * SPEED_XP * speedFactor(timeSeconds, reached));
+}
+
+/** Base XP: distance + clear bonus + a speed component. */
+export function basePoints(reached: number, rounds: number, timeSeconds: number): number {
+  const distance = Math.max(0, reached) * DISTANCE_XP;
+  const clear = rounds > 0 && reached >= rounds ? CLEAR_BONUS : 0;
+  return distance + clear + speedBonus(reached, timeSeconds);
 }
 
 /** Gentle streak boost: +3% per consecutive day, capped at +60%. */
@@ -77,8 +116,13 @@ export function streakMultiplier(streak: number): number {
   return Math.min(1.6, 1 + 0.03 * Math.max(0, streak));
 }
 
-export function pointsForGame(reached: number, rounds: number, streak: number): number {
-  return Math.round(basePoints(reached, rounds) * streakMultiplier(streak));
+export function pointsForGame(
+  reached: number,
+  rounds: number,
+  timeSeconds: number,
+  streak: number
+): number {
+  return Math.round(basePoints(reached, rounds, timeSeconds) * streakMultiplier(streak));
 }
 
 // --- Achievements ------------------------------------------------------------

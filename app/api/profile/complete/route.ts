@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   const reached = Number(body.reached);
   const rounds = Number(body.rounds);
   const lives = Number(body.lives);
-  const time = Number(body.time_seconds);
+  const time = Number.isFinite(Number(body.time_seconds)) ? Number(body.time_seconds) : 0;
 
   if (!Number.isFinite(reached) || !Number.isFinite(rounds)) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   if (!isSupabaseConfigured()) {
     return NextResponse.json({
       profile: null,
-      pointsEarned: pointsForGame(reached, rounds, 0),
+      pointsEarned: pointsForGame(reached, rounds, time, 0),
       stars,
     });
   }
@@ -92,7 +92,7 @@ export async function POST(req: Request) {
           : 1;
   }
   const streakForPoints = profile ? (isToday ? nextStreak : profile.current_streak) : 0;
-  const pts = pointsForGame(reached, rounds, streakForPoints);
+  const pts = pointsForGame(reached, rounds, time, streakForPoints);
 
   // Record the result with the credited points/stars (also enables backfill).
   await supabase.from("game_results").insert({
@@ -101,7 +101,7 @@ export async function POST(req: Request) {
     score: reached,
     lives_remaining: Number.isFinite(lives) ? lives : null,
     completed: true,
-    time_seconds: Number.isFinite(time) ? time : null,
+    time_seconds: time,
     points: pts,
     stars,
   });

@@ -14,7 +14,7 @@ import {
   type StoredResult,
 } from "@/lib/playStore";
 import { msUntilNextGameMidnight } from "@/lib/date";
-import { pointsForGame } from "@/lib/leaderboard";
+import { levelFromXp, pointsForGame, type Profile } from "@/lib/leaderboard";
 import type { GameResultSummary } from "@/hooks/useGame";
 import type { FullGame } from "@/types";
 
@@ -39,11 +39,13 @@ export function PlayExperience({
   const [mode, setMode] = useState<Mode>("start");
   const [result, setResult] = useState<StoredResult | null>(null);
   const [alreadyPlayed, setAlreadyPlayed] = useState(false);
+  const [levelUp, setLevelUp] = useState<number | null>(null);
 
   // On load / whenever the day changes (midnight roll-over), restore any saved
   // result for that date so a finished game stays finished.
   useEffect(() => {
     const stored = getLocalResult(date);
+    setLevelUp(null);
     if (stored) {
       setResult(stored);
       setAlreadyPlayed(true);
@@ -66,7 +68,7 @@ export function PlayExperience({
     (summary: GameResultSummary) => {
       // XP shown is the streak-free baseline (instant + works offline). The
       // leaderboard total credits the streak multiplier server-side.
-      const xpEarned = pointsForGame(summary.reached, summary.rounds, 0);
+      const xpEarned = pointsForGame(summary.reached, summary.rounds, summary.timeSeconds, 0);
       const stored: StoredResult = {
         reached: summary.reached,
         rounds: summary.rounds,
@@ -79,10 +81,13 @@ export function PlayExperience({
       saveLocalResult(date, stored);
       setResult(stored);
       setAlreadyPlayed(false);
+      setLevelUp(null);
       setMode("completed");
 
       // Record the result + update leaderboard stats (best-effort; the route is
       // idempotent per session+date). Identity is the anonymous session_id.
+      // A returned profile means they were signed in before this game, so we can
+      // detect whether this run pushed them up a level.
       void fetch("/api/profile/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -94,9 +99,18 @@ export function PlayExperience({
           lives: summary.lives,
           time_seconds: summary.timeSeconds,
         }),
-      }).catch(() => {
-        /* never block the end screen on result tracking */
-      });
+      })
+        .then((r) => r.json())
+        .then((data: { profile: Profile | null; pointsEarned?: number }) => {
+          if (data.profile && typeof data.pointsEarned === "number") {
+            const after = levelFromXp(data.profile.xp);
+            const before = levelFromXp(data.profile.xp - data.pointsEarned);
+            if (after > before) setLevelUp(after);
+          }
+        })
+        .catch(() => {
+          /* never block the end screen on result tracking */
+        });
     },
     [date]
   );
@@ -112,6 +126,7 @@ export function PlayExperience({
     clearLocalResult(date);
     setResult(null);
     setAlreadyPlayed(false);
+    setLevelUp(null);
     setMode("start");
   };
 
@@ -129,6 +144,7 @@ export function PlayExperience({
         gameNumber={gameNumber}
         mode="play"
         alreadyPlayed={alreadyPlayed}
+        levelUp={levelUp}
         onReset={resetForTesting}
       />
     );
