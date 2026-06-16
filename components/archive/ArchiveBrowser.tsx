@@ -15,13 +15,13 @@ interface ArchiveBrowserProps {
 
 export function ArchiveBrowser({ games }: ArchiveBrowserProps) {
   // Played status lives in localStorage, so resolve it after mount.
-  const [played, setPlayed] = useState<Record<string, { score: number; best: number }>>({});
+  const [played, setPlayed] = useState<Record<string, { reached: number; rounds: number }>>({});
 
   useEffect(() => {
-    const map: Record<string, { score: number; best: number }> = {};
+    const map: Record<string, { reached: number; rounds: number }> = {};
     for (const g of games) {
       const r = getLocalResult(g.play_date);
-      if (r) map[g.play_date] = { score: r.score, best: r.best };
+      if (r) map[g.play_date] = { reached: r.reached, rounds: r.rounds };
     }
     setPlayed(map);
   }, [games]);
@@ -60,7 +60,7 @@ export function ArchiveBrowser({ games }: ArchiveBrowserProps) {
 
               {result ? (
                 <span className="shrink-0 rounded-full border border-correct/30 bg-correct/10 px-3 py-1 text-xs font-semibold text-correct">
-                  {result.score}/{result.best}
+                  {result.reached}/{result.rounds}
                 </span>
               ) : (
                 <span className="shrink-0 rounded-full bg-cta px-4 py-1.5 text-xs font-semibold text-white">

@@ -14,6 +14,7 @@ import {
   type StoredResult,
 } from "@/lib/playStore";
 import { msUntilNextGameMidnight } from "@/lib/date";
+import { pointsForGame } from "@/lib/leaderboard";
 import type { GameResultSummary } from "@/hooks/useGame";
 import type { FullGame } from "@/types";
 
@@ -63,11 +64,16 @@ export function PlayExperience({
 
   const handleComplete = useCallback(
     (summary: GameResultSummary) => {
+      // XP shown is the streak-free baseline (instant + works offline). The
+      // leaderboard total credits the streak multiplier server-side.
+      const xpEarned = pointsForGame(summary.reached, summary.rounds, 0);
       const stored: StoredResult = {
-        score: summary.score,
-        best: summary.best,
+        reached: summary.reached,
+        rounds: summary.rounds,
         lives: summary.lives,
         timeSeconds: summary.timeSeconds,
+        wrongRounds: summary.wrongRounds,
+        xpEarned,
         completedAt: new Date().toISOString(),
       };
       saveLocalResult(date, stored);
@@ -83,8 +89,8 @@ export function PlayExperience({
         body: JSON.stringify({
           session_id: getSessionId(),
           play_date: date,
-          score: summary.score,
-          best: summary.best,
+          reached: summary.reached,
+          rounds: summary.rounds,
           lives: summary.lives,
           time_seconds: summary.timeSeconds,
         }),
@@ -112,10 +118,12 @@ export function PlayExperience({
   if (mode === "completed" && result) {
     return (
       <ResultScreen
-        score={result.score}
-        best={result.best}
+        reached={result.reached}
+        rounds={result.rounds}
         lives={result.lives}
         timeSeconds={result.timeSeconds}
+        wrongRounds={result.wrongRounds}
+        xpEarned={result.xpEarned}
         topicLabel={game.topic_label}
         date={date}
         gameNumber={gameNumber}

@@ -10,10 +10,12 @@ const SESSION_KEY = "whohadmore_session_id";
 const resultKey = (date: string) => `whohadmore:result:${date}`;
 
 export interface StoredResult {
-  score: number;
-  best: number;
+  reached: number; // how far they made it (rounds)
+  rounds: number; // total rounds
   lives: number;
   timeSeconds: number;
+  wrongRounds: number[];
+  xpEarned: number;
   completedAt: string; // ISO timestamp
 }
 

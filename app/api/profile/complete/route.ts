@@ -16,30 +16,44 @@ interface Body {
   session_id?: string;
   play_date?: string;
   score?: number;
-  best?: number;
+  reached?: number;
+  rounds?: number;
   lives?: number;
   time_seconds?: number;
 }
 
 export async function POST(req: Request) {
-  if (!isSupabaseConfigured()) {
-    return NextResponse.json({ profile: null, pointsEarned: 0, stars: 0 });
-  }
-
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    body = {};
   }
 
   const { session_id, play_date } = body;
-  const score = Number(body.score);
-  const best = Number(body.best);
+  const reached = Number(body.reached);
+  const rounds = Number(body.rounds);
   const lives = Number(body.lives);
   const time = Number(body.time_seconds);
 
-  if (!session_id || !play_date || !isValidISODate(play_date) || !Number.isFinite(score)) {
+  if (!Number.isFinite(reached) || !Number.isFinite(rounds)) {
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
+
+  const stars = computeStars(reached, rounds);
+  const cleared = rounds > 0 && reached >= rounds;
+  const flawless = cleared && lives >= 3;
+
+  // No backend configured: still report the (streak-free) XP for display.
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json({
+      profile: null,
+      pointsEarned: pointsForGame(reached, rounds, 0),
+      stars,
+    });
+  }
+
+  if (!session_id || !play_date || !isValidISODate(play_date)) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
@@ -47,10 +61,6 @@ export async function POST(req: Request) {
   const today = todayISO();
   const period = monthPeriod(today);
   const isToday = play_date === today;
-
-  const stars = computeStars(score, best, lives);
-  const cleared = best > 0 && score >= best;
-  const flawless = cleared && lives >= 3;
 
   // Has this session already completed this date? (idempotent stats)
   const { data: existing } = await supabase
@@ -82,14 +92,14 @@ export async function POST(req: Request) {
           : 1;
   }
   const streakForPoints = profile ? (isToday ? nextStreak : profile.current_streak) : 0;
-  const pts = pointsForGame(score, best, lives, streakForPoints);
+  const pts = pointsForGame(reached, rounds, streakForPoints);
 
   // Record the result with the credited points/stars (also enables backfill).
   await supabase.from("game_results").insert({
     play_date,
     session_id,
-    score,
-    lives_remaining: lives,
+    score: reached,
+    lives_remaining: Number.isFinite(lives) ? lives : null,
     completed: true,
     time_seconds: Number.isFinite(time) ? time : null,
     points: pts,

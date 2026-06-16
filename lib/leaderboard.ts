@@ -54,19 +54,22 @@ export function rankTitle(level: number): string {
 }
 
 // --- Per-game scoring --------------------------------------------------------
+// Everything is based on HOW FAR the player made it (rounds reached), not how
+// many they got right.
 
-/** 0–3 stars: 3 = cleared the chain, scaling down by share completed. */
-export function computeStars(score: number, best: number, lives: number): number {
-  if (best <= 0) return 0;
-  if (score >= best) return lives >= 3 ? 3 : 3; // clearing always earns 3
-  if (score >= Math.ceil(best * 0.66)) return 2;
-  if (score >= Math.ceil(best * 0.33)) return 1;
+/** 0–3 stars by share of the chain reached; clearing it earns 3. */
+export function computeStars(reached: number, rounds: number): number {
+  if (rounds <= 0) return 0;
+  if (reached >= rounds) return 3;
+  if (reached >= Math.ceil(rounds * 0.66)) return 2;
+  if (reached >= Math.ceil(rounds * 0.33)) return 1;
   return 0;
 }
 
-export function basePoints(score: number, best: number, lives: number): number {
-  const cleared = best > 0 && score >= best ? 500 : 0;
-  return score * 100 + cleared + Math.max(0, lives) * 50;
+/** Base XP from distance traveled, with a bonus for going the full distance. */
+export function basePoints(reached: number, rounds: number): number {
+  const cleared = rounds > 0 && reached >= rounds ? 500 : 0;
+  return Math.max(0, reached) * 100 + cleared;
 }
 
 /** Gentle streak boost: +3% per consecutive day, capped at +60%. */
@@ -74,13 +77,8 @@ export function streakMultiplier(streak: number): number {
   return Math.min(1.6, 1 + 0.03 * Math.max(0, streak));
 }
 
-export function pointsForGame(
-  score: number,
-  best: number,
-  lives: number,
-  streak: number
-): number {
-  return Math.round(basePoints(score, best, lives) * streakMultiplier(streak));
+export function pointsForGame(reached: number, rounds: number, streak: number): number {
+  return Math.round(basePoints(reached, rounds) * streakMultiplier(streak));
 }
 
 // --- Achievements ------------------------------------------------------------

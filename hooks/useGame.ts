@@ -28,10 +28,11 @@ export type GamePhase =
   | "complete";
 
 export interface GameResultSummary {
-  score: number;
-  best: number;
+  reached: number; // how far they got (rounds played)
+  rounds: number; // total rounds (= best)
   lives: number;
   timeSeconds: number;
+  wrongRounds: number[];
 }
 
 interface UseGameOptions {
@@ -70,6 +71,9 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const startedAt = useRef<number>(Date.now());
   const completedRef = useRef(false);
+  // Refs mirror state so the completion summary reads current values.
+  const roundsPlayedRef = useRef(0);
+  const wrongRoundsRef = useRef<number[]>([]);
 
   // Keep the latest onComplete without re-arming effects.
   const onCompleteRef = useRef(opts.onComplete);
@@ -103,6 +107,7 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
       );
       const livesAtGuess = lives;
       const idx = currentIndex;
+      roundsPlayedRef.current += 1; // a committed guess = a round played (how far)
 
       setChosenSide(side);
       // 1) Count the value up with no verdict yet — pure suspense.
@@ -114,7 +119,8 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
         if (correct) setScore((s) => s + 1);
         else {
           setLives((l) => l - 1);
-          setWrongRounds((w) => [...w, idx]);
+          wrongRoundsRef.current = [...wrongRoundsRef.current, idx];
+          setWrongRounds(wrongRoundsRef.current);
         }
 
         // Linger after a miss so the player can watch the heart break.
@@ -142,6 +148,8 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
     clearTimers();
     completedRef.current = false;
     startedAt.current = Date.now();
+    roundsPlayedRef.current = 0;
+    wrongRoundsRef.current = [];
     setCurrentIndex(0);
     setLives(STARTING_LIVES);
     setScore(0);
@@ -157,8 +165,14 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
     completedRef.current = true;
     const seconds = Math.max(0, Math.round((Date.now() - startedAt.current) / 1000));
     setElapsedSeconds(seconds);
-    onCompleteRef.current?.({ score, best, lives, timeSeconds: seconds });
-  }, [phase, score, best, lives]);
+    onCompleteRef.current?.({
+      reached: roundsPlayedRef.current,
+      rounds: best,
+      lives,
+      timeSeconds: seconds,
+      wrongRounds: wrongRoundsRef.current,
+    });
+  }, [phase, best, lives]);
 
   // The right value is visible while it counts up and through the verdict. Once
   // the index advances (transitioning), the incoming right card stays hidden.
