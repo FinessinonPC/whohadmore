@@ -14,7 +14,7 @@ import {
   type StoredResult,
 } from "@/lib/playStore";
 import { msUntilNextGameMidnight } from "@/lib/date";
-import { levelFromXp, pointsForGame, type Profile } from "@/lib/leaderboard";
+import { levelFromXp, pointsForGame, streakMultiplier, type Profile } from "@/lib/leaderboard";
 import type { GameResultSummary } from "@/hooks/useGame";
 import type { FullGame } from "@/types";
 
@@ -26,6 +26,12 @@ interface PlayExperienceProps {
 }
 
 type Mode = "start" | "playing" | "completed";
+
+interface StreakBonus {
+  days: number;
+  multiplier: number;
+  bonusXp: number;
+}
 
 export function PlayExperience({
   initialGame,
@@ -40,12 +46,14 @@ export function PlayExperience({
   const [result, setResult] = useState<StoredResult | null>(null);
   const [alreadyPlayed, setAlreadyPlayed] = useState(false);
   const [levelUp, setLevelUp] = useState<number | null>(null);
+  const [streakBonus, setStreakBonus] = useState<StreakBonus | null>(null);
 
   // On load / whenever the day changes (midnight roll-over), restore any saved
   // result for that date so a finished game stays finished.
   useEffect(() => {
     const stored = getLocalResult(date);
     setLevelUp(null);
+    setStreakBonus(null);
     if (stored) {
       setResult(stored);
       setAlreadyPlayed(true);
@@ -82,6 +90,7 @@ export function PlayExperience({
       setResult(stored);
       setAlreadyPlayed(false);
       setLevelUp(null);
+      setStreakBonus(null);
       setMode("completed");
 
       // Record the result + update leaderboard stats (best-effort; the route is
@@ -106,6 +115,16 @@ export function PlayExperience({
             const after = levelFromXp(data.profile.xp);
             const before = levelFromXp(data.profile.xp - data.pointsEarned);
             if (after > before) setLevelUp(after);
+
+            // Show the streak paying off: the credited XP includes the multiplier.
+            const streak = data.profile.current_streak;
+            if (streak >= 1) {
+              setStreakBonus({
+                days: streak,
+                multiplier: streakMultiplier(streak),
+                bonusXp: Math.max(0, data.pointsEarned - xpEarned),
+              });
+            }
           }
         })
         .catch(() => {
@@ -127,6 +146,7 @@ export function PlayExperience({
     setResult(null);
     setAlreadyPlayed(false);
     setLevelUp(null);
+    setStreakBonus(null);
     setMode("start");
   };
 
@@ -145,6 +165,7 @@ export function PlayExperience({
         mode="play"
         alreadyPlayed={alreadyPlayed}
         levelUp={levelUp}
+        streakBonus={streakBonus}
         onReset={resetForTesting}
       />
     );

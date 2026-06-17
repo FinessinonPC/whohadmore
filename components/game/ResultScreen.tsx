@@ -26,6 +26,8 @@ interface ResultScreenProps {
   alreadyPlayed?: boolean;
   /** Set to the new level if this run pushed a signed-in player up a level. */
   levelUp?: number | null;
+  /** Streak multiplier that applied to this run's XP (signed-in players). */
+  streakBonus?: { days: number; multiplier: number; bonusXp: number } | null;
   onPlayAgain?: () => void;
   onClose?: () => void;
   onReset?: () => void;
@@ -58,6 +60,7 @@ export function ResultScreen({
   mode,
   alreadyPlayed = false,
   levelUp = null,
+  streakBonus = null,
   onPlayAgain,
   onClose,
   onReset,
@@ -137,6 +140,27 @@ export function ResultScreen({
           </span>
           <span className="text-xs font-semibold text-correct/80">earned</span>
         </div>
+
+        {/* Streak payoff */}
+        {mode === "play" &&
+          (streakBonus && streakBonus.bonusXp > 0 ? (
+            <motion.div
+              className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#FFB300]/40 bg-[#FFB300]/10 px-3.5 py-1.5"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <span className="text-sm">🔥</span>
+              <span className="text-xs font-bold text-[#9A6A00]">
+                {streakBonus.days}-day streak · ×{streakBonus.multiplier.toFixed(2)} · +
+                {streakBonus.bonusXp} XP
+              </span>
+            </motion.div>
+          ) : (
+            <p className="mt-3 text-xs text-ink-secondary">
+              🔥 Play daily — your streak multiplies XP.
+            </p>
+          ))}
 
         {/* Level-up moment */}
         {levelUp != null && (
