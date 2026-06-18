@@ -13,6 +13,7 @@ interface StartScreenProps {
   game: FullGame;
   date: string;
   gameNumber: number;
+  resuming?: boolean;
   onStart: () => void;
 }
 
@@ -25,7 +26,7 @@ function pickSpread(cards: GameCard[], n: number): GameCard[] {
   return Array.from({ length: n }, (_, i) => pool[Math.round(i * step)]);
 }
 
-export function StartScreen({ game, date, gameNumber, onStart }: StartScreenProps) {
+export function StartScreen({ game, date, gameNumber, resuming = false, onStart }: StartScreenProps) {
   const rounds = maxScore(game.cards.length);
   const hero = pickSpread(game.cards, 5);
   const center = (hero.length - 1) / 2;
@@ -94,9 +95,11 @@ export function StartScreen({ game, date, gameNumber, onStart }: StartScreenProp
         </p>
 
         <Button size="lg" onClick={onStart} className="mt-8 w-full max-w-xs">
-          Start game
+          {resuming ? "Resume game" : "Start game"}
         </Button>
-        <p className="mt-3 text-xs text-ink-secondary">Free · one new game every day</p>
+        <p className="mt-3 text-xs text-ink-secondary">
+          {resuming ? "Pick up where you left off." : "Free · one new game every day"}
+        </p>
       </motion.div>
     </main>
   );

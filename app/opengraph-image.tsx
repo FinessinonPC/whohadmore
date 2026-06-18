@@ -20,22 +20,23 @@ export default function OpengraphImage() {
           fontFamily: "sans-serif",
         }}
       >
-        {/* Logo mark — up/down chevrons */}
+        {/* Logo mark — two cards, the bigger one "had more" */}
         <div
           style={{
             display: "flex",
-            alignItems: "center",
+            alignItems: "flex-end",
             justifyContent: "center",
+            gap: 24,
             width: 260,
             height: 260,
             background: "#111111",
             borderRadius: 56,
+            paddingBottom: 58,
+            boxSizing: "border-box",
           }}
         >
-          <svg width="170" height="170" viewBox="0 0 64 64">
-            <path d="M18 29 L32 16 L46 29" fill="none" stroke="#00C853" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M18 35 L32 48 L46 35" fill="none" stroke="#FFFFFF" strokeOpacity="0.5" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <div style={{ width: 58, height: 96, borderRadius: 12, background: "rgba(255,255,255,0.5)" }} />
+          <div style={{ width: 58, height: 140, borderRadius: 12, background: "#00C853" }} />
         </div>
 
         <div

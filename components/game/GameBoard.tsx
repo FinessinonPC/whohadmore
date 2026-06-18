@@ -2,15 +2,22 @@
 
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CardPair } from "./CardPair";
 import { LivesDisplay } from "./LivesDisplay";
 import { ChainTimeline } from "./ChainTimeline";
 import { HeartLossOverlay, type HeartLossEvent } from "./HeartLossOverlay";
 import { BrandMark } from "@/components/ui/Logo";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
-import { useGame, type GamePhase, type GameResultSummary } from "@/hooks/useGame";
+import {
+  useGame,
+  type GameCheckpoint,
+  type GamePhase,
+  type GameResultSummary,
+} from "@/hooks/useGame";
 import { STARTING_LIVES } from "@/lib/gameLogic";
+import { hashSeed, mulberry32, seededShuffle } from "@/lib/seed";
+import { getSessionId } from "@/lib/playStore";
 import { formatShortDate } from "@/lib/date";
 import type { FullGame } from "@/types";
 
@@ -19,6 +26,9 @@ interface GameBoardProps {
   date: string;
   gameNumber: number;
   onComplete: (result: GameResultSummary) => void;
+  /** Resume an in-progress game from a saved checkpoint. */
+  resumeState?: GameCheckpoint | null;
+  onCheckpoint?: (snap: GameCheckpoint) => void;
   /** Embedded in the admin preview — hide site nav so nothing navigates away. */
   embedded?: boolean;
 }
@@ -41,19 +51,28 @@ export function GameBoard({
   date,
   gameNumber,
   onComplete,
+  resumeState = null,
+  onCheckpoint,
   embedded = false,
 }: GameBoardProps) {
-  const state = useGame(game.cards, { onComplete });
+  // Random-but-stable card order: unique per player (session) and per day, yet
+  // reproducible so a resumed game keeps the same order.
+  const cards = useMemo(
+    () => seededShuffle(game.cards, mulberry32(hashSeed(`${getSessionId()}:${date}`))),
+    [game, date]
+  );
+
+  const state = useGame(cards, { onComplete, initial: resumeState, onCheckpoint });
 
   // Preload every card image so slides reveal instantly instead of popping in.
   useEffect(() => {
-    game.cards.forEach((c) => {
+    cards.forEach((c) => {
       if (c.image_url) {
         const img = new window.Image();
         img.src = c.image_url;
       }
     });
-  }, [game]);
+  }, [cards]);
 
   // Sound + haptics on each reveal.
   useEffect(() => {

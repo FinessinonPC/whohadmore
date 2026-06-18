@@ -8,9 +8,13 @@ import { StartScreen } from "./StartScreen";
 import { ResultScreen } from "./ResultScreen";
 import {
   clearLocalResult,
+  clearProgress,
   getLocalResult,
+  getProgress,
   getSessionId,
   saveLocalResult,
+  saveProgress,
+  type ProgressSnapshot,
   type StoredResult,
 } from "@/lib/playStore";
 import { msUntilNextGameMidnight } from "@/lib/date";
@@ -47,22 +51,26 @@ export function PlayExperience({
   const [alreadyPlayed, setAlreadyPlayed] = useState(false);
   const [levelUp, setLevelUp] = useState<number | null>(null);
   const [streakBonus, setStreakBonus] = useState<StreakBonus | null>(null);
+  const [resumeSnap, setResumeSnap] = useState<ProgressSnapshot | null>(null);
 
-  // On load / whenever the day changes (midnight roll-over), restore any saved
-  // result for that date so a finished game stays finished.
+  // On load / whenever the day changes (midnight roll-over): restore a finished
+  // result, otherwise pick up any in-progress game so we resume, not restart.
   useEffect(() => {
-    const stored = getLocalResult(date);
     setLevelUp(null);
     setStreakBonus(null);
+    const stored = getLocalResult(date);
     if (stored) {
       setResult(stored);
       setAlreadyPlayed(true);
+      setResumeSnap(null);
       setMode("completed");
-    } else {
-      setResult(null);
-      setAlreadyPlayed(false);
-      setMode("start");
+      return;
     }
+    const prog = getProgress(date);
+    setResumeSnap(prog && prog.roundsPlayed > 0 ? prog : null);
+    setResult(null);
+    setAlreadyPlayed(false);
+    setMode("start");
   }, [date]);
 
   // Daily game auto-rolls to the next day at midnight (game timezone).
@@ -87,6 +95,7 @@ export function PlayExperience({
         completedAt: new Date().toISOString(),
       };
       saveLocalResult(date, stored);
+      clearProgress(date); // game is finished — nothing to resume
       setResult(stored);
       setAlreadyPlayed(false);
       setLevelUp(null);
@@ -143,10 +152,12 @@ export function PlayExperience({
   // Remove the onReset prop (and the button) before the public launch.
   const resetForTesting = () => {
     clearLocalResult(date);
+    clearProgress(date);
     setResult(null);
     setAlreadyPlayed(false);
     setLevelUp(null);
     setStreakBonus(null);
+    setResumeSnap(null);
     setMode("start");
   };
 
@@ -178,6 +189,8 @@ export function PlayExperience({
         date={date}
         gameNumber={gameNumber}
         onComplete={handleComplete}
+        resumeState={resumeSnap}
+        onCheckpoint={(snap) => saveProgress(date, snap)}
       />
     );
   }
@@ -187,6 +200,7 @@ export function PlayExperience({
       game={game}
       date={date}
       gameNumber={gameNumber}
+      resuming={Boolean(resumeSnap)}
       onStart={() => setMode("playing")}
     />
   );

@@ -18,24 +18,9 @@ export function BrandMark({ className = "", size }: MarkProps) {
       aria-label="WhoHadMore"
     >
       <rect width="64" height="64" rx="16" fill="#111111" />
-      {/* up = higher (green), down = lower (dim) */}
-      <path
-        d="M18 29 L32 16 L46 29"
-        fill="none"
-        stroke="#00C853"
-        strokeWidth="7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M18 35 L32 48 L46 35"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeOpacity="0.5"
-        strokeWidth="7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      {/* two cards compared — the right one "had more" (taller, green) */}
+      <rect x="14" y="24" width="15" height="24" rx="3" fill="#FFFFFF" fillOpacity="0.5" />
+      <rect x="35" y="13" width="15" height="35" rx="3" fill="#00C853" />
     </svg>
   );
 }

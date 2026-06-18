@@ -8,6 +8,7 @@
 
 const SESSION_KEY = "whohadmore_session_id";
 const resultKey = (date: string) => `whohadmore:result:${date}`;
+const progressKey = (date: string) => `whohadmore:progress:${date}`;
 
 export interface StoredResult {
   reached: number; // how far they made it (rounds)
@@ -54,6 +55,45 @@ export function clearLocalResult(date: string): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.removeItem(resultKey(date));
+  } catch {
+    /* non-fatal */
+  }
+}
+
+// --- In-progress game state (so leaving mid-game can resume, not restart) ----
+
+export interface ProgressSnapshot {
+  currentIndex: number;
+  lives: number;
+  score: number;
+  wrongRounds: number[];
+  roundsPlayed: number;
+  elapsedSeconds: number;
+}
+
+export function getProgress(date: string): ProgressSnapshot | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(progressKey(date));
+    return raw ? (JSON.parse(raw) as ProgressSnapshot) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveProgress(date: string, snap: ProgressSnapshot): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(progressKey(date), JSON.stringify(snap));
+  } catch {
+    /* non-fatal */
+  }
+}
+
+export function clearProgress(date: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(progressKey(date));
   } catch {
     /* non-fatal */
   }

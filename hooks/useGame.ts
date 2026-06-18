@@ -35,8 +35,21 @@ export interface GameResultSummary {
   wrongRounds: number[];
 }
 
+export interface GameCheckpoint {
+  currentIndex: number;
+  lives: number;
+  score: number;
+  wrongRounds: number[];
+  roundsPlayed: number;
+  elapsedSeconds: number;
+}
+
 interface UseGameOptions {
   onComplete?: (result: GameResultSummary) => void;
+  /** Seed state to resume an in-progress game. */
+  initial?: GameCheckpoint | null;
+  /** Fired at each stable pair boundary so progress can be persisted. */
+  onCheckpoint?: (snap: GameCheckpoint) => void;
 }
 
 export interface UseGameState {
@@ -59,26 +72,30 @@ export interface UseGameState {
 }
 
 export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameState {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [lives, setLives] = useState(STARTING_LIVES);
-  const [score, setScore] = useState(0);
+  const init = opts.initial ?? null;
+  const [currentIndex, setCurrentIndex] = useState(init?.currentIndex ?? 0);
+  const [lives, setLives] = useState(init?.lives ?? STARTING_LIVES);
+  const [score, setScore] = useState(init?.score ?? 0);
   const [phase, setPhase] = useState<GamePhase>("idle");
   const [chosenSide, setChosenSide] = useState<Side | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [wrongRounds, setWrongRounds] = useState<number[]>([]);
+  const [wrongRounds, setWrongRounds] = useState<number[]>(init?.wrongRounds ?? []);
 
   // Pending timers, cleared on unmount / restart so callbacks never fire late.
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const startedAt = useRef<number>(Date.now());
+  // Resume keeps the clock running from where it left off.
+  const startedAt = useRef<number>(Date.now() - (init?.elapsedSeconds ?? 0) * 1000);
   const completedRef = useRef(false);
   // Refs mirror state so the completion summary reads current values.
-  const roundsPlayedRef = useRef(0);
-  const wrongRoundsRef = useRef<number[]>([]);
+  const roundsPlayedRef = useRef(init?.roundsPlayed ?? 0);
+  const wrongRoundsRef = useRef<number[]>(init?.wrongRounds ?? []);
 
-  // Keep the latest onComplete without re-arming effects.
+  // Keep latest callbacks without re-arming effects.
   const onCompleteRef = useRef(opts.onComplete);
+  const onCheckpointRef = useRef(opts.onCheckpoint);
   useEffect(() => {
     onCompleteRef.current = opts.onComplete;
+    onCheckpointRef.current = opts.onCheckpoint;
   });
 
   const total = cards.length;
@@ -173,6 +190,20 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
       wrongRounds: wrongRoundsRef.current,
     });
   }, [phase, best, lives]);
+
+  // Persist a checkpoint at each stable pair boundary so leaving mid-game can
+  // resume rather than restart.
+  useEffect(() => {
+    if (phase !== "idle" || completedRef.current) return;
+    onCheckpointRef.current?.({
+      currentIndex,
+      lives,
+      score,
+      wrongRounds: wrongRoundsRef.current,
+      roundsPlayed: roundsPlayedRef.current,
+      elapsedSeconds: Math.max(0, Math.round((Date.now() - startedAt.current) / 1000)),
+    });
+  }, [phase, currentIndex, lives, score]);
 
   // The right value is visible while it counts up and through the verdict. Once
   // the index advances (transitioning), the incoming right card stays hidden.
