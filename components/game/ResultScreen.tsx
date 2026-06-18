@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { BrandMark } from "@/components/ui/Logo";
+import { TopNav } from "@/components/ui/TopNav";
 import { CountUp } from "./CountUp";
 import { Confetti } from "./Confetti";
 import { ChainTimeline } from "./ChainTimeline";
@@ -89,22 +89,7 @@ export function ResultScreen({
     <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-5 pb-10 pt-5">
       {clearedChain && <Confetti />}
 
-      {mode === "play" && (
-        <header className="flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center gap-1.5">
-            <BrandMark className="h-5 w-5" />
-            <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
-          </Link>
-          <nav className="flex items-center gap-4">
-            <Link href="/leaderboard" className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink">
-              Leaderboard
-            </Link>
-            <Link href="/archive" className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink">
-              Archive
-            </Link>
-          </nav>
-        </header>
-      )}
+      {mode === "play" && <TopNav />}
 
       <motion.div
         className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center py-6 text-center"

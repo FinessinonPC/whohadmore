@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Badge, categoryLabel } from "@/components/ui/Badge";
-import { BrandMark } from "@/components/ui/Logo";
+import { TopNav } from "@/components/ui/TopNav";
+import { initialsFor } from "@/lib/wikimedia";
 import { STARTING_LIVES, maxScore } from "@/lib/gameLogic";
 import { formatDisplayDate, isToday } from "@/lib/date";
-import type { FullGame } from "@/types";
+import type { FullGame, GameCard } from "@/types";
 
 interface StartScreenProps {
   game: FullGame;
@@ -16,80 +16,88 @@ interface StartScreenProps {
   onStart: () => void;
 }
 
+/** Pick up to n cards spread across the chain for the hero montage. */
+function pickSpread(cards: GameCard[], n: number): GameCard[] {
+  const withImg = cards.filter((c) => c.image_url);
+  const pool = withImg.length >= 3 ? withImg : cards;
+  if (pool.length <= n) return pool;
+  const step = (pool.length - 1) / (n - 1);
+  return Array.from({ length: n }, (_, i) => pool[Math.round(i * step)]);
+}
+
 export function StartScreen({ game, date, gameNumber, onStart }: StartScreenProps) {
   const rounds = maxScore(game.cards.length);
+  const hero = pickSpread(game.cards, 5);
+  const center = (hero.length - 1) / 2;
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-5 pb-10 pt-5">
-      <TopBar />
+      <TopNav />
 
       <motion.div
         className="flex flex-1 flex-col items-center justify-center text-center"
-        initial={{ opacity: 0, y: 18 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       >
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", damping: 16, stiffness: 220, delay: 0.05 }}
-        >
-          <BrandMark className="h-20 w-20 drop-shadow-sm" />
-        </motion.div>
-
-        <p className="mt-7 small-caps text-xs text-ink-secondary">
+        <p className="small-caps text-xs text-ink-secondary">
           {formatDisplayDate(date)}
-          {!isToday(date) ? " · Archive" : ""}
-        </p>
-        <p className="mt-1 small-caps text-[11px] text-ink-secondary">
-          Game No. {gameNumber}
+          {!isToday(date) ? " · Archive" : ""} · Game No. {gameNumber}
         </p>
 
-        <h1 className="mt-5 text-balance text-3xl font-extrabold leading-tight tracking-tight text-ink">
+        {/* Hero montage — a fanned peek at today's lineup */}
+        <div className="relative mt-6 flex h-44 w-full items-center justify-center">
+          {hero.map((card, i) => {
+            const offset = i - center;
+            return (
+              <motion.div
+                key={card.id}
+                className="absolute h-32 w-24 overflow-hidden rounded-lg border-2 border-white bg-ink shadow-xl sm:h-36 sm:w-28"
+                style={{ zIndex: hero.length - Math.abs(offset) }}
+                initial={{ opacity: 0, y: 24, rotate: offset * 4, scale: 0.9 }}
+                animate={{
+                  opacity: 1,
+                  x: offset * 46,
+                  y: Math.abs(offset) * 10,
+                  rotate: offset * 8,
+                  scale: 1,
+                }}
+                transition={{ delay: 0.1 + i * 0.07, type: "spring", damping: 18, stiffness: 220 }}
+              >
+                {card.image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={card.image_url} alt="" className="h-full w-full object-cover" draggable={false} />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center font-condensed text-2xl font-bold text-white/80">
+                    {initialsFor(card.entity_name)}
+                  </div>
+                )}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <h1 className="mt-7 text-balance text-3xl font-extrabold leading-tight tracking-tight text-ink">
           {game.topic_label}
         </h1>
 
-        <div className="mt-4 flex items-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
           <Badge tone="category">{categoryLabel(game.topic_category)}</Badge>
           <Badge tone="neutral">{game.stat_label}</Badge>
         </div>
 
-        <p className="mt-8 max-w-xs text-balance text-[15px] leading-relaxed text-ink-secondary">
+        <p className="mt-6 max-w-xs text-balance text-[15px] leading-relaxed text-ink-secondary">
           Two cards, one stat. Tap whichever had{" "}
-          <span className="font-semibold text-ink">more {game.stat_unit || game.stat_label}</span>.
-          {" "}
+          <span className="font-semibold text-ink">more {game.stat_unit || game.stat_label}</span>.{" "}
           {STARTING_LIVES} lives, {rounds} rounds.
         </p>
 
-        <Button size="lg" onClick={onStart} className="mt-10 w-full max-w-xs">
+        <Button size="lg" onClick={onStart} className="mt-8 w-full max-w-xs">
           Start game
         </Button>
+        <p className="mt-3 text-xs text-ink-secondary">Free · one new game every day</p>
       </motion.div>
     </main>
-  );
-}
-
-function TopBar() {
-  return (
-    <header className="flex items-center justify-between">
-      <Link href="/" className="inline-flex items-center gap-1.5">
-        <BrandMark className="h-5 w-5" />
-        <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
-      </Link>
-      <nav className="flex items-center gap-4">
-        <Link
-          href="/leaderboard"
-          className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
-        >
-          Leaderboard
-        </Link>
-        <Link
-          href="/archive"
-          className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
-        >
-          Archive
-        </Link>
-      </nav>
-    </header>
   );
 }
