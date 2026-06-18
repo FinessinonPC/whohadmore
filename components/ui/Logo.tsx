@@ -18,9 +18,24 @@ export function BrandMark({ className = "", size }: MarkProps) {
       aria-label="WhoHadMore"
     >
       <rect width="64" height="64" rx="16" fill="#111111" />
-      <rect x="16" y="33" width="11" height="15" rx="4" fill="#FFFFFF" fillOpacity="0.85" />
-      <rect x="30.5" y="25" width="11" height="23" rx="4" fill="#FFFFFF" fillOpacity="0.55" />
-      <rect x="45" y="16" width="11" height="32" rx="4" fill="#00C853" />
+      {/* up = higher (green), down = lower (dim) */}
+      <path
+        d="M18 29 L32 16 L46 29"
+        fill="none"
+        stroke="#00C853"
+        strokeWidth="7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M18 35 L32 48 L46 35"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeOpacity="0.5"
+        strokeWidth="7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

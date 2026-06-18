@@ -6,12 +6,6 @@ export const contentType = "image/png";
 
 // Branded share card, drawn entirely with primitives (no asset files).
 export default function OpengraphImage() {
-  const bars = [
-    { h: 150, c: "rgba(255,255,255,0.85)" },
-    { h: 230, c: "rgba(255,255,255,0.5)" },
-    { h: 320, c: "#00C853" },
-  ];
-
   return new ImageResponse(
     (
       <div
@@ -26,31 +20,22 @@ export default function OpengraphImage() {
           fontFamily: "sans-serif",
         }}
       >
-        {/* Logo mark */}
+        {/* Logo mark — up/down chevrons */}
         <div
           style={{
             display: "flex",
-            alignItems: "flex-end",
-            gap: 18,
+            alignItems: "center",
+            justifyContent: "center",
             width: 260,
             height: 260,
             background: "#111111",
             borderRadius: 56,
-            padding: 44,
-            boxSizing: "border-box",
           }}
         >
-          {bars.map((b, i) => (
-            <div
-              key={i}
-              style={{
-                width: 44,
-                height: b.h,
-                background: b.c,
-                borderRadius: 14,
-              }}
-            />
-          ))}
+          <svg width="170" height="170" viewBox="0 0 64 64">
+            <path d="M18 29 L32 16 L46 29" fill="none" stroke="#00C853" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M18 35 L32 48 L46 35" fill="none" stroke="#FFFFFF" strokeOpacity="0.5" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </div>
 
         <div

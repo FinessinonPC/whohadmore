@@ -7,6 +7,7 @@ import { earnedAchievementIds, levelFromXp, type Profile } from "@/lib/leaderboa
 export const dynamic = "force-dynamic";
 
 const USERNAME_RE = /^[A-Za-z0-9 _-]{2,20}$/;
+const UNIQUE_VIOLATION = "23505";
 
 function computeStreak(dates: Set<string>, today: string): number {
   let cursor = dates.has(today)
@@ -46,33 +47,33 @@ export async function POST(req: Request) {
 
   const supabase = getServiceSupabase();
 
-  // Username taken by someone else? (escape LIKE wildcards for the ilike match)
-  const escaped = username.replace(/[\\%_]/g, (c) => `\\${c}`);
-  const { data: taken } = await supabase
-    .from("profiles")
-    .select("session_id")
-    .ilike("username", escaped)
-    .maybeSingle<{ session_id: string }>();
-  if (taken && taken.session_id !== session_id) {
-    return NextResponse.json({ error: "That username is taken." }, { status: 409 });
-  }
-
-  const { data: existing } = await supabase
+  // Uniqueness is enforced by the DB (case-insensitive index on username), so we
+  // just try the write and translate a unique-violation into a friendly message.
+  // Any OTHER error is surfaced as-is (e.g. missing table / RLS) instead of being
+  // mislabeled "taken".
+  const { data: existing, error: existErr } = await supabase
     .from("profiles")
     .select("*")
     .eq("session_id", session_id)
     .maybeSingle<Profile>();
 
+  if (existErr) {
+    return NextResponse.json({ error: existErr.message }, { status: 500 });
+  }
+
   // Rename keeps stats.
   if (existing) {
-    const { data: updated, error: renameError } = await supabase
+    const { data: updated, error } = await supabase
       .from("profiles")
       .update({ username, updated_at: new Date().toISOString() })
       .eq("session_id", session_id)
       .select("*")
       .single<Profile>();
-    if (renameError) {
-      return NextResponse.json({ error: "That username is taken." }, { status: 409 });
+    if (error) {
+      if (error.code === UNIQUE_VIOLATION) {
+        return NextResponse.json({ error: "That username is taken." }, { status: 409 });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
     return NextResponse.json({ profile: updated ?? existing });
   }
@@ -127,8 +128,10 @@ export async function POST(req: Request) {
     .single<Profile>();
 
   if (error) {
-    // Unique violation (race) -> treat as taken.
-    return NextResponse.json({ error: "That username is taken." }, { status: 409 });
+    if (error.code === UNIQUE_VIOLATION) {
+      return NextResponse.json({ error: "That username is taken." }, { status: 409 });
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
   return NextResponse.json({ profile: created });
 }
