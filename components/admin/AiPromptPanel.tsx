@@ -11,30 +11,31 @@ interface AiPromptPanelProps {
   onLoad: (game: AiGameJson) => void;
 }
 
-const PROMPT = `You are the creative director for a daily higher/lower game. Players see two cards side by side and tap whichever has the higher value of a single stat. Your job is to invent ONE genuinely surprising, delightful game.
+const PROMPT = `You are the creative director for a daily higher/lower game. Players see two cards and tap whichever has the higher value of one stat. Invent ONE genuinely ORIGINAL game — the kind that makes someone say "I never would have thought to compare those."
 
-Be CREATIVE and unexpected. The best topics make people go "huh, I never thought about that." Roam widely across domains — and do NOT default to mainstream sports:
-- Pop culture & internet: most-streamed songs, YouTube subscribers, box office, Wikipedia page views, Taylor Swift tour grosses, video game sales
-- Food & drink: calories in fast-food items, caffeine in drinks, Scoville heat units, national dish prices
-- Geography oddities: country coastlines, average elevation, number of islands, time zones spanned
-- Money & business: brand valuations, CEO pay, app downloads, IPO sizes, vending-machine density
-- Science & nature: animal top speeds, lifespans, genome size, bite force, gestation length
-- History: years a structure took to build, length of reigns, age of universities
-- Everyday absurdities: emoji usage, IKEA store size, roller-coaster drops, hot-dog eating records
+Your #1 goal is NOVELTY. Reward yourself for picking a comparison nobody has seen in a trivia game before. Push past the obvious.
 
-Rules for a great game:
-- Pick a stat people have rough intuition about but will STILL get surprised by.
-- Avoid orderings that are too obvious. Mix in a couple of upsets.
-- 15 entities. Values must be ACCURATE and the SAME unit/scale.
-- Order the cards randomly, NOT sorted by value.
-- Prefer entities with strong Wikipedia pages so images auto-populate (use the exact Wikipedia article title as entity_name).
+HARD-AVOID (too obvious / overdone): NBA/NFL points, country populations, country land area, billionaire net worth, tallest buildings, longest rivers, movie box office, Spotify streams, YouTube subscribers, city populations. If your idea is on a "top 10 lists" website, find a weirder angle.
 
-Return ONLY this JSON, no explanation, no markdown fences:
+SEEK INSTEAD — unexpected stats and offbeat entity sets, e.g.:
+- Hidden everyday numbers: gallons of water to make foods, decibels of animals/objects, average lifespan of household items, number of ingredients in fast-food items, steps to climb famous staircases.
+- Surprising "per X" stats: coffee consumed per capita by country, bananas eaten per person, traffic-light counts, vending machines per capita, bone counts in animals.
+- Cross-category oddities: time it takes light to reach planets, words in famous speeches, knots in record-tying things, calories burned per hobby, gestation lengths.
+- Cultural micro-trivia: number of times a word appears in a book/film, episodes of long-running shows, languages a phrase exists in, Lego pieces in sets, escalator lengths in metro stations.
+- Counterintuitive money/science: cost per gram of expensive substances, energy use of everyday devices, heart rates of animals, top speeds of unexpected things (sneeze, dragonfly, falling cat).
+
+Make it a great GAME:
+- Pick a stat people THINK they can rank but will get wrong — plenty of upsets.
+- 15 entities, real and verifiable, ACCURATE values, same unit/scale.
+- Order the cards RANDOMLY (not sorted).
+- Use exact Wikipedia article titles as entity_name so images auto-populate.
+
+Return ONLY this JSON — no explanation, no markdown fences:
 {
-  "topic_label": "string",        // specific & catchy, e.g. "Most-Streamed Songs on Spotify"
+  "topic_label": "string",        // specific & intriguing
   "topic_category": "sports|geography|entertainment|science|current_events",
-  "stat_label": "string",         // e.g. "All-Time Streams"
-  "stat_unit": "string",          // e.g. "billion"
+  "stat_label": "string",
+  "stat_unit": "string",
   "cards": [
     { "entity_name": "string", "stat_value": number }
     // 15 total

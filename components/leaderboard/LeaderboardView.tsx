@@ -1,19 +1,19 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
-import { BrandMark } from "@/components/ui/Logo";
+import { TopNav } from "@/components/ui/TopNav";
 import { useProfile } from "@/hooks/useProfile";
 import {
   ACHIEVEMENTS,
-  levelFromXp,
   levelInfo,
   rankTitle,
   streakMultiplier,
   type LeaderboardRow,
 } from "@/lib/leaderboard";
+
+const MEDAL = ["#FFB300", "#B8C2CC", "#CD7F32"]; // gold / silver / bronze
 
 export function LeaderboardView() {
   const { profile, rank, loading, claim } = useProfile();
@@ -44,109 +44,106 @@ export function LeaderboardView() {
   const hasName = Boolean(profile?.username);
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-8">
-      <header className="mb-8 flex items-center justify-between">
-        <Link href="/" className="inline-flex items-center gap-1.5">
-          <BrandMark className="h-5 w-5" />
-          <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
-        </Link>
-        <Link href="/play" className="rounded-full bg-cta px-4 py-1.5 text-xs font-semibold text-white">
-          Play
-        </Link>
-      </header>
+    <main className="mx-auto w-full max-w-xl px-4 pb-16 pt-5">
+      <TopNav />
 
-      <h1 className="mb-6 text-3xl font-extrabold tracking-tight text-ink">Leaderboard</h1>
+      <h1 className="mt-8 text-4xl font-extrabold tracking-tight text-ink">Leaderboard</h1>
+      <p className="mt-1 text-[15px] text-ink-secondary">Climb the board with every game you play.</p>
 
-      {/* Profile card */}
-      <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-        {!hasName && (
-          <>
-            <p className="text-center text-sm text-ink-secondary">
-              To join the leaderboard, just pick a username.
+      {/* Profile / join card */}
+      <section className="mt-6 rounded-[28px] bg-surface p-6">
+        {!hasName ? (
+          <div className="text-center">
+            <p className="text-xl font-extrabold text-ink">Join the leaderboard</p>
+            <p className="mx-auto mt-1 max-w-xs text-sm text-ink-secondary">
+              Pick a username to bank your XP, build a streak, and climb the ranks.
             </p>
-            <div className="mt-4 flex gap-2">
+            <div className="mt-5 flex flex-col gap-2.5">
               <input
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && username.trim() && save()}
-                placeholder="Your username"
+                placeholder="Choose a username"
                 maxLength={20}
-                className="h-12 flex-1 rounded-xl border border-border bg-background px-4 text-sm outline-none focus:border-ink"
+                className="h-12 w-full rounded-2xl border border-border bg-background px-4 text-center text-base font-semibold outline-none focus:border-ink"
               />
-              <Button size="lg" onClick={save} disabled={saving || !username.trim()}>
-                {saving ? "…" : "Save"}
+              <Button size="lg" onClick={save} disabled={saving || !username.trim()} className="w-full">
+                {saving ? "Saving…" : "Claim username"}
               </Button>
             </div>
-            {error && <p className="mt-2 text-xs font-semibold text-wrong">{error}</p>}
+            {error && <p className="mt-2 text-sm font-semibold text-wrong">{error}</p>}
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-4">
+              <LevelRing level={level} progress={needed > 0 ? into / needed : 0} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-2xl font-extrabold leading-tight text-ink">
+                  {profile?.username}
+                </p>
+                <p className="text-sm font-bold text-correct">{rankTitle(level)}</p>
+              </div>
+              <div className="text-right">
+                <p className="small-caps text-[10px] text-ink-secondary">Rank</p>
+                <p className="text-2xl font-extrabold text-ink">{rank ? `#${rank}` : "—"}</p>
+              </div>
+            </div>
+
+            {/* XP bar */}
+            <div className="mt-5">
+              <div className="mb-1.5 flex items-center justify-between text-xs font-semibold text-ink-secondary">
+                <span><span className="text-ink">{into}</span> / {needed} XP</span>
+                <span>Level {level + 1}</span>
+              </div>
+              <div className="h-3.5 w-full overflow-hidden rounded-full bg-background">
+                <motion.div
+                  className="h-full rounded-full bg-correct"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${needed > 0 ? (into / needed) * 100 : 0}%` }}
+                  transition={{ type: "spring", damping: 24, stiffness: 180 }}
+                />
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="mt-6 grid grid-cols-4 divide-x divide-border">
+              <StatCell value={streak} label="Streak" accent="#FF7A00" note={streak > 0 ? `×${streakMultiplier(streak).toFixed(2)}` : undefined} />
+              <StatCell value={profile?.days_played ?? 0} label="Days" />
+              <StatCell value={profile?.total_stars ?? 0} label="Stars" accent="#FFB300" />
+              <StatCell value={profile?.monthly_score ?? 0} label="This mo." accent="#00C853" />
+            </div>
+
+            <div className="mt-4 text-center">
+              <UsernameEditor current={profile?.username ?? ""} onSave={claim} />
+            </div>
           </>
         )}
-
-        {hasName && (
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="small-caps text-[10px] text-ink-secondary">Signed in as</p>
-              <p className="text-xl font-extrabold text-ink">{profile?.username}</p>
-            </div>
-            <UsernameEditor current={profile?.username ?? ""} onSave={claim} />
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Stat icon="🔥" label="Streak" value={streak} sub={streak > 0 ? `×${streakMultiplier(streak).toFixed(2)}` : undefined} />
-          <Stat icon="📅" label="Days Played" value={profile?.days_played ?? 0} />
-          <Stat icon="⭐" label="Total Stars" value={profile?.total_stars ?? 0} />
-          <Stat
-            icon="📊"
-            label="Monthly Score"
-            value={profile?.monthly_score ?? 0}
-            sub={rank ? `#${rank}` : undefined}
-          />
-        </div>
-
-        {/* Level + XP */}
-        <div className="mt-6 border-t border-border pt-5">
-          <div className="flex items-center justify-between">
-            <span className="rounded-full border border-border bg-background px-3 py-1 text-sm font-bold text-ink">
-              ⭐ Level {level}
-            </span>
-            <span className="small-caps text-xs font-semibold text-ink-secondary">
-              {rankTitle(level)}
-            </span>
-          </div>
-          <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-background">
-            <motion.div
-              className="h-full rounded-full bg-correct"
-              initial={{ width: 0 }}
-              animate={{ width: `${(into / needed) * 100}%` }}
-              transition={{ type: "spring", damping: 24, stiffness: 180 }}
-            />
-          </div>
-          <p className="mt-2 text-center text-xs text-ink-secondary">
-            <span className="font-bold text-ink">{into}</span> / {needed} XP
-          </p>
-        </div>
       </section>
 
       {/* Achievements */}
-      <section className="mt-8">
-        <h2 className="mb-3 small-caps text-xs text-ink-secondary">Achievements</h2>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+      <section className="mt-9">
+        <h2 className="mb-3 text-base font-extrabold text-ink">Achievements</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {ACHIEVEMENTS.map((a) => {
             const earned = profile?.achievements?.includes(a.id);
             return (
               <div
                 key={a.id}
                 title={a.description}
-                className={`flex flex-col items-center gap-1 rounded-xl border p-3 text-center ${
-                  earned ? "border-correct/40 bg-correct/5" : "border-border bg-surface opacity-55"
+                className={`flex flex-col items-center gap-2 rounded-2xl p-4 text-center transition-colors ${
+                  earned ? "bg-surface" : "bg-surface/50"
                 }`}
               >
-                <span className="text-2xl" style={{ filter: earned ? "none" : "grayscale(1)" }}>
-                  {a.icon}
+                <span
+                  className={`flex h-12 w-12 items-center justify-center rounded-full text-2xl ${
+                    earned ? "bg-correct/15" : "bg-border/50 grayscale"
+                  }`}
+                >
+                  {earned ? a.icon : "🔒"}
                 </span>
-                <span className="text-[11px] font-bold text-ink">{a.label}</span>
-                <span className="text-[10px] leading-tight text-ink-secondary">{a.description}</span>
+                <span className={`text-xs font-bold ${earned ? "text-ink" : "text-ink-secondary"}`}>
+                  {a.label}
+                </span>
               </div>
             );
           })}
@@ -154,63 +151,115 @@ export function LeaderboardView() {
       </section>
 
       {/* Ranked list */}
-      <section className="mt-8">
-        <h2 className="mb-3 small-caps text-xs text-ink-secondary">This month</h2>
+      <section className="mt-9">
+        <h2 className="mb-3 text-base font-extrabold text-ink">This month</h2>
         {loading ? (
-          <p className="py-6 text-center text-sm text-ink-secondary">Loading…</p>
+          <p className="py-8 text-center text-sm text-ink-secondary">Loading…</p>
         ) : rows.length === 0 ? (
-          <p className="py-6 text-center text-sm text-ink-secondary">
-            No scores yet this month — be the first.
-          </p>
+          <div className="rounded-3xl bg-surface px-6 py-10 text-center">
+            <p className="text-sm font-semibold text-ink">No scores yet this month</p>
+            <p className="mt-1 text-sm text-ink-secondary">Play a game to claim the top spot.</p>
+          </div>
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
-            {rows.map((r) => {
+          <div className="overflow-hidden rounded-3xl bg-surface">
+            {rows.map((r, i) => {
               const me = r.username === profile?.username;
               return (
-                <li
+                <div
                   key={r.rank}
-                  className={`flex items-center gap-3 px-4 py-3 ${me ? "bg-correct/5" : "bg-surface"}`}
+                  className={`flex items-center gap-3 px-4 py-3.5 ${i > 0 ? "border-t border-border/70" : ""} ${
+                    me ? "bg-correct/10" : ""
+                  }`}
                 >
-                  <span className="w-7 text-center tabular text-sm font-extrabold text-ink-secondary">
-                    {r.rank}
+                  <RankBadge rank={r.rank} />
+                  <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-ink">
+                    {r.username}
+                    {me && <span className="ml-1 text-ink-secondary">· You</span>}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-sm font-bold text-ink">
-                    {r.username} {me && <span className="text-ink-secondary">(you)</span>}
+                  <span className="rounded-full bg-background px-2 py-0.5 text-[11px] font-bold text-ink-secondary">
+                    Lv {r.level}
                   </span>
-                  <span className="text-xs text-ink-secondary">Lv {r.level}</span>
-                  <span className="tabular text-sm font-extrabold text-ink">
+                  <span className="tabular text-base font-extrabold text-ink">
                     {r.monthly_score.toLocaleString()}
                   </span>
-                </li>
+                </div>
               );
             })}
-          </ul>
+          </div>
         )}
       </section>
     </main>
   );
 }
 
-function Stat({
-  icon,
-  label,
+function StatCell({
   value,
-  sub,
+  label,
+  accent,
+  note,
 }: {
-  icon: string;
-  label: string;
   value: number;
-  sub?: string;
+  label: string;
+  accent?: string;
+  note?: string;
 }) {
   return (
-    <div className="flex flex-col items-center text-center">
-      <span className="text-xl">{icon}</span>
-      <span className="mt-1 flex items-baseline gap-1">
-        <span className="tabular text-2xl font-extrabold text-ink">{value.toLocaleString()}</span>
-        {sub && <span className="text-xs font-semibold text-ink-secondary">{sub}</span>}
+    <div className="flex flex-col items-center px-1">
+      <span className="tabular text-2xl font-extrabold leading-none" style={{ color: accent ?? "#111111" }}>
+        {value.toLocaleString()}
       </span>
-      <span className="mt-0.5 small-caps text-[10px] text-ink-secondary">{label}</span>
+      <span className="mt-1.5 small-caps text-[9px] text-ink-secondary">{label}</span>
+      {note && <span className="text-[9px] font-bold text-ink-secondary">{note}</span>}
     </div>
+  );
+}
+
+function LevelRing({ level, progress }: { level: number; progress: number }) {
+  const r = 28;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - Math.max(0, Math.min(1, progress)));
+  return (
+    <div className="relative h-[72px] w-[72px] shrink-0">
+      <svg viewBox="0 0 72 72" className="h-full w-full -rotate-90">
+        <circle cx="36" cy="36" r={r} fill="none" stroke="#E8E8E8" strokeWidth="7" />
+        <motion.circle
+          cx="36"
+          cy="36"
+          r={r}
+          fill="none"
+          stroke="#00C853"
+          strokeWidth="7"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          initial={{ strokeDashoffset: c }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ type: "spring", damping: 24, stiffness: 160 }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="small-caps text-[8px] leading-none text-ink-secondary">Lvl</span>
+        <span className="text-2xl font-extrabold leading-none text-ink">{level}</span>
+      </div>
+    </div>
+  );
+}
+
+function RankBadge({ rank }: { rank: number }) {
+  const medal = rank <= 3 ? MEDAL[rank - 1] : null;
+  if (medal) {
+    return (
+      <span
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-extrabold text-white"
+        style={{ backgroundColor: medal }}
+      >
+        {rank}
+      </span>
+    );
+  }
+  return (
+    <span className="flex h-7 w-7 shrink-0 items-center justify-center text-sm font-extrabold text-ink-secondary">
+      {rank}
+    </span>
   );
 }
 
@@ -227,18 +276,21 @@ function UsernameEditor({
 
   if (!editing) {
     return (
-      <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
-        Edit
-      </Button>
+      <button
+        onClick={() => setEditing(true)}
+        className="text-xs font-semibold text-ink-secondary underline underline-offset-2 hover:text-ink"
+      >
+        Change username
+      </button>
     );
   }
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center justify-center gap-2">
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
         maxLength={20}
-        className="h-9 w-32 rounded-lg border border-border bg-background px-2 text-sm outline-none focus:border-ink"
+        className="h-10 w-36 rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-ink"
       />
       <Button
         size="sm"

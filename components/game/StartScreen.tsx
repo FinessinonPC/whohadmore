@@ -79,26 +79,32 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
           })}
         </div>
 
-        <h1 className="mt-7 text-balance text-3xl font-extrabold leading-tight tracking-tight text-ink">
+        <h1 className="mt-7 text-balance text-[2.5rem] font-extrabold leading-[1.05] tracking-tight text-ink">
           {game.topic_label}
         </h1>
 
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
           <Badge tone="category">{categoryLabel(game.topic_category)}</Badge>
           <Badge tone="neutral">{game.stat_label}</Badge>
         </div>
 
         <p className="mt-6 max-w-xs text-balance text-[15px] leading-relaxed text-ink-secondary">
-          Two cards, one stat. Tap whichever had{" "}
-          <span className="font-semibold text-ink">more {game.stat_unit || game.stat_label}</span>.{" "}
-          {STARTING_LIVES} lives, {rounds} rounds.
+          Two cards, one stat — tap whichever had{" "}
+          <span className="font-semibold text-ink">more {game.stat_unit || game.stat_label}</span>.
         </p>
+
+        {/* lives + rounds, clean */}
+        <div className="mt-4 flex items-center gap-2 text-sm font-bold text-ink">
+          <span className="text-lives">{"♥".repeat(STARTING_LIVES)}</span>
+          <span className="text-ink-secondary">·</span>
+          <span>{rounds} rounds</span>
+        </div>
 
         <Button size="lg" onClick={onStart} className="mt-8 w-full max-w-xs">
           {resuming ? "Resume game" : "Start game"}
         </Button>
         <p className="mt-3 text-xs text-ink-secondary">
-          {resuming ? "Pick up where you left off." : "Free · one new game every day"}
+          {resuming ? "Pick up where you left off." : "Free · a fresh game every day"}
         </p>
       </motion.div>
     </main>
