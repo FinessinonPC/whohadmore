@@ -9,7 +9,7 @@ import { CountUp } from "./CountUp";
 import { Confetti } from "./Confetti";
 import { ChainTimeline } from "./ChainTimeline";
 import { LivesDisplay } from "./LivesDisplay";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfile, type LastGame } from "@/hooks/useProfile";
 import { formatDisplayDate, isToday } from "@/lib/date";
 
 interface ResultScreenProps {
@@ -180,7 +180,15 @@ export function ResultScreen({
           </div>
         ) : (
           <div className="mt-7 flex w-full flex-col gap-3">
-            <ClaimBlock />
+            <ClaimBlock
+              lastGame={{
+                play_date: date,
+                reached,
+                rounds,
+                lives,
+                time_seconds: timeSeconds,
+              }}
+            />
 
             {/* Push to the archive */}
             <Link href="/archive" className="contents">
@@ -224,7 +232,7 @@ export function ResultScreen({
 }
 
 /** Inline username signup / signed-in state for the result screen. */
-function ClaimBlock() {
+function ClaimBlock({ lastGame }: { lastGame: LastGame }) {
   const { profile, loading, claim } = useProfile();
   const [username, setUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -248,7 +256,8 @@ function ClaimBlock() {
   async function save() {
     setSaving(true);
     setError(null);
-    const res = await claim(username.trim());
+    // Pass the just-finished game so it counts toward the brand-new profile.
+    const res = await claim(username.trim(), lastGame);
     setSaving(false);
     if (!res.ok) setError(res.error ?? "Couldn't save that.");
   }

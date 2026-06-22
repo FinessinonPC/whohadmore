@@ -11,23 +11,35 @@ interface AiPromptPanelProps {
   onLoad: (game: AiGameJson) => void;
 }
 
-const PROMPT = `You are the creative director for a daily higher/lower game. Players see two cards and tap whichever has the higher value of one stat. Invent ONE genuinely ORIGINAL game — the kind that makes someone say "I never would have thought to compare those."
+const PROMPT = `You are the creative director for a daily higher/lower game. Players see two cards and tap whichever has the higher value of one stat. Invent ONE genuinely ORIGINAL game — the kind that makes someone say "huh, I never thought to compare those."
 
-Your #1 goal is NOVELTY. Reward yourself for picking a comparison nobody has seen in a trivia game before. Push past the obvious.
+THREE rules that matter most:
 
-HARD-AVOID (too obvious / overdone): NBA/NFL points, country populations, country land area, billionaire net worth, tallest buildings, longest rivers, movie box office, Spotify streams, YouTube subscribers, city populations. If your idea is on a "top 10 lists" website, find a weirder angle.
+1) NOVEL. Pick a comparison nobody has seen in a trivia game. Push past the obvious.
+   HARD-AVOID (overdone): NBA/NFL stats, country populations, land area, net worth,
+   tallest buildings, longest rivers, box office, Spotify streams, YouTube subs.
 
-SEEK INSTEAD — unexpected stats and offbeat entity sets, e.g.:
-- Hidden everyday numbers: gallons of water to make foods, decibels of animals/objects, average lifespan of household items, number of ingredients in fast-food items, steps to climb famous staircases.
-- Surprising "per X" stats: coffee consumed per capita by country, bananas eaten per person, traffic-light counts, vending machines per capita, bone counts in animals.
-- Cross-category oddities: time it takes light to reach planets, words in famous speeches, knots in record-tying things, calories burned per hobby, gestation lengths.
-- Cultural micro-trivia: number of times a word appears in a book/film, episodes of long-running shows, languages a phrase exists in, Lego pieces in sets, escalator lengths in metro stations.
-- Counterintuitive money/science: cost per gram of expensive substances, energy use of everyday devices, heart rates of animals, top speeds of unexpected things (sneeze, dragonfly, falling cat).
+2) OBJECTIVE — exactly one right answer, not debatable. Use a hard, measurable,
+   verifiable NUMBER (count, length, weight, speed, year, calories, etc.). NO
+   opinions, rankings, "best/greatest", quality scores, or anything subjective.
+   For any two cards, which is higher must be a settled fact.
 
-Make it a great GAME:
-- Pick a stat people THINK they can rank but will get wrong — plenty of upsets.
-- 15 entities, real and verifiable, ACCURATE values, same unit/scale.
-- Order the cards RANDOMLY (not sorted).
+3) NON-CONTROVERSIAL & light. Keep it fun and safe. AVOID death tolls, war
+   casualties, disasters, crime, disease, politics, religion, and anything grim
+   or divisive. Aim for playful, everyday, surprising.
+
+4) EDUCATED-GUESSABLE. Most people should have a rough intuition and be able to
+   reason about it — but very few will know the exact order. Include real upsets.
+
+Good directions: hidden everyday numbers (water to grow foods, caffeine in drinks,
+ingredients in a recipe, weight of animals/objects), surprising "per X" stats
+(coffee per capita, escalator length, Lego pieces in sets), counterintuitive
+science (animal top speeds, gestation lengths, planet day-lengths, boiling points),
+fun culture trivia (episode counts of shows, runtime of films, words in a song).
+
+Build it well:
+- 15 entities, real and verifiable, ACCURATE values, all the SAME unit/scale.
+- Order the cards RANDOMLY (not sorted by value).
 - Use exact Wikipedia article titles as entity_name so images auto-populate.
 
 Return ONLY this JSON — no explanation, no markdown fences:

@@ -64,11 +64,14 @@ export function ImagePicker({ open, card, onClose, onConfirm }: ImagePickerProps
         </Button>
       </div>
 
-      {/* Results grid — click to pick */}
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      {/* Results grid — landscape "card crop" preview, best-fit images first */}
+      <p className="mt-3 text-[11px] text-ink-secondary">
+        Previewed as cropped on the card · <span className="font-semibold text-correct">✓ Fits</span> = landscape
+      </p>
+      <div className="mt-1.5 grid grid-cols-2 gap-2">
         {searching && results.length === 0 ? (
-          Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="aspect-square animate-pulse rounded-lg bg-surface" />
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="aspect-[3/2] animate-pulse rounded-lg bg-surface" />
           ))
         ) : results.length > 0 ? (
           results.map((r) => {
@@ -79,17 +82,22 @@ export function ImagePicker({ open, card, onClose, onConfirm }: ImagePickerProps
                 type="button"
                 title={r.title}
                 onClick={() => setPending({ url: r.imageUrl, source: "wikimedia" })}
-                className={`relative aspect-square overflow-hidden rounded-lg border-2 transition-colors ${
+                className={`relative aspect-[3/2] overflow-hidden rounded-lg border-2 transition-colors ${
                   selected ? "border-ink" : "border-transparent hover:border-border"
                 }`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={r.imageUrl} alt={r.title} className="h-full w-full object-cover" />
+                {r.landscape && (
+                  <span className="absolute left-1 top-1 rounded bg-correct px-1.5 py-0.5 text-[9px] font-bold text-white">
+                    ✓ Fits
+                  </span>
+                )}
               </button>
             );
           })
         ) : (
-          <div className="col-span-3 flex h-24 items-center justify-center rounded-lg bg-surface text-xs text-ink-secondary">
+          <div className="col-span-2 flex h-24 items-center justify-center rounded-lg bg-surface text-xs text-ink-secondary">
             {card?.entity_name ? "No results — try a different search or paste a URL." : "Search to find images."}
           </div>
         )}

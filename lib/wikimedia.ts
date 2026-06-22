@@ -55,6 +55,8 @@ export async function getWikimediaThumbnail(
 export interface WikimediaResult {
   title: string;
   imageUrl: string;
+  /** true when the thumbnail is landscape-ish (fits the cards without heavy crop) */
+  landscape: boolean;
 }
 
 /**
@@ -76,7 +78,7 @@ export async function searchWikimediaImages(
     gsrlimit: String(limit),
     prop: "pageimages",
     piprop: "thumbnail",
-    pithumbsize: "400",
+    pithumbsize: "640", // bigger so cards stay sharp
   });
 
   try {
@@ -90,16 +92,29 @@ export async function searchWikimediaImages(
       query?: {
         pages?: Record<
           string,
-          { title: string; index: number; thumbnail?: { source?: string } }
+          {
+            title: string;
+            index: number;
+            thumbnail?: { source?: string; width?: number; height?: number };
+          }
         >;
       };
     };
 
-    const pages = Object.values(data.query?.pages ?? {});
-    return pages
-      .filter((p) => p.thumbnail?.source)
-      .sort((a, b) => a.index - b.index)
-      .map((p) => ({ title: p.title, imageUrl: p.thumbnail!.source! }));
+    const pages = Object.values(data.query?.pages ?? {}).filter((p) => p.thumbnail?.source);
+    const results = pages.map((p) => {
+      const w = p.thumbnail!.width ?? 0;
+      const h = p.thumbnail!.height ?? 0;
+      // Landscape-ish images fill the (landscape) cards cleanly.
+      const landscape = w > 0 && h > 0 ? w / h >= 1.15 : false;
+      return { title: p.title, imageUrl: p.thumbnail!.source!, landscape, index: p.index };
+    });
+    // Landscape (best fit) first, then by search relevance.
+    results.sort((a, b) => {
+      if (a.landscape !== b.landscape) return a.landscape ? -1 : 1;
+      return a.index - b.index;
+    });
+    return results.map(({ title, imageUrl, landscape }) => ({ title, imageUrl, landscape }));
   } catch {
     return [];
   }

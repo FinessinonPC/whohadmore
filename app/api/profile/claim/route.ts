@@ -1,8 +1,22 @@
 import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
-import { monthPeriod, previousISODate, todayISO } from "@/lib/date";
-import { earnedAchievementIds, levelFromXp, type Profile } from "@/lib/leaderboard";
+import { isValidISODate, monthPeriod, previousISODate, todayISO } from "@/lib/date";
+import {
+  computeStars,
+  earnedAchievementIds,
+  levelFromXp,
+  pointsForGame,
+  type Profile,
+} from "@/lib/leaderboard";
+
+interface LastGame {
+  play_date: string;
+  reached: number;
+  rounds: number;
+  lives?: number;
+  time_seconds?: number;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +42,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Leaderboard isn't configured." }, { status: 503 });
   }
 
-  let body: { session_id?: string; username?: string };
+  let body: { session_id?: string; username?: string; lastGame?: LastGame };
   try {
     body = (await req.json()) as typeof body;
   } catch {
@@ -37,6 +51,7 @@ export async function POST(req: Request) {
 
   const session_id = body.session_id;
   const username = (body.username ?? "").trim();
+  const lastGame = body.lastGame;
   if (!session_id) return NextResponse.json({ error: "Missing session" }, { status: 400 });
   if (!USERNAME_RE.test(username)) {
     return NextResponse.json(
@@ -81,6 +96,37 @@ export async function POST(req: Request) {
   // New profile — backfill stats from this session's history.
   const today = todayISO();
   const period = monthPeriod(today);
+
+  // Make sure the game they JUST finished is recorded before we tally, so a
+  // first game counts toward the new profile (guards against the async
+  // complete-route insert not having landed yet). Idempotent per session+date.
+  if (
+    lastGame &&
+    isValidISODate(lastGame.play_date) &&
+    Number.isFinite(lastGame.reached) &&
+    Number.isFinite(lastGame.rounds)
+  ) {
+    const { data: already } = await supabase
+      .from("game_results")
+      .select("id")
+      .eq("session_id", session_id)
+      .eq("play_date", lastGame.play_date)
+      .maybeSingle<{ id: string }>();
+    if (!already) {
+      const time = Number.isFinite(lastGame.time_seconds) ? lastGame.time_seconds! : 0;
+      await supabase.from("game_results").insert({
+        play_date: lastGame.play_date,
+        session_id,
+        score: lastGame.reached,
+        lives_remaining: Number.isFinite(lastGame.lives) ? lastGame.lives : null,
+        completed: true,
+        time_seconds: time,
+        points: pointsForGame(lastGame.reached, lastGame.rounds, time, 0),
+        stars: computeStars(lastGame.reached, lastGame.rounds),
+      });
+    }
+  }
+
   const { data: results } = await supabase
     .from("game_results")
     .select("play_date, points, stars")

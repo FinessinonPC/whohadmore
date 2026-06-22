@@ -3,7 +3,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { Card, type CardStatus } from "./Card";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { GamePhase } from "@/hooks/useGame";
 import type { ActivePair, Side } from "@/lib/gameLogic";
 
@@ -38,28 +37,26 @@ export function CardPair({
   revealRight,
   onGuess,
 }: CardPairProps) {
-  const isRow = useMediaQuery("(min-width: 640px)");
-
+  // First paint uses a staggered fade-in; later swaps slide vertically.
   const mounted = useRef(false);
   useEffect(() => {
     mounted.current = true;
   }, []);
 
+  // Always stacked (top = left, bottom = right) on every screen size.
   const slots: { card: ActivePair["left"]; side: Side }[] = [
     { card: pair.left, side: "left" },
     { card: pair.right, side: "right" },
   ];
 
   const interactionLocked = phase !== "idle";
-  const enter = isRow ? { x: 90, y: 0 } : { x: 0, y: 70 };
-  const exit = isRow ? { x: -110, y: 0 } : { x: 0, y: -90 };
 
   const lv = pair.left.stat_value;
   const rv = pair.right.stat_value;
   const higher: Side | "both" = lv === rv ? "both" : lv > rv ? "left" : "right";
 
   return (
-    <div className="relative flex h-full flex-col items-stretch gap-2 sm:flex-row">
+    <div className="relative mx-auto flex h-full w-full flex-col items-stretch gap-3">
       <AnimatePresence mode="popLayout">
         {slots.map(({ card, side }, i) => {
           const firstLoad = !mounted.current;
@@ -67,12 +64,10 @@ export function CardPair({
             <motion.div
               key={card.id}
               layout
-              className="relative flex-1 will-change-transform"
-              initial={
-                firstLoad ? { opacity: 0, y: 24 } : { opacity: 0, scale: 0.96, ...enter }
-              }
-              animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96, ...exit }}
+              className="relative min-h-0 flex-1 will-change-transform"
+              initial={firstLoad ? { opacity: 0, y: 18 } : { opacity: 0, y: 80, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -90, scale: 0.96 }}
               transition={
                 firstLoad
                   ? { duration: 0.4, delay: i * 0.08, ease: "easeOut" }
@@ -94,9 +89,9 @@ export function CardPair({
         })}
       </AnimatePresence>
 
-      {/* Angular VS tag on the seam */}
+      {/* Angular VS tag on the seam between the two cards */}
       <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
-        <div className="flex h-12 w-12 -rotate-6 items-center justify-center bg-ink font-condensed text-lg font-bold tracking-wider text-white shadow-lg ring-2 ring-white">
+        <div className="flex h-11 w-11 -rotate-6 items-center justify-center bg-ink font-condensed text-base font-bold tracking-wider text-white shadow-lg ring-2 ring-white">
           VS
         </div>
       </div>
