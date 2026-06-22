@@ -119,7 +119,7 @@ export function GameBoard({
     <>
       <HeartLossOverlay event={lossEvent} max={STARTING_LIVES} />
 
-      <main className="mx-auto flex h-dvh w-full max-w-[460px] flex-col overflow-hidden px-4 pb-5 pt-5">
+      <main className="mx-auto flex h-dvh w-full max-w-[480px] flex-col overflow-hidden px-4 pb-5 pt-5 sm:max-w-[620px]">
         {/* Header */}
         <header className="flex shrink-0 items-center justify-between">
           <div className="flex items-center gap-2">

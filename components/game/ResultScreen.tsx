@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -233,6 +234,7 @@ export function ResultScreen({
 
 /** Inline username signup / signed-in state for the result screen. */
 function ClaimBlock({ lastGame }: { lastGame: LastGame }) {
+  const router = useRouter();
   const { profile, loading, claim } = useProfile();
   const [username, setUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -258,8 +260,13 @@ function ClaimBlock({ lastGame }: { lastGame: LastGame }) {
     setError(null);
     // Pass the just-finished game so it counts toward the brand-new profile.
     const res = await claim(username.trim(), lastGame);
-    setSaving(false);
-    if (!res.ok) setError(res.error ?? "Couldn't save that.");
+    if (!res.ok) {
+      setSaving(false);
+      setError(res.error ?? "Couldn't save that.");
+      return;
+    }
+    // Straight to their stats page so they can see their progress.
+    router.push("/leaderboard");
   }
 
   return (
