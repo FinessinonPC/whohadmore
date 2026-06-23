@@ -18,7 +18,7 @@ export default async function ArchivePage() {
           <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
         </Link>
         <Link
-          href="/play"
+          href="/"
           className="rounded-full bg-cta px-4 py-1.5 text-xs font-semibold text-white"
         >
           Today&apos;s game

@@ -93,11 +93,14 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
           <span className="font-semibold text-ink">more {game.stat_unit || game.stat_label}</span>.
         </p>
 
-        {/* lives + rounds, clean */}
-        <div className="mt-4 flex items-center gap-2 text-sm font-bold text-ink">
-          <span className="text-lives">{"♥".repeat(STARTING_LIVES)}</span>
-          <span className="text-ink-secondary">·</span>
-          <span>{rounds} rounds</span>
+        {/* lives + rounds */}
+        <div className="mt-5 flex items-center gap-3">
+          <span className="flex items-center gap-1.5 text-3xl leading-none text-lives">
+            {Array.from({ length: STARTING_LIVES }).map((_, i) => (
+              <span key={i}>♥</span>
+            ))}
+          </span>
+          <span className="text-sm font-bold text-ink-secondary">{rounds} rounds</span>
         </div>
 
         <Button size="lg" onClick={onStart} className="mt-8 w-full max-w-xs">
@@ -105,6 +108,13 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
         </Button>
         <p className="mt-3 text-xs text-ink-secondary">
           {resuming ? "Pick up where you left off." : "Free · a fresh game every day"}
+        </p>
+
+        {/* Visible description for visitors & search engines */}
+        <p className="mt-8 max-w-sm text-balance text-xs leading-relaxed text-ink-secondary">
+          WhoHadMore is a free daily comparison game. Each day brings a new
+          higher-or-lower puzzle across sports, pop culture, food, geography and
+          science — make your guesses, keep your streak, and climb the leaderboard.
         </p>
       </motion.div>
     </main>

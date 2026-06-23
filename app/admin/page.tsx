@@ -18,7 +18,7 @@ export default function AdminPage() {
             </p>
           </div>
           <Link
-            href="/play"
+            href="/"
             className="rounded-full border border-border bg-surface px-4 py-1.5 text-xs font-semibold text-ink"
           >
             View site
