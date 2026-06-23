@@ -15,7 +15,7 @@ import {
   type GamePhase,
   type GameResultSummary,
 } from "@/hooks/useGame";
-import { STARTING_LIVES } from "@/lib/gameLogic";
+import { STARTING_LIVES, avoidAdjacentTies } from "@/lib/gameLogic";
 import { hashSeed, mulberry32, seededShuffle } from "@/lib/seed";
 import { getSessionId } from "@/lib/playStore";
 import { formatShortDate } from "@/lib/date";
@@ -58,7 +58,10 @@ export function GameBoard({
   // Random-but-stable card order: unique per player (session) and per day, yet
   // reproducible so a resumed game keeps the same order.
   const cards = useMemo(
-    () => seededShuffle(game.cards, mulberry32(hashSeed(`${getSessionId()}:${date}`))),
+    () =>
+      avoidAdjacentTies(
+        seededShuffle(game.cards, mulberry32(hashSeed(`${getSessionId()}:${date}`)))
+      ),
     [game, date]
   );
 

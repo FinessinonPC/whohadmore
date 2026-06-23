@@ -71,16 +71,12 @@ export function rankTitle(level: number): string {
 }
 
 // --- Per-game scoring --------------------------------------------------------
-// Everything is based on HOW FAR the player made it (rounds reached), not how
-// many they got right.
+// XP is based on HOW FAR the player made it (rounds reached). The collectible
+// stat is HEARTS — the lives you finish a game with (0–3) — summed over time.
 
-/** 0–3 stars by share of the chain reached; clearing it earns 3. */
-export function computeStars(reached: number, rounds: number): number {
-  if (rounds <= 0) return 0;
-  if (reached >= rounds) return 3;
-  if (reached >= Math.ceil(rounds * 0.66)) return 2;
-  if (reached >= Math.ceil(rounds * 0.33)) return 1;
-  return 0;
+/** Hearts banked from a game = lives remaining at the end (0–3). */
+export function heartsFor(lives: number): number {
+  return Math.max(0, Math.min(3, Math.floor(Number.isFinite(lives) ? lives : 0)));
 }
 
 // XP weights. Distance is the bulk; clearing adds a bonus; speed is a smaller
@@ -140,8 +136,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: "flawless", label: "Flawless", description: "Clear a chain without losing a life.", icon: "💎" },
   { id: "streak7", label: "On Fire", description: "Reach a 7-day streak.", icon: "🔥" },
   { id: "streak30", label: "Unstoppable", description: "Reach a 30-day streak.", icon: "⚡" },
-  { id: "stars25", label: "Star Collector", description: "Earn 25 total stars.", icon: "✨" },
-  { id: "stars100", label: "Constellation", description: "Earn 100 total stars.", icon: "🌟" },
+  { id: "stars25", label: "Heart Collector", description: "Bank 25 hearts.", icon: "❤️" },
+  { id: "stars100", label: "Big Heart", description: "Bank 100 hearts.", icon: "💖" },
   { id: "level10", label: "Seasoned", description: "Reach level 10.", icon: "🏆" },
 ];
 

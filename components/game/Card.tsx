@@ -77,7 +77,7 @@ export function Card({
           onError={() => setImgFailed(true)}
         />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-ink to-[#2A2A2A] font-condensed text-7xl font-bold text-white/85">
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#1f2226] to-[#33373b] font-condensed text-7xl font-bold text-white/85">
           {initialsFor(card.entity_name)}
         </div>
       )}

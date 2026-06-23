@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -8,17 +9,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // WhoHadMore design system — NYT Games x Robinhood
-        background: "#FFFFFF",
-        surface: "#F8F8F8",
-        border: "#E8E8E8",
+        // Neutrals are CSS vars (RGB channels) so they flip in dark mode and
+        // still support /opacity modifiers. Accents stay fixed.
+        background: "rgb(var(--bg) / <alpha-value>)",
+        surface: "rgb(var(--surface) / <alpha-value>)",
+        border: "rgb(var(--border) / <alpha-value>)",
         ink: {
-          DEFAULT: "#111111", // text primary
-          secondary: "#888888", // text secondary
+          DEFAULT: "rgb(var(--ink) / <alpha-value>)", // text primary
+          secondary: "rgb(var(--ink-2) / <alpha-value>)", // text secondary
         },
         correct: "#00C853", // clean green
         wrong: "#FF3B30",
-        cta: "#1A1A1A",
+        cta: "rgb(var(--cta) / <alpha-value>)",
         lives: "#FF3B30",
       },
       fontFamily: {

@@ -3,8 +3,8 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import { isValidISODate, monthPeriod, previousISODate, todayISO } from "@/lib/date";
 import {
-  computeStars,
   earnedAchievementIds,
+  heartsFor,
   levelFromXp,
   pointsForGame,
   type Profile,
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const stars = computeStars(reached, rounds);
+  const stars = heartsFor(lives); // "stars" column now stores hearts banked
   const cleared = rounds > 0 && reached >= rounds;
   const flawless = cleared && lives >= 3;
 

@@ -58,3 +58,20 @@ export function formatStat(value: number): string {
     maximumFractionDigits: isInteger ? 0 : 1,
   });
 }
+
+/**
+ * Reorder so no two ADJACENT cards share the same stat_value — that way a pair
+ * is never a tie. Greedy: when neighbors match, swap the later card forward.
+ */
+export function avoidAdjacentTies<T extends { stat_value: number }>(cards: T[]): T[] {
+  const out = [...cards];
+  for (let i = 1; i < out.length; i++) {
+    if (out[i].stat_value === out[i - 1].stat_value) {
+      let j = i + 1;
+      while (j < out.length && out[j].stat_value === out[i - 1].stat_value) j++;
+      if (j < out.length) [out[i], out[j]] = [out[j], out[i]];
+      // else: every remaining card ties — unavoidable, leave as-is.
+    }
+  }
+  return out;
+}

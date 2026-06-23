@@ -3,8 +3,8 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import { isValidISODate, monthPeriod, previousISODate, todayISO } from "@/lib/date";
 import {
-  computeStars,
   earnedAchievementIds,
+  heartsFor,
   levelFromXp,
   pointsForGame,
   type Profile,
@@ -122,7 +122,7 @@ export async function POST(req: Request) {
         completed: true,
         time_seconds: time,
         points: pointsForGame(lastGame.reached, lastGame.rounds, time, 0),
-        stars: computeStars(lastGame.reached, lastGame.rounds),
+        stars: heartsFor(lastGame.lives ?? 0),
       });
     }
   }

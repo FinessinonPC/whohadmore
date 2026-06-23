@@ -3,6 +3,28 @@
 @tailwind utilities;
 
 @layer base {
+  /* Neutral palette as RGB channels (light default). */
+  :root {
+    --bg: 255 255 255;
+    --surface: 248 248 248;
+    --border: 232 232 232;
+    --ink: 17 17 17;
+    --ink-2: 136 136 136;
+    --cta: 26 26 26;
+  }
+
+  /* Dark mode — neutral greys (Twitter-ish, not blue). cta stays dark enough
+     to keep white button text readable on the dark canvas. */
+  .dark {
+    --bg: 22 24 27;
+    --surface: 32 35 39;
+    --border: 49 53 58;
+    --ink: 233 235 238;
+    --ink-2: 150 157 164;
+    --cta: 58 62 67;
+    color-scheme: dark;
+  }
+
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

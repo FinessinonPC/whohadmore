@@ -109,7 +109,7 @@ export function LeaderboardView() {
             <div className="mt-6 grid grid-cols-4 divide-x divide-border">
               <StatCell value={streak} label="Streak" accent="#FF7A00" note={streak > 0 ? `×${streakMultiplier(streak).toFixed(2)}` : undefined} />
               <StatCell value={profile?.days_played ?? 0} label="Days" />
-              <StatCell value={profile?.total_stars ?? 0} label="Stars" accent="#FFB300" />
+              <StatCell value={profile?.total_stars ?? 0} label="Hearts" accent="#FF3B30" />
               <StatCell value={profile?.monthly_score ?? 0} label="This mo." accent="#00C853" />
             </div>
 
@@ -221,7 +221,7 @@ function LevelRing({ level, progress }: { level: number; progress: number }) {
   return (
     <div className="relative h-[72px] w-[72px] shrink-0">
       <svg viewBox="0 0 72 72" className="h-full w-full -rotate-90">
-        <circle cx="36" cy="36" r={r} fill="none" stroke="#E8E8E8" strokeWidth="7" />
+        <circle cx="36" cy="36" r={r} fill="none" className="stroke-border" strokeWidth="7" />
         <motion.circle
           cx="36"
           cy="36"
