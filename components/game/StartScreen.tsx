@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Badge, categoryLabel } from "@/components/ui/Badge";
@@ -109,13 +110,12 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
         <p className="mt-3 text-xs text-ink-secondary">
           {resuming ? "Pick up where you left off." : "Free · a fresh game every day"}
         </p>
-
-        {/* Visible description for visitors & search engines */}
-        <p className="mt-8 max-w-sm text-balance text-xs leading-relaxed text-ink-secondary">
-          WhoHadMore is a free daily comparison game. Each day brings a new
-          higher-or-lower puzzle across sports, pop culture, food, geography and
-          science — make your guesses, keep your streak, and climb the leaderboard.
-        </p>
+        <Link
+          href="/about"
+          className="mt-4 text-xs font-semibold text-ink-secondary underline underline-offset-2 transition-colors hover:text-ink"
+        >
+          What is WhoHadMore?
+        </Link>
       </motion.div>
     </main>
   );

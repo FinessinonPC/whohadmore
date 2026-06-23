@@ -1,14 +1,21 @@
 import Link from "next/link";
-import { ArchiveBrowser } from "@/components/archive/ArchiveBrowser";
+import type { Metadata } from "next";
+import { ArchiveCalendar } from "@/components/archive/ArchiveCalendar";
 import { BrandMark } from "@/components/ui/Logo";
 import { getPublishedGamesWithNumbers } from "@/lib/games";
 import { todayISO } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
 
+export const metadata: Metadata = {
+  title: "Archive",
+  description:
+    "Browse and replay every past WhoHadMore puzzle by date — a new daily comparison game across sports, pop culture, food, geography and science.",
+  alternates: { canonical: "/archive" },
+};
+
 export default async function ArchivePage() {
-  // Oldest-first with game numbers; show newest first.
-  const games = (await getPublishedGamesWithNumbers(todayISO())).reverse();
+  const games = await getPublishedGamesWithNumbers(todayISO());
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-8">
@@ -28,11 +35,11 @@ export default async function ArchivePage() {
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold tracking-tight text-ink">Archive</h1>
         <p className="mt-1 text-sm text-ink-secondary">
-          Every game so far. {games.length} total.
+          {games.length} games and counting — pick any day to play.
         </p>
       </div>
 
-      <ArchiveBrowser games={games} />
+      <ArchiveCalendar games={games} />
     </main>
   );
 }

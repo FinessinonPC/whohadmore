@@ -8,6 +8,23 @@ import { getWikimediaThumbnail } from "@/lib/wikimedia";
 import { buildMockGame, isSupabaseConfigured } from "@/lib/mockGame";
 import type { DailyGame, FullGame, GameCard } from "@/types";
 
+/** Lightweight meta for a published game (no cards) — used for SEO titles. */
+export async function getGameMeta(
+  date: string
+): Promise<Pick<DailyGame, "topic_label" | "stat_label" | "topic_category"> | null> {
+  if (!isSupabaseConfigured()) {
+    const m = buildMockGame(date);
+    return { topic_label: m.topic_label, stat_label: m.stat_label, topic_category: m.topic_category };
+  }
+  const { data } = await getServerSupabase()
+    .from("daily_games")
+    .select("topic_label, stat_label, topic_category")
+    .eq("play_date", date)
+    .eq("published", true)
+    .maybeSingle<Pick<DailyGame, "topic_label" | "stat_label" | "topic_category">>();
+  return data ?? null;
+}
+
 /** The published game for a date (with its ordered cards), or null. */
 export async function getFullGame(date: string): Promise<FullGame | null> {
   // Fresh-clone fallback: serve a playable mock enriched with live images.
