@@ -64,7 +64,7 @@ export function CardPair({
             <motion.div
               key={card.id}
               layout
-              className="relative min-h-0 flex-1 will-change-transform"
+              className="relative flex min-h-0 flex-1 items-center justify-center will-change-transform"
               initial={firstLoad ? { opacity: 0, y: 18 } : { opacity: 0, y: 80, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -90, scale: 0.96 }}
@@ -74,16 +74,20 @@ export function CardPair({
                   : { type: "spring", damping: 30, stiffness: 320, mass: 0.8 }
               }
             >
-              <Card
-                card={card}
-                statUnit={statUnit}
-                revealValue={side === "left" ? true : revealRight}
-                animateValue={side === "right"}
-                status={statusFor(side, phase, chosenSide, higher)}
-                shake={phase === "reveal-wrong" && chosenSide === side}
-                disabled={interactionLocked}
-                onSelect={() => onGuess(side)}
-              />
+              {/* Square card: sized by the slot's height so two always fit the
+                  screen; centered, so it reads as a square rather than a wide bar. */}
+              <div className="relative aspect-square h-full max-w-full">
+                <Card
+                  card={card}
+                  statUnit={statUnit}
+                  revealValue={side === "left" ? true : revealRight}
+                  animateValue={side === "right"}
+                  status={statusFor(side, phase, chosenSide, higher)}
+                  shake={phase === "reveal-wrong" && chosenSide === side}
+                  disabled={interactionLocked}
+                  onSelect={() => onGuess(side)}
+                />
+              </div>
             </motion.div>
           );
         })}
