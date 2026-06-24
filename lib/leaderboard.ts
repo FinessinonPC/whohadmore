@@ -23,7 +23,7 @@ export interface Profile {
 export interface LeaderboardRow {
   rank: number;
   username: string;
-  monthly_score: number;
+  score: number; // all-time score (total XP accumulated)
   total_stars: number;
   current_streak: number;
   level: number;
@@ -32,7 +32,9 @@ export interface LeaderboardRow {
 export interface DailyRow {
   rank: number;
   name: string; // username, or "Anonymous" for players without a profile
-  reached: number;
+  score: number; // combined daily score (correct answers + hearts + speed)
+  reached: number; // correct answers
+  hearts: number; // lives left at the end (0–3)
   timeSeconds: number | null;
   you: boolean;
 }
@@ -127,6 +129,21 @@ export function pointsForGame(
   streak: number
 ): number {
   return Math.round(basePoints(reached, rounds, timeSeconds) * streakMultiplier(streak));
+}
+
+// --- Daily score -------------------------------------------------------------
+// The daily leaderboard ranks on one number. Weighted, in order: how many you
+// got right (the bulk), then the hearts you kept, then how fast you decided.
+// No streak multiplier — every day stands on its own.
+const DAILY_CORRECT = 100; // per correct answer
+const DAILY_HEART = 150; // per heart still held at the end (0–3)
+const DAILY_SPEED = 30; // max per correct answer, scaled by decision speed
+
+export function dailyScore(reached: number, hearts: number, timeSeconds: number): number {
+  const correct = Math.max(0, reached) * DAILY_CORRECT;
+  const heartBonus = heartsFor(hearts) * DAILY_HEART;
+  const speed = Math.round(Math.max(0, reached) * DAILY_SPEED * speedFactor(timeSeconds, reached));
+  return correct + heartBonus + speed;
 }
 
 // --- Achievements ------------------------------------------------------------

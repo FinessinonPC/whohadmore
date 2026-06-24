@@ -7,7 +7,6 @@ import { TopNav } from "@/components/ui/TopNav";
 import { useProfile } from "@/hooks/useProfile";
 import { getSessionId } from "@/lib/playStore";
 import {
-  ACHIEVEMENTS,
   levelInfo,
   rankTitle,
   streakMultiplier,
@@ -22,7 +21,7 @@ export function LeaderboardView() {
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
   const [daily, setDaily] = useState<DailyRow[]>([]);
   const [dailyRounds, setDailyRounds] = useState(0);
-  const [tab, setTab] = useState<"today" | "month">("today");
+  const [tab, setTab] = useState<"daily" | "alltime">("daily");
   const [username, setUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -122,7 +121,7 @@ export function LeaderboardView() {
               <StatCell value={streak} label="Streak" accent="#FF7A00" note={streak > 0 ? `×${streakMultiplier(streak).toFixed(2)}` : undefined} />
               <StatCell value={profile?.days_played ?? 0} label="Days" />
               <StatCell value={profile?.total_stars ?? 0} label="Hearts" accent="#FF3B30" />
-              <StatCell value={profile?.monthly_score ?? 0} label="This mo." accent="#00C853" />
+              <StatCell value={profile?.xp ?? 0} label="XP" accent="#00C853" />
             </div>
 
             <div className="mt-4 text-center">
@@ -132,48 +131,18 @@ export function LeaderboardView() {
         )}
       </section>
 
-      {/* Achievements */}
-      <section className="mt-9">
-        <h2 className="mb-3 text-base font-extrabold text-ink">Achievements</h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {ACHIEVEMENTS.map((a) => {
-            const earned = profile?.achievements?.includes(a.id);
-            return (
-              <div
-                key={a.id}
-                title={a.description}
-                className={`flex flex-col items-center gap-2 rounded-2xl p-4 text-center transition-colors ${
-                  earned ? "bg-surface" : "bg-surface/50"
-                }`}
-              >
-                <span
-                  className={`flex h-12 w-12 items-center justify-center rounded-full text-2xl ${
-                    earned ? "bg-correct/15" : "bg-border/50 grayscale"
-                  }`}
-                >
-                  {earned ? a.icon : "🔒"}
-                </span>
-                <span className={`text-xs font-bold ${earned ? "text-ink" : "text-ink-secondary"}`}>
-                  {a.label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Ranked list with Today / This month toggle */}
+      {/* Ranked list with Daily / All-time toggle */}
       <section className="mt-9">
         <div className="mb-3 inline-flex rounded-full bg-surface p-1">
-          <TabButton active={tab === "today"} onClick={() => setTab("today")}>
-            Today
+          <TabButton active={tab === "daily"} onClick={() => setTab("daily")}>
+            Daily
           </TabButton>
-          <TabButton active={tab === "month"} onClick={() => setTab("month")}>
-            This month
+          <TabButton active={tab === "alltime"} onClick={() => setTab("alltime")}>
+            All time
           </TabButton>
         </div>
 
-        {tab === "today" ? (
+        {tab === "daily" ? (
           daily.length === 0 ? (
             <EmptyBoard
               title="No scores yet today"
@@ -182,36 +151,42 @@ export function LeaderboardView() {
           ) : (
             <div className="overflow-hidden rounded-3xl bg-surface">
               {daily.map((r, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-center gap-3 px-4 py-3.5 ${i > 0 ? "border-t border-border/70" : ""} ${
-                      r.you ? "bg-correct/10" : ""
-                    }`}
-                  >
-                    <RankBadge rank={r.rank} />
-                    <span className={`min-w-0 flex-1 truncate text-[15px] font-bold ${r.name === "Anonymous" && !r.you ? "text-ink-secondary" : "text-ink"}`}>
+                <div
+                  key={i}
+                  className={`flex items-center gap-3 px-4 py-3 ${i > 0 ? "border-t border-border/70" : ""} ${
+                    r.you ? "bg-correct/10" : ""
+                  }`}
+                >
+                  <RankBadge rank={r.rank} />
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={`truncate text-[15px] font-bold ${
+                        r.name === "Anonymous" && !r.you ? "text-ink-secondary" : "text-ink"
+                      }`}
+                    >
                       {r.name}
                       {r.you && <span className="ml-1 text-ink-secondary">· You</span>}
-                    </span>
-                    {r.timeSeconds != null && (
-                      <span className="tabular text-[11px] text-ink-secondary">
-                        {formatClock(r.timeSeconds)}
-                      </span>
-                    )}
-                    <span className="tabular text-base font-extrabold text-ink">
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-ink-secondary">
                       {r.reached}
-                      {dailyRounds > 0 && (
-                        <span className="text-sm font-bold text-ink-secondary">/{dailyRounds}</span>
-                      )}
-                    </span>
+                      {dailyRounds > 0 ? `/${dailyRounds}` : ""} correct
+                      {" · "}
+                      {r.hearts}
+                      <span className="text-wrong">♥</span>
+                      {r.timeSeconds != null && <>{" · "}{formatClock(r.timeSeconds)}</>}
+                    </p>
                   </div>
+                  <span className="tabular text-base font-extrabold text-ink">
+                    {r.score.toLocaleString()}
+                  </span>
+                </div>
               ))}
             </div>
           )
         ) : loading ? (
           <p className="py-8 text-center text-sm text-ink-secondary">Loading…</p>
         ) : rows.length === 0 ? (
-          <EmptyBoard title="No scores yet this month" sub="Play a game to claim the top spot." />
+          <EmptyBoard title="No scores yet" sub="Play games to climb the all-time board." />
         ) : (
           <div className="overflow-hidden rounded-3xl bg-surface">
             {rows.map((r, i) => {
@@ -232,7 +207,7 @@ export function LeaderboardView() {
                     Lv {r.level}
                   </span>
                   <span className="tabular text-base font-extrabold text-ink">
-                    {r.monthly_score.toLocaleString()}
+                    {r.score.toLocaleString()}
                   </span>
                 </div>
               );

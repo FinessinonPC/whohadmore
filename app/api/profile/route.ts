@@ -28,17 +28,17 @@ export async function GET(req: Request) {
     return NextResponse.json({ profile: null, rank: null });
   }
 
-  // Rank within the current month (only meaningful if they've scored).
+  // Reset the displayed monthly tally if the stored period is stale.
   const period = monthPeriod(todayISO());
   const effectiveMonthly = profile.monthly_period === period ? profile.monthly_score : 0;
 
+  // Rank all-time, by total XP (only meaningful once they've earned some).
   let rank: number | null = null;
-  if (effectiveMonthly > 0) {
+  if (profile.xp > 0) {
     const { count } = await supabase
       .from("profiles")
       .select("id", { count: "exact", head: true })
-      .eq("monthly_period", period)
-      .gt("monthly_score", effectiveMonthly);
+      .gt("xp", profile.xp);
     rank = (count ?? 0) + 1;
   }
 

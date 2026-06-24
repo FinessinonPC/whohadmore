@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import { isValidISODate, todayISO } from "@/lib/date";
-import type { DailyRow } from "@/lib/leaderboard";
+import { dailyScore, heartsFor, type DailyRow } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
 
@@ -30,9 +30,17 @@ export async function GET(req: Request) {
     // Every result for the day — one per session, signed in or anonymous.
     const { data: results, error: resultsError } = await supabase
       .from("game_results")
-      .select("session_id, score, time_seconds")
+      .select("session_id, score, time_seconds, lives_remaining, stars")
       .eq("play_date", date)
-      .returns<{ session_id: string; score: number | null; time_seconds: number | null }[]>();
+      .returns<
+        {
+          session_id: string;
+          score: number | null;
+          time_seconds: number | null;
+          lives_remaining: number | null;
+          stars: number | null;
+        }[]
+      >();
     if (resultsError) throw resultsError;
 
     const rows = results ?? [];
@@ -67,17 +75,31 @@ export async function GET(req: Request) {
     }
 
     const ranked: DailyRow[] = rows
+      .map((r) => {
+        const reached = r.score ?? 0;
+        // `stars` already stores hearts banked; fall back to lives for old rows.
+        const hearts = r.stars != null ? r.stars : heartsFor(r.lives_remaining ?? 0);
+        const timeSeconds = r.time_seconds;
+        return {
+          session_id: r.session_id,
+          reached,
+          hearts,
+          timeSeconds,
+          score: dailyScore(reached, hearts, timeSeconds ?? 0),
+        };
+      })
       .sort((a, b) => {
-        const reachedDiff = (b.score ?? 0) - (a.score ?? 0);
-        if (reachedDiff !== 0) return reachedDiff;
-        return (a.time_seconds ?? 1e9) - (b.time_seconds ?? 1e9);
+        if (b.score !== a.score) return b.score - a.score;
+        return (a.timeSeconds ?? 1e9) - (b.timeSeconds ?? 1e9);
       })
       .slice(0, 100)
       .map((r, i) => ({
         rank: i + 1,
         name: nameBy.get(r.session_id) ?? "Anonymous",
-        reached: r.score ?? 0,
-        timeSeconds: r.time_seconds,
+        score: r.score,
+        reached: r.reached,
+        hearts: r.hearts,
+        timeSeconds: r.timeSeconds,
         you: Boolean(viewer) && r.session_id === viewer,
       }));
 
