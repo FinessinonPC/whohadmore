@@ -44,12 +44,15 @@ export async function POST(req: Request) {
   const cleared = rounds > 0 && reached >= rounds;
   const flawless = cleared && lives >= 3;
 
-  // No backend configured: still report the (streak-free) XP for display.
+  // No backend configured (demo mode): still report the (streak-free) XP for
+  // display. `demo: true` makes this state visible — in this mode nothing is
+  // recorded, so the daily leaderboard will be empty no matter what.
   if (!isSupabaseConfigured()) {
     return NextResponse.json({
       profile: null,
       pointsEarned: pointsForGame(reached, rounds, time, 0),
       stars,
+      demo: true,
     });
   }
 
@@ -95,7 +98,9 @@ export async function POST(req: Request) {
   const pts = pointsForGame(reached, rounds, time, streakForPoints);
 
   // Record the result with the credited points/stars (also enables backfill).
-  await supabase.from("game_results").insert({
+  // This row is what the daily leaderboard reads, so a silent failure here is
+  // exactly why the board can look empty — surface it instead of swallowing it.
+  const { error: insertError } = await supabase.from("game_results").insert({
     play_date,
     session_id,
     score: reached,
@@ -105,6 +110,17 @@ export async function POST(req: Request) {
     points: pts,
     stars,
   });
+  if (insertError) {
+    console.error("[complete] game_results insert failed:", insertError);
+    return NextResponse.json({
+      profile: profile ?? null,
+      pointsEarned: 0,
+      stars,
+      error: "record_failed",
+      code: insertError.code,
+      detail: insertError.message,
+    });
+  }
 
   if (!profile) {
     return NextResponse.json({ profile: null, pointsEarned: pts, stars });
