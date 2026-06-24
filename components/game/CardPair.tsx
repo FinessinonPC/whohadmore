@@ -56,7 +56,7 @@ export function CardPair({
   const higher: Side | "both" = lv === rv ? "both" : lv > rv ? "left" : "right";
 
   return (
-    <div className="relative mx-auto flex h-full w-full flex-col items-stretch gap-3">
+    <div className="relative mx-auto flex h-full w-full flex-col items-stretch gap-3 md:flex-row md:gap-5">
       <AnimatePresence mode="popLayout">
         {slots.map(({ card, side }, i) => {
           const firstLoad = !mounted.current;
@@ -74,9 +74,10 @@ export function CardPair({
                   : { type: "spring", damping: 30, stiffness: 320, mass: 0.8 }
               }
             >
-              {/* Square card: sized by the slot's height so two always fit the
-                  screen; centered, so it reads as a square rather than a wide bar. */}
-              <div className="relative aspect-square h-full max-w-full">
+              {/* Responsive tiles: square and stacked on phones (two fit the
+                  screen), larger side-by-side panels that fill the width on
+                  desktop. */}
+              <div className="relative aspect-square h-full max-w-full md:aspect-auto md:w-full">
                 <Card
                   card={card}
                   statUnit={statUnit}

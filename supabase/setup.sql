@@ -45,7 +45,12 @@ create table if not exists public.game_results (
   stars           integer,
   created_at      timestamptz not null default now()
 );
--- In case game_results already existed without the newer columns:
+-- In case game_results already existed without the newer columns (an early
+-- partial migration may have created it without these). Adding them is
+-- idempotent and is required for the daily leaderboard to record plays.
+alter table public.game_results add column if not exists lives_remaining integer;
+alter table public.game_results add column if not exists completed boolean;
+alter table public.game_results add column if not exists time_seconds integer;
 alter table public.game_results add column if not exists points integer;
 alter table public.game_results add column if not exists stars integer;
 create index if not exists game_results_play_date_idx on public.game_results (play_date);
