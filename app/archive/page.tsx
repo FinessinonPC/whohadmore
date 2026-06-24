@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ArchiveCalendar } from "@/components/archive/ArchiveCalendar";
+import { ArchiveList } from "@/components/archive/ArchiveList";
 import { BrandMark } from "@/components/ui/Logo";
 import { getPublishedGamesWithNumbers } from "@/lib/games";
 import { todayISO } from "@/lib/date";
@@ -18,7 +19,7 @@ export default async function ArchivePage() {
   const games = await getPublishedGamesWithNumbers(todayISO());
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-8">
+    <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:max-w-4xl">
       <header className="mb-8 flex items-center justify-between">
         <Link href="/" className="inline-flex items-center gap-1.5">
           <BrandMark className="h-5 w-5" />
@@ -39,7 +40,13 @@ export default async function ArchivePage() {
         </p>
       </div>
 
-      <ArchiveCalendar games={games} />
+      {/* Calendar on desktop, list on mobile */}
+      <div className="hidden sm:block">
+        <ArchiveCalendar games={games} />
+      </div>
+      <div className="sm:hidden">
+        <ArchiveList games={games} />
+      </div>
     </main>
   );
 }

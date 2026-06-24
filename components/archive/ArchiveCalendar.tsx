@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { categoryLabel } from "@/components/ui/Badge";
 import { getLocalResult } from "@/lib/playStore";
 import { todayISO } from "@/lib/date";
 import type { DailyGame } from "@/types";
 
 type NumberedGame = DailyGame & { game_number: number };
+type PlayedResult = { reached: number; rounds: number };
 
 interface ArchiveCalendarProps {
   games: NumberedGame[];
@@ -15,6 +15,18 @@ interface ArchiveCalendarProps {
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 const pad = (n: number) => n.toString().padStart(2, "0");
+
+/** green = cleared, yellow = made it past 7, red = out before 7. */
+function tierClass(reached: number, rounds: number): string {
+  if (reached >= rounds) return "border-correct/45 bg-correct/15 hover:bg-correct/25";
+  if (reached >= 7) return "border-[#FFB300]/50 bg-[#FFB300]/15 hover:bg-[#FFB300]/25";
+  return "border-wrong/40 bg-wrong/12 hover:bg-wrong/20";
+}
+function tierText(reached: number, rounds: number): string {
+  if (reached >= rounds) return "text-correct";
+  if (reached >= 7) return "text-[#9A6A00]";
+  return "text-wrong";
+}
 
 export function ArchiveCalendar({ games }: ArchiveCalendarProps) {
   const today = todayISO();
@@ -26,18 +38,17 @@ export function ArchiveCalendar({ games }: ArchiveCalendarProps) {
     return m;
   }, [games]);
 
-  // Start on the most recent month that has a game (usually the current month).
   const latest = useMemo(
     () => games.map((g) => g.play_date).sort().slice(-1)[0] ?? today,
     [games, today]
   );
   const [ly, lm] = latest.split("-").map(Number);
   const [year, setYear] = useState(ly);
-  const [month, setMonth] = useState(lm - 1); // 0-based
+  const [month, setMonth] = useState(lm - 1);
 
-  const [played, setPlayed] = useState<Record<string, { reached: number; rounds: number }>>({});
+  const [played, setPlayed] = useState<Record<string, PlayedResult>>({});
   useEffect(() => {
-    const map: Record<string, { reached: number; rounds: number }> = {};
+    const map: Record<string, PlayedResult> = {};
     games.forEach((g) => {
       const r = getLocalResult(g.play_date);
       if (r) map[g.play_date] = { reached: r.reached, rounds: r.rounds };
@@ -65,14 +76,12 @@ export function ArchiveCalendar({ games }: ArchiveCalendarProps) {
     setYear(d.getUTCFullYear());
     setMonth(d.getUTCMonth());
   }
-
-  // Don't let players page into the future (no games there).
   const atCurrentMonth = year === ty && month === tm - 1;
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-extrabold text-ink">{label}</h2>
+        <h2 className="text-xl font-extrabold text-ink">{label}</h2>
         <div className="flex items-center gap-1">
           <ArrowButton dir="prev" onClick={() => shift(-1)} />
           <button
@@ -88,9 +97,9 @@ export function ArchiveCalendar({ games }: ArchiveCalendarProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-1.5">
+      <div className="grid grid-cols-7 gap-2">
         {WEEKDAYS.map((d, i) => (
-          <div key={i} className="pb-1 text-center text-[10px] font-bold uppercase text-ink-secondary">
+          <div key={i} className="pb-1 text-center text-[11px] font-bold uppercase text-ink-secondary">
             {d}
           </div>
         ))}
@@ -106,42 +115,37 @@ export function ArchiveCalendar({ games }: ArchiveCalendarProps) {
             return (
               <div
                 key={dateStr}
-                className={`flex min-h-[76px] flex-col rounded-xl border border-border/60 p-1.5 sm:min-h-[96px] ${
+                className={`flex min-h-[84px] flex-col rounded-xl border border-border/50 p-2 sm:min-h-[112px] ${
                   isToday ? "ring-1 ring-ink/20" : ""
                 }`}
               >
-                <span className="text-[11px] font-bold text-ink-secondary/50">{day}</span>
+                <span className="text-xs font-bold text-ink-secondary/40">{day}</span>
               </div>
             );
           }
+
+          const state = result
+            ? tierClass(result.reached, result.rounds)
+            : "border-border bg-surface hover:border-ink/30";
 
           return (
             <Link
               key={dateStr}
               href={`/play/${dateStr}`}
               title={game.topic_label}
-              className={`group flex min-h-[76px] flex-col gap-0.5 rounded-xl border p-1.5 transition-colors sm:min-h-[96px] ${
-                result
-                  ? "border-correct/30 bg-correct/10 hover:bg-correct/20"
-                  : "border-border bg-surface hover:border-ink/30"
-              } ${isToday ? "ring-2 ring-ink/30" : ""}`}
+              className={`group flex min-h-[84px] flex-col gap-1 rounded-xl border p-2 transition-colors sm:min-h-[112px] ${state} ${
+                isToday ? "ring-2 ring-ink/30" : ""
+              }`}
             >
-              <span className="text-[11px] font-bold text-ink">{day}</span>
-              <span className="line-clamp-2 text-[9px] font-semibold leading-tight text-ink/80 sm:text-[11px]">
+              <span className="text-xs font-bold text-ink">{day}</span>
+              <span className="line-clamp-3 text-[10px] font-semibold leading-tight text-ink/85 sm:text-xs">
                 {game.topic_label}
               </span>
-              <span className="mt-auto flex items-center justify-between">
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ backgroundColor: categoryColor(game.topic_category) }}
-                  title={categoryLabel(game.topic_category)}
-                />
-                {result && (
-                  <span className="tabular text-[9px] font-bold text-correct sm:text-[10px]">
-                    {result.reached}/{result.rounds}
-                  </span>
-                )}
-              </span>
+              {result && (
+                <span className={`mt-auto tabular text-[10px] font-extrabold sm:text-xs ${tierText(result.reached, result.rounds)}`}>
+                  {result.reached}/{result.rounds}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -149,33 +153,21 @@ export function ArchiveCalendar({ games }: ArchiveCalendarProps) {
 
       {/* Legend */}
       <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-ink-secondary">
-        <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded border border-correct/30 bg-correct/10" /> Played
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded border border-border bg-surface" /> Available
-        </span>
-        <span>Tap any day to play that game.</span>
+        <Swatch className="border-correct/45 bg-correct/15" label="Cleared it" />
+        <Swatch className="border-[#FFB300]/50 bg-[#FFB300]/15" label="Past 7" />
+        <Swatch className="border-wrong/40 bg-wrong/12" label="Out before 7" />
+        <Swatch className="border-border bg-surface" label="Not played" />
       </div>
     </div>
   );
 }
 
-function categoryColor(category: DailyGame["topic_category"]): string {
-  switch (category) {
-    case "sports":
-      return "#00C853";
-    case "geography":
-      return "#1E88E5";
-    case "entertainment":
-      return "#E040FB";
-    case "science":
-      return "#FF7A00";
-    case "current_events":
-      return "#FFB300";
-    default:
-      return "#888888";
-  }
+function Swatch({ className, label }: { className: string; label: string }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className={`h-3 w-3 rounded border ${className}`} /> {label}
+    </span>
+  );
 }
 
 function ArrowButton({

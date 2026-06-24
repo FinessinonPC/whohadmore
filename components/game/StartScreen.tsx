@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
-import { Badge, categoryLabel } from "@/components/ui/Badge";
 import { TopNav } from "@/components/ui/TopNav";
 import { initialsFor } from "@/lib/wikimedia";
 import { STARTING_LIVES, maxScore } from "@/lib/gameLogic";
@@ -33,7 +32,7 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
   const center = (hero.length - 1) / 2;
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-5 pb-10 pt-5">
+    <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-5 pb-10 pt-5 sm:max-w-2xl">
       <TopNav />
 
       <motion.div
@@ -48,13 +47,13 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
         </p>
 
         {/* Hero montage — a fanned peek at today's lineup */}
-        <div className="relative mt-6 flex h-44 w-full items-center justify-center">
+        <div className="relative mt-6 flex h-44 w-full items-center justify-center sm:h-60">
           {hero.map((card, i) => {
             const offset = i - center;
             return (
               <motion.div
                 key={card.id}
-                className="absolute h-32 w-24 overflow-hidden rounded-lg border-2 border-white bg-ink shadow-xl sm:h-36 sm:w-28"
+                className="absolute h-32 w-24 overflow-hidden rounded-lg border-2 border-white bg-ink shadow-xl sm:h-48 sm:w-36"
                 style={{ zIndex: hero.length - Math.abs(offset) }}
                 initial={{ opacity: 0, y: 24, rotate: offset * 4, scale: 0.9 }}
                 animate={{
@@ -80,16 +79,11 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
           })}
         </div>
 
-        <h1 className="mt-7 text-balance text-[2.5rem] font-extrabold leading-[1.05] tracking-tight text-ink">
+        <h1 className="mt-7 text-balance text-[2.5rem] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[3.25rem]">
           {game.topic_label}
         </h1>
 
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-          <Badge tone="category">{categoryLabel(game.topic_category)}</Badge>
-          <Badge tone="neutral">{game.stat_label}</Badge>
-        </div>
-
-        <p className="mt-6 max-w-xs text-balance text-[15px] leading-relaxed text-ink-secondary">
+        <p className="mt-5 max-w-sm text-balance text-[15px] leading-relaxed text-ink-secondary sm:text-base">
           Two cards, one stat — tap whichever had{" "}
           <span className="font-semibold text-ink">more {game.stat_unit || game.stat_label}</span>.
         </p>
@@ -108,7 +102,7 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
           {resuming ? "Resume game" : "Start game"}
         </Button>
         <p className="mt-3 text-xs text-ink-secondary">
-          {resuming ? "Pick up where you left off." : "Free · a fresh game every day"}
+          {resuming ? "Pick up where you left off." : "A fresh game every day"}
         </p>
         <Link
           href="/about"

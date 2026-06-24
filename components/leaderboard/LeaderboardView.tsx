@@ -10,6 +10,7 @@ import {
   levelInfo,
   rankTitle,
   streakMultiplier,
+  type DailyRow,
   type LeaderboardRow,
 } from "@/lib/leaderboard";
 
@@ -18,6 +19,9 @@ const MEDAL = ["#FFB300", "#B8C2CC", "#CD7F32"]; // gold / silver / bronze
 export function LeaderboardView() {
   const { profile, rank, loading, claim } = useProfile();
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
+  const [daily, setDaily] = useState<DailyRow[]>([]);
+  const [dailyRounds, setDailyRounds] = useState(0);
+  const [tab, setTab] = useState<"today" | "month">("today");
   const [username, setUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -27,6 +31,13 @@ export function LeaderboardView() {
       .then((r) => r.json())
       .then((d: { rows: LeaderboardRow[] }) => setRows(d.rows ?? []))
       .catch(() => setRows([]));
+    fetch("/api/leaderboard/daily")
+      .then((r) => r.json())
+      .then((d: { rows: DailyRow[]; rounds: number }) => {
+        setDaily(d.rows ?? []);
+        setDailyRounds(d.rounds ?? 0);
+      })
+      .catch(() => setDaily([]));
   }, [profile]);
 
   async function save() {
@@ -44,7 +55,7 @@ export function LeaderboardView() {
   const hasName = Boolean(profile?.username);
 
   return (
-    <main className="mx-auto w-full max-w-xl px-4 pb-16 pt-5">
+    <main className="mx-auto w-full max-w-xl px-4 pb-16 pt-5 sm:max-w-2xl">
       <TopNav />
 
       <h1 className="mt-8 text-4xl font-extrabold tracking-tight text-ink">Leaderboard</h1>
@@ -150,16 +161,59 @@ export function LeaderboardView() {
         </div>
       </section>
 
-      {/* Ranked list */}
+      {/* Ranked list with Today / This month toggle */}
       <section className="mt-9">
-        <h2 className="mb-3 text-base font-extrabold text-ink">This month</h2>
-        {loading ? (
+        <div className="mb-3 inline-flex rounded-full bg-surface p-1">
+          <TabButton active={tab === "today"} onClick={() => setTab("today")}>
+            Today
+          </TabButton>
+          <TabButton active={tab === "month"} onClick={() => setTab("month")}>
+            This month
+          </TabButton>
+        </div>
+
+        {tab === "today" ? (
+          daily.length === 0 ? (
+            <EmptyBoard
+              title="No scores yet today"
+              sub="Be the first to play today's game."
+            />
+          ) : (
+            <div className="overflow-hidden rounded-3xl bg-surface">
+              {daily.map((r, i) => {
+                const me = r.username === profile?.username;
+                return (
+                  <div
+                    key={r.rank}
+                    className={`flex items-center gap-3 px-4 py-3.5 ${i > 0 ? "border-t border-border/70" : ""} ${
+                      me ? "bg-correct/10" : ""
+                    }`}
+                  >
+                    <RankBadge rank={r.rank} />
+                    <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-ink">
+                      {r.username}
+                      {me && <span className="ml-1 text-ink-secondary">· You</span>}
+                    </span>
+                    {r.timeSeconds != null && (
+                      <span className="tabular text-[11px] text-ink-secondary">
+                        {formatClock(r.timeSeconds)}
+                      </span>
+                    )}
+                    <span className="tabular text-base font-extrabold text-ink">
+                      {r.reached}
+                      {dailyRounds > 0 && (
+                        <span className="text-sm font-bold text-ink-secondary">/{dailyRounds}</span>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        ) : loading ? (
           <p className="py-8 text-center text-sm text-ink-secondary">Loading…</p>
         ) : rows.length === 0 ? (
-          <div className="rounded-3xl bg-surface px-6 py-10 text-center">
-            <p className="text-sm font-semibold text-ink">No scores yet this month</p>
-            <p className="mt-1 text-sm text-ink-secondary">Play a game to claim the top spot.</p>
-          </div>
+          <EmptyBoard title="No scores yet this month" sub="Play a game to claim the top spot." />
         ) : (
           <div className="overflow-hidden rounded-3xl bg-surface">
             {rows.map((r, i) => {
@@ -189,6 +243,41 @@ export function LeaderboardView() {
         )}
       </section>
     </main>
+  );
+}
+
+function formatClock(s: number): string {
+  const m = Math.floor(s / 60);
+  return `${m}:${(s % 60).toString().padStart(2, "0")}`;
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
+        active ? "bg-background text-ink shadow-sm" : "text-ink-secondary hover:text-ink"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function EmptyBoard({ title, sub }: { title: string; sub: string }) {
+  return (
+    <div className="rounded-3xl bg-surface px-6 py-10 text-center">
+      <p className="text-sm font-semibold text-ink">{title}</p>
+      <p className="mt-1 text-sm text-ink-secondary">{sub}</p>
+    </div>
   );
 }
 

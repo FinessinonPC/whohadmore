@@ -29,6 +29,13 @@ export interface LeaderboardRow {
   level: number;
 }
 
+export interface DailyRow {
+  rank: number;
+  username: string;
+  reached: number;
+  timeSeconds: number | null;
+}
+
 // --- Levels ------------------------------------------------------------------
 // Rising curve: early levels come quickly (rewarding), later ones take longer.
 // XP to go from level L to L+1 = 200 + (L-1)*100  (L1->2: 200, L2->3: 300, …).

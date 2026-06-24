@@ -11,6 +11,7 @@ import { Confetti } from "./Confetti";
 import { ChainTimeline } from "./ChainTimeline";
 import { LivesDisplay } from "./LivesDisplay";
 import { useProfile, type LastGame } from "@/hooks/useProfile";
+import { speedBonus } from "@/lib/leaderboard";
 import { formatDisplayDate, isToday } from "@/lib/date";
 
 interface ResultScreenProps {
@@ -87,13 +88,13 @@ export function ResultScreen({
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-5 pb-10 pt-5">
+    <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-5 pb-10 pt-5 sm:max-w-xl">
       {clearedChain && <Confetti />}
 
       {mode === "play" && <TopNav />}
 
       <motion.div
-        className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center py-6 text-center"
+        className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center py-6 text-center sm:max-w-md"
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", damping: 30, stiffness: 280 }}
@@ -162,11 +163,17 @@ export function ResultScreen({
         )}
 
         {/* Meta */}
-        <div className="mt-4 flex items-center gap-4 text-xs text-ink-secondary">
-          <span className="flex items-center gap-1.5">
+        <div className="mt-4 flex flex-col items-center gap-1.5">
+          <div className="flex items-center gap-4 text-xs text-ink-secondary">
             <LivesDisplay lives={lives} size="sm" />
-          </span>
-          <span className="tabular">⏱ {formatClock(timeSeconds)}</span>
+            <span className="tabular">⏱ {formatClock(timeSeconds)}</span>
+          </div>
+          <p className="text-[11px] font-semibold text-ink-secondary">
+            ⚡ Faster finishes earn more XP
+            {speedBonus(reached, timeSeconds) > 0
+              ? ` · +${speedBonus(reached, timeSeconds)} speed bonus`
+              : ""}
+          </p>
         </div>
 
         {/* Actions */}

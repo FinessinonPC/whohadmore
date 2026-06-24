@@ -5,7 +5,7 @@ import { BrandMark } from "@/components/ui/Logo";
 export const dynamic = "force-static";
 
 const DESCRIPTION =
-  "WhoHadMore is a free daily comparison game — two cards, one stat, tap whichever had more. Learn how to play, build a streak, and climb the leaderboard.";
+  "WhoHadMore is a daily comparison game — two cards, one stat, tap whichever had more. Learn how to play, build a streak, and climb the leaderboard.";
 
 export const metadata: Metadata = {
   title: "About",
@@ -31,8 +31,8 @@ export default function AboutPage() {
         <h1 className="text-4xl font-extrabold tracking-tight text-ink">About WhoHadMore</h1>
 
         <p>
-          <span className="font-semibold text-ink">WhoHadMore</span> is a free
-          daily comparison game. Every day you get a fresh higher-or-lower
+          <span className="font-semibold text-ink">WhoHadMore</span> is a daily
+          comparison game. Every day you get a fresh higher-or-lower
           puzzle: two cards appear side by side, each showing a person, place, or
           thing, and you simply tap whichever one had{" "}
           <span className="font-semibold text-ink">more</span> of that day&apos;s
