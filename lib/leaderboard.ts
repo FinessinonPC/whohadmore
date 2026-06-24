@@ -8,6 +8,7 @@ export interface Profile {
   session_id: string;
   username: string | null;
   xp: number;
+  total_score: number;
   total_stars: number;
   days_played: number;
   current_streak: number;

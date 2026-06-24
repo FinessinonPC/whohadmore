@@ -32,13 +32,13 @@ export async function GET(req: Request) {
   const period = monthPeriod(todayISO());
   const effectiveMonthly = profile.monthly_period === period ? profile.monthly_score : 0;
 
-  // Rank all-time, by total XP (only meaningful once they've earned some).
+  // Rank all-time, by streak-free total score (only meaningful once > 0).
   let rank: number | null = null;
-  if (profile.xp > 0) {
+  if (profile.total_score > 0) {
     const { count } = await supabase
       .from("profiles")
       .select("id", { count: "exact", head: true })
-      .gt("xp", profile.xp);
+      .gt("total_score", profile.total_score);
     rank = (count ?? 0) + 1;
   }
 

@@ -3,6 +3,7 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import { isValidISODate, monthPeriod, previousISODate, todayISO } from "@/lib/date";
 import {
+  dailyScore,
   earnedAchievementIds,
   heartsFor,
   levelFromXp,
@@ -133,6 +134,9 @@ export async function POST(req: Request) {
   const currentStreak = isToday ? nextStreak : profile.current_streak;
   const longestStreak = Math.max(profile.longest_streak, currentStreak);
   const monthlyScore = (profile.monthly_period === period ? profile.monthly_score : 0) + pts;
+  // All-time leaderboard score: streak-free (sum of daily scores). Only XP
+  // carries the streak bonus; the competitive boards don't.
+  const totalScore = (profile.total_score ?? 0) + dailyScore(reached, stars, time);
 
   const merged = Array.from(
     new Set([
@@ -153,6 +157,7 @@ export async function POST(req: Request) {
     .from("profiles")
     .update({
       xp,
+      total_score: totalScore,
       days_played: daysPlayed,
       total_stars: totalStars,
       current_streak: currentStreak,

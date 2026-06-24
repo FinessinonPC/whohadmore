@@ -61,6 +61,7 @@ create table if not exists public.profiles (
   session_id       uuid unique not null,
   username         text unique,
   xp               integer not null default 0,
+  total_score      integer not null default 0,
   total_stars      integer not null default 0,
   days_played      integer not null default 0,
   current_streak   integer not null default 0,
@@ -72,6 +73,9 @@ create table if not exists public.profiles (
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );
+-- Streak-free all-time leaderboard score (sum of daily scores). Added
+-- idempotently for tables created before this column existed.
+alter table public.profiles add column if not exists total_score integer not null default 0;
 create unique index if not exists profiles_username_lower_idx on public.profiles (lower(username));
 create index if not exists profiles_monthly_idx on public.profiles (monthly_period, monthly_score desc);
 
