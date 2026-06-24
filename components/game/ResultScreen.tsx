@@ -11,7 +11,7 @@ import { Confetti } from "./Confetti";
 import { ChainTimeline } from "./ChainTimeline";
 import { LivesDisplay } from "./LivesDisplay";
 import { useProfile, type LastGame } from "@/hooks/useProfile";
-import { speedBonus } from "@/lib/leaderboard";
+import { dailyScore, heartsFor } from "@/lib/leaderboard";
 import { formatDisplayDate, isToday } from "@/lib/date";
 
 interface ResultScreenProps {
@@ -28,8 +28,8 @@ interface ResultScreenProps {
   alreadyPlayed?: boolean;
   /** Set to the new level if this run pushed a signed-in player up a level. */
   levelUp?: number | null;
-  /** Streak multiplier that applied to this run's XP (signed-in players). */
-  streakBonus?: { days: number; multiplier: number; bonusXp: number } | null;
+  /** Current daily streak (signed-in players); shown as a stat. */
+  streak?: number | null;
   onPlayAgain?: () => void;
   onClose?: () => void;
   onReset?: () => void;
@@ -62,7 +62,7 @@ export function ResultScreen({
   mode,
   alreadyPlayed = false,
   levelUp = null,
-  streakBonus = null,
+  streak = null,
   onPlayAgain,
   onClose,
   onReset,
@@ -72,9 +72,11 @@ export function ResultScreen({
   const clearedChain = mode === "play" && !alreadyPlayed && rounds > 0 && reached >= rounds;
 
   async function share() {
-    const text = `WhoHadMore No. ${gameNumber} — ${topicLabel}\nMade it to ${reached}/${rounds} · +${xpEarned} XP · ${formatClock(
+    const hearts = heartsFor(lives);
+    const heartsBar = "❤️".repeat(hearts) + "🤍".repeat(3 - hearts);
+    const text = `WhoHadMore No. ${gameNumber}\n${reached}/${rounds}\n${heartsBar}\n${formatClock(
       timeSeconds
-    )}`;
+    )}\n${dailyScore(reached, hearts, timeSeconds).toLocaleString()}`;
     try {
       if (navigator.share) await navigator.share({ title: "WhoHadMore", text });
       else {
@@ -120,34 +122,13 @@ export function ResultScreen({
           <ChainTimeline position={reached} total={rounds} wrongRounds={wrongRounds} />
         </div>
 
-        {/* XP earned */}
+        {/* XP earned — on top */}
         <div className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-correct/30 bg-correct/10 px-4 py-2">
           <span className="font-condensed text-xl font-bold text-correct">
             +<CountUp value={xpEarned} run duration={1} /> XP
           </span>
           <span className="text-xs font-semibold text-correct/80">earned</span>
         </div>
-
-        {/* Streak payoff */}
-        {mode === "play" &&
-          (streakBonus && streakBonus.bonusXp > 0 ? (
-            <motion.div
-              className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#FFB300]/40 bg-[#FFB300]/10 px-3.5 py-1.5"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <span className="text-sm">🔥</span>
-              <span className="text-xs font-bold text-[#9A6A00]">
-                {streakBonus.days}-day streak · ×{streakBonus.multiplier.toFixed(2)} · +
-                {streakBonus.bonusXp} XP
-              </span>
-            </motion.div>
-          ) : (
-            <p className="mt-3 text-xs text-ink-secondary">
-              🔥 Play daily — your streak multiplies XP.
-            </p>
-          ))}
 
         {/* Level-up moment */}
         {levelUp != null && (
@@ -162,18 +143,20 @@ export function ResultScreen({
           </motion.div>
         )}
 
-        {/* Meta */}
-        <div className="mt-4 flex flex-col items-center gap-1.5">
-          <div className="flex items-center gap-4 text-xs text-ink-secondary">
-            <LivesDisplay lives={lives} size="sm" />
-            <span className="tabular">⏱ {formatClock(timeSeconds)}</span>
+        {/* Streak · time · hearts */}
+        <div className="mt-5 grid w-full max-w-xs grid-cols-3 divide-x divide-border rounded-2xl border border-border bg-surface py-3.5">
+          <div className="flex flex-col items-center justify-center gap-1.5 px-2">
+            <span className="tabular text-xl font-extrabold text-ink">🔥 {streak ?? 0}</span>
+            <span className="small-caps text-[9px] text-ink-secondary">Streak</span>
           </div>
-          <p className="text-[11px] font-semibold text-ink-secondary">
-            ⚡ Faster finishes earn more XP
-            {speedBonus(reached, timeSeconds) > 0
-              ? ` · +${speedBonus(reached, timeSeconds)} speed bonus`
-              : ""}
-          </p>
+          <div className="flex flex-col items-center justify-center gap-1.5 px-2">
+            <span className="tabular text-xl font-extrabold text-ink">{formatClock(timeSeconds)}</span>
+            <span className="small-caps text-[9px] text-ink-secondary">Time</span>
+          </div>
+          <div className="flex flex-col items-center justify-center gap-1.5 px-2">
+            <LivesDisplay lives={lives} size="sm" />
+            <span className="small-caps text-[9px] text-ink-secondary">Hearts</span>
+          </div>
         </div>
 
         {/* Actions */}

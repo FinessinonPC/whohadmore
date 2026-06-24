@@ -18,7 +18,7 @@ import {
   type StoredResult,
 } from "@/lib/playStore";
 import { msUntilNextGameMidnight } from "@/lib/date";
-import { levelFromXp, pointsForGame, streakMultiplier, type Profile } from "@/lib/leaderboard";
+import { levelFromXp, pointsForGame, type Profile } from "@/lib/leaderboard";
 import type { GameResultSummary } from "@/hooks/useGame";
 import type { FullGame } from "@/types";
 
@@ -30,12 +30,6 @@ interface PlayExperienceProps {
 }
 
 type Mode = "start" | "playing" | "completed";
-
-interface StreakBonus {
-  days: number;
-  multiplier: number;
-  bonusXp: number;
-}
 
 export function PlayExperience({
   initialGame,
@@ -50,14 +44,16 @@ export function PlayExperience({
   const [result, setResult] = useState<StoredResult | null>(null);
   const [alreadyPlayed, setAlreadyPlayed] = useState(false);
   const [levelUp, setLevelUp] = useState<number | null>(null);
-  const [streakBonus, setStreakBonus] = useState<StreakBonus | null>(null);
+  const [streak, setStreak] = useState<number | null>(null);
+  const [creditedXp, setCreditedXp] = useState<number | null>(null);
   const [resumeSnap, setResumeSnap] = useState<ProgressSnapshot | null>(null);
 
   // On load / whenever the day changes (midnight roll-over): restore a finished
   // result, otherwise pick up any in-progress game so we resume, not restart.
   useEffect(() => {
     setLevelUp(null);
-    setStreakBonus(null);
+    setStreak(null);
+    setCreditedXp(null);
     const stored = getLocalResult(date);
     if (stored) {
       setResult(stored);
@@ -99,7 +95,8 @@ export function PlayExperience({
       setResult(stored);
       setAlreadyPlayed(false);
       setLevelUp(null);
-      setStreakBonus(null);
+      setStreak(null);
+      setCreditedXp(null);
       setMode("completed");
 
       // Record the result + update leaderboard stats (best-effort; the route is
@@ -124,16 +121,9 @@ export function PlayExperience({
             const after = levelFromXp(data.profile.xp);
             const before = levelFromXp(data.profile.xp - data.pointsEarned);
             if (after > before) setLevelUp(after);
-
-            // Show the streak paying off: the credited XP includes the multiplier.
-            const streak = data.profile.current_streak;
-            if (streak >= 1) {
-              setStreakBonus({
-                days: streak,
-                multiplier: streakMultiplier(streak),
-                bonusXp: Math.max(0, data.pointsEarned - xpEarned),
-              });
-            }
+            // Streak (shown as a stat) and the actual credited XP (streak included).
+            setStreak(data.profile.current_streak);
+            if (data.pointsEarned > 0) setCreditedXp(data.pointsEarned);
           }
         })
         .catch(() => {
@@ -156,7 +146,8 @@ export function PlayExperience({
     setResult(null);
     setAlreadyPlayed(false);
     setLevelUp(null);
-    setStreakBonus(null);
+    setStreak(null);
+    setCreditedXp(null);
     setResumeSnap(null);
     setMode("start");
   };
@@ -169,14 +160,14 @@ export function PlayExperience({
         lives={result.lives}
         timeSeconds={result.timeSeconds}
         wrongRounds={result.wrongRounds}
-        xpEarned={result.xpEarned}
+        xpEarned={creditedXp ?? result.xpEarned}
         topicLabel={game.topic_label}
         date={date}
         gameNumber={gameNumber}
         mode="play"
         alreadyPlayed={alreadyPlayed}
         levelUp={levelUp}
-        streakBonus={streakBonus}
+        streak={streak}
         onReset={resetForTesting}
       />
     );
