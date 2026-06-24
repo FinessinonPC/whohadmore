@@ -31,9 +31,10 @@ export interface LeaderboardRow {
 
 export interface DailyRow {
   rank: number;
-  username: string;
+  name: string; // username, or "Anonymous" for players without a profile
   reached: number;
   timeSeconds: number | null;
+  you: boolean;
 }
 
 // --- Levels ------------------------------------------------------------------

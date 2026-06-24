@@ -6,10 +6,14 @@ import type { DailyRow } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/leaderboard/daily?date=YYYY-MM-DD — best players on that day's game,
-// ranked by how far they got, then by who was fastest.
+// GET /api/leaderboard/daily?date=YYYY-MM-DD&session=<id>
+// Everyone who played that day's game (signed in or not), ranked by how far
+// they got, then who was fastest. Profile-less players show as "Anonymous".
+// Scoped to one date, so it naturally resets when the daily game rolls over.
 export async function GET(req: Request) {
-  const param = new URL(req.url).searchParams.get("date");
+  const url = new URL(req.url);
+  const param = url.searchParams.get("date");
+  const viewer = url.searchParams.get("session");
   const date = param && isValidISODate(param) ? param : todayISO();
 
   if (!isSupabaseConfigured()) {
@@ -18,7 +22,7 @@ export async function GET(req: Request) {
 
   const supabase = getServiceSupabase();
 
-  // Results for the day (one per session).
+  // Every result for the day — one per session, signed in or anonymous.
   const { data: results } = await supabase
     .from("game_results")
     .select("session_id, score, time_seconds")
@@ -30,18 +34,18 @@ export async function GET(req: Request) {
     return NextResponse.json({ date, rounds: 0, rows: [] });
   }
 
-  // Map sessions -> usernames (only signed-in players appear on the board).
+  // Names for sessions that have claimed a username.
   const sessionIds = Array.from(new Set(rows.map((r) => r.session_id)));
   const { data: profiles } = await supabase
     .from("profiles")
     .select("session_id, username")
     .in("session_id", sessionIds)
-    .not("username", "is", null)
-    .returns<{ session_id: string; username: string }[]>();
+    .returns<{ session_id: string; username: string | null }[]>();
+  const nameBy = new Map(
+    (profiles ?? []).filter((p) => p.username).map((p) => [p.session_id, p.username as string])
+  );
 
-  const nameBy = new Map((profiles ?? []).map((p) => [p.session_id, p.username]));
-
-  // Rounds for the "X / Y" display.
+  // Rounds, for the "X / Y" display.
   let rounds = 0;
   const { data: game } = await supabase
     .from("daily_games")
@@ -57,18 +61,18 @@ export async function GET(req: Request) {
   }
 
   const ranked: DailyRow[] = rows
-    .filter((r) => nameBy.has(r.session_id))
     .sort((a, b) => {
       const reachedDiff = (b.score ?? 0) - (a.score ?? 0);
       if (reachedDiff !== 0) return reachedDiff;
-      return (a.time_seconds ?? 1e9) - (b.time_seconds ?? 1e9); // faster wins ties
+      return (a.time_seconds ?? 1e9) - (b.time_seconds ?? 1e9);
     })
-    .slice(0, 50)
+    .slice(0, 100)
     .map((r, i) => ({
       rank: i + 1,
-      username: nameBy.get(r.session_id)!,
+      name: nameBy.get(r.session_id) ?? "Anonymous",
       reached: r.score ?? 0,
       timeSeconds: r.time_seconds,
+      you: Boolean(viewer) && r.session_id === viewer,
     }));
 
   return NextResponse.json({ date, rounds, rows: ranked });

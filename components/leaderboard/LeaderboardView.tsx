@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { TopNav } from "@/components/ui/TopNav";
 import { useProfile } from "@/hooks/useProfile";
+import { getSessionId } from "@/lib/playStore";
 import {
   ACHIEVEMENTS,
   levelInfo,
@@ -31,7 +32,7 @@ export function LeaderboardView() {
       .then((r) => r.json())
       .then((d: { rows: LeaderboardRow[] }) => setRows(d.rows ?? []))
       .catch(() => setRows([]));
-    fetch("/api/leaderboard/daily")
+    fetch(`/api/leaderboard/daily?session=${getSessionId()}`)
       .then((r) => r.json())
       .then((d: { rows: DailyRow[]; rounds: number }) => {
         setDaily(d.rows ?? []);
@@ -180,19 +181,17 @@ export function LeaderboardView() {
             />
           ) : (
             <div className="overflow-hidden rounded-3xl bg-surface">
-              {daily.map((r, i) => {
-                const me = r.username === profile?.username;
-                return (
+              {daily.map((r, i) => (
                   <div
-                    key={r.rank}
+                    key={i}
                     className={`flex items-center gap-3 px-4 py-3.5 ${i > 0 ? "border-t border-border/70" : ""} ${
-                      me ? "bg-correct/10" : ""
+                      r.you ? "bg-correct/10" : ""
                     }`}
                   >
                     <RankBadge rank={r.rank} />
-                    <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-ink">
-                      {r.username}
-                      {me && <span className="ml-1 text-ink-secondary">· You</span>}
+                    <span className={`min-w-0 flex-1 truncate text-[15px] font-bold ${r.name === "Anonymous" && !r.you ? "text-ink-secondary" : "text-ink"}`}>
+                      {r.name}
+                      {r.you && <span className="ml-1 text-ink-secondary">· You</span>}
                     </span>
                     {r.timeSeconds != null && (
                       <span className="tabular text-[11px] text-ink-secondary">
@@ -206,8 +205,7 @@ export function LeaderboardView() {
                       )}
                     </span>
                   </div>
-                );
-              })}
+              ))}
             </div>
           )
         ) : loading ? (
