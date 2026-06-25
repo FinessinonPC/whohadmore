@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -10,7 +9,7 @@ import { CountUp } from "./CountUp";
 import { Confetti } from "./Confetti";
 import { ChainTimeline } from "./ChainTimeline";
 import { LivesDisplay } from "./LivesDisplay";
-import { useProfile, type LastGame } from "@/hooks/useProfile";
+import { useProfile } from "@/hooks/useProfile";
 import { dailyScore, heartsFor } from "@/lib/leaderboard";
 import { formatDisplayDate, isToday } from "@/lib/date";
 
@@ -179,15 +178,7 @@ export function ResultScreen({
           </div>
         ) : (
           <div className="mt-7 flex w-full flex-col gap-3">
-            <ClaimBlock
-              lastGame={{
-                play_date: date,
-                reached,
-                rounds,
-                lives,
-                time_seconds: timeSeconds,
-              }}
-            />
+            <ClaimBlock />
 
             {/* Push to the archive */}
             <Link href="/archive" className="contents">
@@ -230,16 +221,14 @@ export function ResultScreen({
   );
 }
 
-/** Inline username signup / signed-in state for the result screen. */
-function ClaimBlock({ lastGame }: { lastGame: LastGame }) {
-  const router = useRouter();
-  const { profile, loading, claim } = useProfile();
-  const [username, setUsername] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+/** Sign-up CTA / signed-in state for the result screen. The full email flow
+ *  lives on the profile page; the just-played game is already recorded, so
+ *  signing up there still counts it. */
+function ClaimBlock() {
+  const { profile, loading } = useProfile();
 
   if (loading) {
-    return <div className="h-[92px] animate-pulse rounded-2xl bg-surface" />;
+    return <div className="h-[68px] animate-pulse rounded-2xl bg-surface" />;
   }
 
   if (profile?.username) {
@@ -248,45 +237,22 @@ function ClaimBlock({ lastGame }: { lastGame: LastGame }) {
         <p className="text-sm text-ink">
           Signed in as <span className="font-extrabold">{profile.username}</span>
         </p>
-        <p className="mt-0.5 text-xs text-ink-secondary">XP added to your total — keep your streak going.</p>
+        <p className="mt-0.5 text-xs text-ink-secondary">Score added to your totals — keep your streak going.</p>
       </div>
     );
   }
 
-  async function save() {
-    setSaving(true);
-    setError(null);
-    // Pass the just-finished game so it counts toward the brand-new profile.
-    const res = await claim(username.trim(), lastGame);
-    if (!res.ok) {
-      setSaving(false);
-      setError(res.error ?? "Couldn't save that.");
-      return;
-    }
-    // Straight to their profile so they can see their progress.
-    router.push("/profile");
-  }
-
   return (
-    <div className="rounded-2xl border border-border bg-surface p-4 text-center">
-      <p className="text-[15px] font-bold text-ink">Save your progress</p>
-      <p className="mt-0.5 text-xs text-ink-secondary">
-        Pick a username to bank your XP, build a streak, and climb the leaderboard.
-      </p>
-      <div className="mt-3 flex gap-2">
-        <input
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && username.trim() && save()}
-          placeholder="Username"
-          maxLength={20}
-          className="h-11 flex-1 rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-ink"
-        />
-        <Button onClick={save} disabled={saving || !username.trim()}>
-          {saving ? "…" : "Save"}
-        </Button>
-      </div>
-      {error && <p className="mt-1.5 text-xs font-semibold text-wrong">{error}</p>}
-    </div>
+    <Link href="/profile" className="contents">
+      <button className="flex w-full items-center justify-between rounded-2xl border border-border bg-surface px-5 py-4 text-left transition-colors hover:bg-border/40">
+        <span>
+          <span className="block text-[15px] font-bold text-ink">Save your score</span>
+          <span className="block text-xs text-ink-secondary">
+            Sign up with your email to bank it and climb the leaderboard
+          </span>
+        </span>
+        <span className="text-xl text-ink-secondary">→</span>
+      </button>
+    </Link>
   );
 }

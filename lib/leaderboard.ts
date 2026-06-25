@@ -7,6 +7,7 @@ export interface Profile {
   id: string;
   session_id: string;
   username: string | null;
+  email: string | null;
   xp: number;
   total_score: number;
   total_stars: number;

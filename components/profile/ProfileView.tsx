@@ -4,24 +4,13 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { TopNav } from "@/components/ui/TopNav";
+import { SignUpFlow } from "@/components/auth/SignUpFlow";
 import { useProfile } from "@/hooks/useProfile";
 import { levelInfo, rankTitle, streakMultiplier } from "@/lib/leaderboard";
 
 /** The player's own profile: level, streak multiplier, and lifetime stats. */
 export function ProfileView() {
-  const { profile, rank, claim } = useProfile();
-  const [username, setUsername] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  async function save() {
-    setSaving(true);
-    setError(null);
-    const res = await claim(username.trim());
-    setSaving(false);
-    if (!res.ok) setError(res.error ?? "Failed");
-    else setUsername("");
-  }
+  const { profile, rank, claim, reload } = useProfile();
 
   const xp = profile?.xp ?? 0;
   const { level, into, needed } = levelInfo(xp);
@@ -37,26 +26,7 @@ export function ProfileView() {
 
       <section className="mt-6 rounded-[28px] bg-surface p-6">
         {!hasName ? (
-          <div className="text-center">
-            <p className="text-xl font-extrabold text-ink">Create your profile</p>
-            <p className="mx-auto mt-1 max-w-xs text-sm text-ink-secondary">
-              Pick a username to bank your XP, build a streak, and climb the ranks.
-            </p>
-            <div className="mt-5 flex flex-col gap-2.5">
-              <input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && username.trim() && save()}
-                placeholder="Choose a username"
-                maxLength={20}
-                className="h-12 w-full rounded-2xl border border-border bg-background px-4 text-center text-base font-semibold outline-none focus:border-ink"
-              />
-              <Button size="lg" onClick={save} disabled={saving || !username.trim()} className="w-full">
-                {saving ? "Saving…" : "Claim username"}
-              </Button>
-            </div>
-            {error && <p className="mt-2 text-sm font-semibold text-wrong">{error}</p>}
-          </div>
+          <SignUpFlow onDone={reload} />
         ) : (
           <>
             <div className="flex items-center gap-4">
