@@ -74,10 +74,11 @@ export function CardPair({
                   : { type: "spring", damping: 30, stiffness: 320, mass: 0.8 }
               }
             >
-              {/* Responsive tiles: square and stacked on phones (two fit the
-                  screen), larger side-by-side panels that fill the width on
-                  desktop. */}
-              <div className="relative aspect-square h-full max-w-full md:aspect-auto md:w-full">
+              {/* Responsive tiles: square either way — sized by height when
+                  stacked on phones, and by width (centered, capped to the
+                  available height) as side-by-side panels on desktop, so they
+                  stay square instead of stretching into tall skinny strips. */}
+              <div className="relative aspect-square h-full max-w-full md:h-auto md:w-full md:max-h-full">
                 <Card
                   card={card}
                   statUnit={statUnit}
