@@ -8,7 +8,7 @@ import { getSessionId } from "@/lib/playStore";
 type Step = "email" | "code" | "username";
 
 /**
- * Passwordless sign-up / login. Enter email → receive a 6-digit code → verify →
+ * Passwordless sign-up / login. Enter email → receive a verification code → verify →
  * (new players) pick a unique username. On success, onDone() should reload the
  * profile. Requires Supabase email OTP to be enabled and the email template to
  * include the {{ .Token }} code.
@@ -128,9 +128,9 @@ export function SignUpFlow({ onDone }: { onDone: () => void }) {
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
               onKeyDown={(e) => e.key === "Enter" && code.trim() && verify()}
-              placeholder="123456"
-              maxLength={6}
-              className="h-12 w-full rounded-2xl border border-border bg-background px-4 text-center text-2xl font-bold tracking-[0.4em] outline-none focus:border-ink"
+              placeholder="12345678"
+              maxLength={8}
+              className="h-12 w-full rounded-2xl border border-border bg-background px-4 text-center text-2xl font-bold tracking-[0.3em] outline-none focus:border-ink"
             />
             <Button size="lg" onClick={verify} disabled={busy || code.trim().length < 6} className="w-full">
               {busy ? "Verifying…" : "Verify"}
