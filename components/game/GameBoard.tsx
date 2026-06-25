@@ -123,28 +123,17 @@ export function GameBoard({
       <HeartLossOverlay event={lossEvent} max={STARTING_LIVES} />
 
       <main className="mx-auto flex h-dvh w-full max-w-[440px] flex-col overflow-hidden px-4 pb-5 pt-5 md:max-w-[880px] lg:max-w-[1120px]">
-        {/* Header */}
+        {/* Header — kept minimal during play. The logo returns to the daily
+            page, where the saved progress lets the player resume. */}
         <header className="flex shrink-0 items-center justify-between">
-          <div className="flex items-center gap-2">
-            {embedded ? (
-              <span className="text-sm font-extrabold tracking-tight text-ink">Preview</span>
-            ) : (
-              <>
-                <Link href="/" className="inline-flex items-center gap-1.5">
-                  <BrandMark className="h-5 w-5" />
-                  <span className="text-sm font-extrabold tracking-tight text-ink">
-                    WhoHadMore
-                  </span>
-                </Link>
-                <Link
-                  href="/leaderboard"
-                  className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
-                >
-                  Leaderboard
-                </Link>
-              </>
-            )}
-          </div>
+          {embedded ? (
+            <span className="text-sm font-extrabold tracking-tight text-ink">Preview</span>
+          ) : (
+            <Link href="/" className="inline-flex items-center gap-1.5" aria-label="Back to today's game">
+              <BrandMark className="h-5 w-5" />
+              <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
+            </Link>
+          )}
           <LivesDisplay lives={state.lives} />
         </header>
 

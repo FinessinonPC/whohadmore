@@ -3,8 +3,15 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import { isValidISODate, todayISO } from "@/lib/date";
 import { dailyScore, heartsFor, type DailyRow } from "@/lib/leaderboard";
+import { hashSeed } from "@/lib/seed";
 
 export const dynamic = "force-dynamic";
+
+// A stable, unique-ish display name for a profile-less player, derived from
+// their session id so it's the same every day (e.g. "Unknown4821").
+function unknownName(sessionId: string): string {
+  return `Unknown${1000 + (hashSeed(sessionId) % 9000)}`;
+}
 
 // GET /api/leaderboard/daily?date=YYYY-MM-DD&session=<id>
 // Everyone who played that day's game (signed in or not), ranked by how far
@@ -93,15 +100,19 @@ export async function GET(req: Request) {
         return (a.timeSeconds ?? 1e9) - (b.timeSeconds ?? 1e9);
       })
       .slice(0, 100)
-      .map((r, i) => ({
-        rank: i + 1,
-        name: nameBy.get(r.session_id) ?? "Anonymous",
-        score: r.score,
-        reached: r.reached,
-        hearts: r.hearts,
-        timeSeconds: r.timeSeconds,
-        you: Boolean(viewer) && r.session_id === viewer,
-      }));
+      .map((r, i) => {
+        const username = nameBy.get(r.session_id);
+        return {
+          rank: i + 1,
+          name: username ?? unknownName(r.session_id),
+          anon: !username,
+          score: r.score,
+          reached: r.reached,
+          hearts: r.hearts,
+          timeSeconds: r.timeSeconds,
+          you: Boolean(viewer) && r.session_id === viewer,
+        };
+      });
 
     return NextResponse.json({ date, rounds, rows: ranked, configured: true });
   } catch (e) {

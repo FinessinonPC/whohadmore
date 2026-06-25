@@ -32,7 +32,8 @@ export interface LeaderboardRow {
 
 export interface DailyRow {
   rank: number;
-  name: string; // username, or "Anonymous" for players without a profile
+  name: string; // username, or "Unknown####" for players without a profile
+  anon: boolean; // true when this player has no claimed username
   score: number; // combined daily score (correct answers + hearts + speed)
   reached: number; // correct answers
   hearts: number; // lives left at the end (0–3)

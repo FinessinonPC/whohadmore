@@ -70,6 +70,8 @@ export function ResultScreen({
   const [copied, setCopied] = useState(false);
   const daily = isToday(date);
   const clearedChain = mode === "play" && !alreadyPlayed && rounds > 0 && reached >= rounds;
+  // The score that gets featured on the leaderboard (streak-free).
+  const score = dailyScore(reached, heartsFor(lives), timeSeconds);
 
   async function share() {
     const hearts = heartsFor(lives);
@@ -110,12 +112,18 @@ export function ResultScreen({
           {headline(reached, rounds, lives)}
         </h2>
 
-        {/* Hero: how far you made it */}
-        <div className="mt-5 flex items-baseline gap-1">
-          <span className="font-condensed text-[5rem] font-bold leading-none text-ink">{reached}</span>
-          <span className="font-condensed text-3xl font-bold text-ink-secondary">/ {rounds}</span>
+        {/* Hero: your leaderboard score */}
+        <div className="mt-5">
+          <span className="font-condensed text-[5rem] font-bold leading-none text-ink">
+            <CountUp value={score} run duration={1.2} />
+          </span>
         </div>
-        <p className="small-caps mt-1 text-[11px] text-ink-secondary">rounds reached</p>
+        <p className="small-caps mt-1 text-[11px] text-ink-secondary">
+          your score · featured on the leaderboard
+        </p>
+        <p className="mt-2 text-sm font-semibold text-ink">
+          Reached {reached}/{rounds} rounds
+        </p>
 
         {/* Frozen run timeline */}
         <div className="mt-4 w-full">
@@ -255,8 +263,8 @@ function ClaimBlock({ lastGame }: { lastGame: LastGame }) {
       setError(res.error ?? "Couldn't save that.");
       return;
     }
-    // Straight to their stats page so they can see their progress.
-    router.push("/leaderboard");
+    // Straight to their profile so they can see their progress.
+    router.push("/profile");
   }
 
   return (
