@@ -133,6 +133,19 @@ export function PlayExperience({
     [date]
   );
 
+  // Tapping the brand mid-game returns to the daily page. On the daily route we
+  // reset to the start screen (re-reading saved progress so Resume is offered);
+  // from an archived game we navigate to today's game.
+  const goToDaily = useCallback(() => {
+    if (!isDaily) {
+      router.push("/");
+      return;
+    }
+    const prog = getProgress(date);
+    setResumeSnap(prog && prog.roundsPlayed > 0 ? prog : null);
+    setMode("start");
+  }, [isDaily, date, router]);
+
   if (!playable) {
     return <EmptyState date={date} isDaily={isDaily} />;
   }
@@ -182,6 +195,7 @@ export function PlayExperience({
         onComplete={handleComplete}
         resumeState={resumeSnap}
         onCheckpoint={(snap) => saveProgress(date, snap)}
+        onExit={goToDaily}
       />
     );
   }

@@ -1,8 +1,7 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { ArchiveCalendar } from "@/components/archive/ArchiveCalendar";
 import { ArchiveList } from "@/components/archive/ArchiveList";
-import { BrandMark } from "@/components/ui/Logo";
+import { TopNav } from "@/components/ui/TopNav";
 import { getPublishedGamesWithNumbers } from "@/lib/games";
 import { todayISO } from "@/lib/date";
 
@@ -19,21 +18,10 @@ export default async function ArchivePage() {
   const games = await getPublishedGamesWithNumbers(todayISO());
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:max-w-4xl">
-      <header className="mb-8 flex items-center justify-between">
-        <Link href="/" className="inline-flex items-center gap-1.5">
-          <BrandMark className="h-5 w-5" />
-          <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
-        </Link>
-        <Link
-          href="/"
-          className="rounded-full bg-cta px-4 py-1.5 text-xs font-semibold text-white"
-        >
-          Today&apos;s game
-        </Link>
-      </header>
+    <main className="mx-auto w-full max-w-2xl px-4 pb-16 pt-5 sm:max-w-4xl">
+      <TopNav />
 
-      <div className="mb-6">
+      <div className="mb-6 mt-8">
         <h1 className="text-3xl font-extrabold tracking-tight text-ink">Archive</h1>
         <p className="mt-1 text-sm text-ink-secondary">
           {games.length} games and counting — pick any day to play.

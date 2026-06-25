@@ -31,6 +31,10 @@ interface GameBoardProps {
   onCheckpoint?: (snap: GameCheckpoint) => void;
   /** Embedded in the admin preview — hide site nav so nothing navigates away. */
   embedded?: boolean;
+  /** Tap-the-brand handler. On the daily route this returns to the start screen
+   *  (saved progress lets the player resume); from an archived game it goes to
+   *  today's game. Falls back to a plain link home when omitted. */
+  onExit?: () => void;
 }
 
 function hintFor(phase: GamePhase): { text: string; tone: string } {
@@ -54,6 +58,7 @@ export function GameBoard({
   resumeState = null,
   onCheckpoint,
   embedded = false,
+  onExit,
 }: GameBoardProps) {
   // Random-but-stable card order: unique per player (session) and per day, yet
   // reproducible so a resumed game keeps the same order.
@@ -123,11 +128,20 @@ export function GameBoard({
       <HeartLossOverlay event={lossEvent} max={STARTING_LIVES} />
 
       <main className="mx-auto flex h-dvh w-full max-w-[440px] flex-col overflow-hidden px-4 pb-5 pt-5 md:max-w-[880px] lg:max-w-[1120px]">
-        {/* Header — kept minimal during play. The logo returns to the daily
-            page, where the saved progress lets the player resume. */}
+        {/* Header — kept minimal during play. The brand returns to the daily
+            page; saved progress lets the player resume. */}
         <header className="flex shrink-0 items-center justify-between">
           {embedded ? (
             <span className="text-sm font-extrabold tracking-tight text-ink">Preview</span>
+          ) : onExit ? (
+            <button
+              onClick={onExit}
+              className="inline-flex items-center gap-1.5"
+              aria-label="Back to today's game"
+            >
+              <BrandMark className="h-5 w-5" />
+              <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
+            </button>
           ) : (
             <Link href="/" className="inline-flex items-center gap-1.5" aria-label="Back to today's game">
               <BrandMark className="h-5 w-5" />
