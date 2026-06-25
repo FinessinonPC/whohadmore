@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { getBrowserSupabase } from "@/lib/supabase";
-import { getSessionId } from "@/lib/playStore";
+import { getSessionId, setSessionId } from "@/lib/playStore";
 
 type Step = "email" | "code" | "username";
 
@@ -58,9 +58,15 @@ export function SignUpFlow({ onDone }: { onDone: () => void }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ access_token: accessToken, session_id: getSessionId() }),
     });
-    const d = (await res.json()) as { profile?: unknown; needsUsername?: boolean; error?: string };
+    const d = (await res.json()) as {
+      profile?: { session_id?: string };
+      needsUsername?: boolean;
+      error?: string;
+    };
     setBusy(false);
     if (d.profile) {
+      // Adopt the account's canonical session so this device acts as the account.
+      if (d.profile.session_id) setSessionId(d.profile.session_id);
       onDone();
       return;
     }
@@ -83,9 +89,10 @@ export function SignUpFlow({ onDone }: { onDone: () => void }) {
         username: username.trim(),
       }),
     });
-    const d = (await res.json()) as { profile?: unknown; error?: string };
+    const d = (await res.json()) as { profile?: { session_id?: string }; error?: string };
     setBusy(false);
     if (d.profile) {
+      if (d.profile.session_id) setSessionId(d.profile.session_id);
       onDone();
       return;
     }

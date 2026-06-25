@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getLocalResult } from "@/lib/playStore";
+import { usePlayedResults } from "@/hooks/usePlayedResults";
 import { todayISO } from "@/lib/date";
 import type { DailyGame } from "@/types";
 
@@ -46,15 +47,20 @@ export function ArchiveCalendar({ games }: ArchiveCalendarProps) {
   const [year, setYear] = useState(ly);
   const [month, setMonth] = useState(lm - 1);
 
-  const [played, setPlayed] = useState<Record<string, PlayedResult>>({});
+  const serverResults = usePlayedResults();
+  const [local, setLocal] = useState<Record<string, PlayedResult>>({});
   useEffect(() => {
     const map: Record<string, PlayedResult> = {};
     games.forEach((g) => {
       const r = getLocalResult(g.play_date);
       if (r) map[g.play_date] = { reached: r.reached, rounds: r.rounds };
     });
-    setPlayed(map);
+    setLocal(map);
   }, [games]);
+  const played: Record<string, PlayedResult> = useMemo(
+    () => ({ ...serverResults, ...local }),
+    [serverResults, local]
+  );
 
   const { cells, label } = useMemo(() => {
     const firstWeekday = new Date(Date.UTC(year, month, 1)).getUTCDay();

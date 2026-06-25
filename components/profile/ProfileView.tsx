@@ -10,7 +10,7 @@ import { levelInfo, rankTitle, streakMultiplier } from "@/lib/leaderboard";
 
 /** The player's own profile: level, streak multiplier, and lifetime stats. */
 export function ProfileView() {
-  const { profile, rank, claim, reload } = useProfile();
+  const { profile, rank, claim, reload, loading } = useProfile();
 
   const xp = profile?.xp ?? 0;
   const { level, into, needed } = levelInfo(xp);
@@ -25,9 +25,7 @@ export function ProfileView() {
       <p className="mt-1 text-[15px] text-ink-secondary">Your level, streak, and lifetime stats.</p>
 
       <section className="mt-6 rounded-[28px] bg-surface p-6">
-        {!hasName ? (
-          <SignUpFlow onDone={reload} />
-        ) : (
+        {hasName ? (
           <>
             <div className="flex items-center gap-4">
               <LevelRing level={level} progress={needed > 0 ? into / needed : 0} />
@@ -71,9 +69,29 @@ export function ProfileView() {
               <UsernameEditor current={profile?.username ?? ""} onSave={claim} />
             </div>
           </>
+        ) : loading ? (
+          <ProfileSkeleton />
+        ) : (
+          <SignUpFlow onDone={reload} />
         )}
       </section>
     </main>
+  );
+}
+
+function ProfileSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="flex items-center gap-4">
+        <div className="h-[72px] w-[72px] shrink-0 rounded-full bg-background" />
+        <div className="flex-1 space-y-2">
+          <div className="h-6 w-32 rounded bg-background" />
+          <div className="h-4 w-24 rounded bg-background" />
+        </div>
+      </div>
+      <div className="mt-5 h-3.5 w-full rounded-full bg-background" />
+      <div className="mt-6 h-20 w-full rounded-2xl bg-background" />
+    </div>
   );
 }
 

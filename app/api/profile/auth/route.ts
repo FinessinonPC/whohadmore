@@ -21,6 +21,17 @@ interface Body {
   username?: string;
 }
 
+interface ResultRow {
+  play_date: string;
+  points: number | null;
+  stars: number | null;
+  score: number | null;
+  time_seconds: number | null;
+  lives_remaining: number | null;
+}
+
+const RESULT_COLUMNS = "play_date, points, stars, score, time_seconds, lives_remaining";
+
 function computeStreak(dates: Set<string>, today: string): number {
   let cursor = dates.has(today)
     ? today
@@ -33,6 +44,34 @@ function computeStreak(dates: Set<string>, today: string): number {
     cursor = previousISODate(cursor);
   }
   return streak;
+}
+
+/** Roll a session's full result history up into profile stats. Idempotent: the
+ *  same rows always produce the same totals (points/stars are stored per game). */
+function aggregate(rows: ResultRow[], today: string, period: string) {
+  const dates = new Set(rows.map((r) => r.play_date));
+  const xp = rows.reduce((s, r) => s + (r.points ?? 0), 0);
+  const totalStars = rows.reduce((s, r) => s + (r.stars ?? 0), 0);
+  const totalScore = rows.reduce(
+    (s, r) =>
+      s + dailyScore(r.score ?? 0, r.stars ?? heartsFor(r.lives_remaining ?? 0), r.time_seconds ?? 0),
+    0
+  );
+  const monthlyScore = rows
+    .filter((r) => r.play_date.startsWith(period))
+    .reduce((s, r) => s + (r.points ?? 0), 0);
+  const daysPlayed = dates.size;
+  const streak = computeStreak(dates, today);
+  const lastPlayed = rows.length ? rows.map((r) => r.play_date).sort().slice(-1)[0] : null;
+  const achievements = earnedAchievementIds({
+    daysPlayed,
+    totalStars,
+    currentStreak: streak,
+    level: levelFromXp(xp),
+    clearedThisGame: rows.some((r) => (r.stars ?? 0) >= 3),
+    flawlessThisGame: false,
+  });
+  return { xp, totalStars, totalScore, monthlyScore, daysPlayed, streak, lastPlayed, achievements };
 }
 
 // POST /api/profile/auth
@@ -65,8 +104,10 @@ export async function POST(req: Request) {
   }
 
   const supabase = getServiceSupabase();
+  const today = todayISO();
+  const period = monthPeriod(today);
 
-  // Already have an account for this email? Log them in on this device.
+  // Already have an account for this email? Log them in.
   const { data: existing } = await supabase
     .from("profiles")
     .select("*")
@@ -74,13 +115,71 @@ export async function POST(req: Request) {
     .maybeSingle<Profile>();
 
   if (existing) {
-    if (existing.session_id !== session_id) {
-      await supabase
-        .from("profiles")
-        .update({ session_id, updated_at: new Date().toISOString() })
-        .eq("id", existing.id);
+    const canonical = existing.session_id;
+
+    // Same device as the account already — nothing to merge or recompute.
+    if (canonical === session_id) {
+      return NextResponse.json({ profile: existing, loggedIn: true });
     }
-    return NextResponse.json({ profile: { ...existing, session_id }, loggedIn: true });
+
+    // Merge any plays made on THIS device (its anonymous session, pre-login)
+    // into the account's canonical session — so the game they just finished
+    // counts and is attributed to their username, not orphaned.
+    const { data: canonRows } = await supabase
+      .from("game_results")
+      .select("play_date")
+      .eq("session_id", canonical)
+      .returns<{ play_date: string }[]>();
+    const canonDates = new Set((canonRows ?? []).map((r) => r.play_date));
+
+    const { data: curRows } = await supabase
+      .from("game_results")
+      .select("id, play_date")
+      .eq("session_id", session_id)
+      .returns<{ id: string; play_date: string }[]>();
+    const dup = (curRows ?? []).filter((r) => canonDates.has(r.play_date)).map((r) => r.id);
+    const move = (curRows ?? []).filter((r) => !canonDates.has(r.play_date)).map((r) => r.id);
+
+    // The account already has those days — drop this device's duplicates.
+    if (dup.length) await supabase.from("game_results").delete().in("id", dup);
+    // New days for the account — re-point them to the canonical session.
+    if (move.length) {
+      await supabase.from("game_results").update({ session_id: canonical }).in("id", move);
+    }
+
+    // Recompute the rolled-up stats from the account's full history. This
+    // credits the freshly merged plays.
+    const { data: allRows } = await supabase
+      .from("game_results")
+      .select(RESULT_COLUMNS)
+      .eq("session_id", canonical)
+      .returns<ResultRow[]>();
+    const rows = allRows ?? [];
+    if (rows.length === 0) {
+      return NextResponse.json({ profile: existing, loggedIn: true });
+    }
+
+    const agg = aggregate(rows, today, period);
+    const { data: updated } = await supabase
+      .from("profiles")
+      .update({
+        xp: agg.xp,
+        total_score: agg.totalScore,
+        total_stars: agg.totalStars,
+        days_played: agg.daysPlayed,
+        current_streak: agg.streak,
+        longest_streak: Math.max(existing.longest_streak, agg.streak),
+        last_played_date: agg.lastPlayed,
+        monthly_score: agg.monthlyScore,
+        monthly_period: period,
+        achievements: Array.from(new Set([...existing.achievements, ...agg.achievements])),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", existing.id)
+      .select("*")
+      .single<Profile>();
+
+    return NextResponse.json({ profile: updated ?? existing, loggedIn: true });
   }
 
   // No account yet — first ask for a username, then create the profile.
@@ -95,47 +194,12 @@ export async function POST(req: Request) {
   }
 
   // Backfill stats from this device's play history so the first game counts.
-  const today = todayISO();
-  const period = monthPeriod(today);
   const { data: results } = await supabase
     .from("game_results")
-    .select("play_date, points, stars, score, time_seconds, lives_remaining")
+    .select(RESULT_COLUMNS)
     .eq("session_id", session_id)
-    .returns<
-      {
-        play_date: string;
-        points: number | null;
-        stars: number | null;
-        score: number | null;
-        time_seconds: number | null;
-        lives_remaining: number | null;
-      }[]
-    >();
-
-  const rows = results ?? [];
-  const dates = new Set(rows.map((r) => r.play_date));
-  const xp = rows.reduce((s, r) => s + (r.points ?? 0), 0);
-  const totalStars = rows.reduce((s, r) => s + (r.stars ?? 0), 0);
-  const totalScore = rows.reduce(
-    (s, r) =>
-      s + dailyScore(r.score ?? 0, r.stars ?? heartsFor(r.lives_remaining ?? 0), r.time_seconds ?? 0),
-    0
-  );
-  const monthlyScore = rows
-    .filter((r) => r.play_date.startsWith(period))
-    .reduce((s, r) => s + (r.points ?? 0), 0);
-  const daysPlayed = dates.size;
-  const streak = computeStreak(dates, today);
-  const lastPlayed = rows.length ? rows.map((r) => r.play_date).sort().slice(-1)[0] : null;
-
-  const achievements = earnedAchievementIds({
-    daysPlayed,
-    totalStars,
-    currentStreak: streak,
-    level: levelFromXp(xp),
-    clearedThisGame: rows.some((r) => (r.stars ?? 0) >= 3),
-    flawlessThisGame: false,
-  });
+    .returns<ResultRow[]>();
+  const agg = aggregate(results ?? [], today, period);
 
   const { data: created, error } = await supabase
     .from("profiles")
@@ -143,16 +207,16 @@ export async function POST(req: Request) {
       session_id,
       username,
       email,
-      xp,
-      total_score: totalScore,
-      total_stars: totalStars,
-      days_played: daysPlayed,
-      current_streak: streak,
-      longest_streak: streak,
-      last_played_date: lastPlayed,
-      monthly_score: monthlyScore,
+      xp: agg.xp,
+      total_score: agg.totalScore,
+      total_stars: agg.totalStars,
+      days_played: agg.daysPlayed,
+      current_streak: agg.streak,
+      longest_streak: agg.streak,
+      last_played_date: agg.lastPlayed,
+      monthly_score: agg.monthlyScore,
       monthly_period: period,
-      achievements,
+      achievements: agg.achievements,
     })
     .select("*")
     .single<Profile>();

@@ -19,6 +19,8 @@ import {
 } from "@/lib/playStore";
 import { msUntilNextGameMidnight } from "@/lib/date";
 import { levelFromXp, pointsForGame, type Profile } from "@/lib/leaderboard";
+import { maxScore } from "@/lib/gameLogic";
+import { usePlayedResults } from "@/hooks/usePlayedResults";
 import type { GameResultSummary } from "@/hooks/useGame";
 import type { FullGame } from "@/types";
 
@@ -47,6 +49,7 @@ export function PlayExperience({
   const [streak, setStreak] = useState<number | null>(null);
   const [creditedXp, setCreditedXp] = useState<number | null>(null);
   const [resumeSnap, setResumeSnap] = useState<ProgressSnapshot | null>(null);
+  const playedResults = usePlayedResults();
 
   // On load / whenever the day changes (midnight roll-over): restore a finished
   // result, otherwise pick up any in-progress game so we resume, not restart.
@@ -75,6 +78,28 @@ export function PlayExperience({
     const t = setTimeout(() => router.refresh(), msUntilNextGameMidnight() + 1500);
     return () => clearTimeout(t);
   }, [isDaily, date, router]);
+
+  // If this account already finished this date (even on another device), show
+  // the saved result instead of offering a replay. Backfills this device's store.
+  useEffect(() => {
+    if (mode !== "start") return;
+    if (getLocalResult(date)) return;
+    const sr = playedResults[date];
+    if (!sr) return;
+    const stored: StoredResult = {
+      reached: sr.reached,
+      rounds: initialGame ? maxScore(initialGame.cards.length) : sr.rounds,
+      lives: sr.lives,
+      timeSeconds: sr.timeSeconds,
+      wrongRounds: [],
+      xpEarned: sr.xpEarned,
+      completedAt: new Date().toISOString(),
+    };
+    saveLocalResult(date, stored);
+    setResult(stored);
+    setAlreadyPlayed(true);
+    setMode("completed");
+  }, [playedResults, date, mode, initialGame]);
 
   const handleComplete = useCallback(
     (summary: GameResultSummary) => {

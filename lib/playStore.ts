@@ -31,6 +31,18 @@ export function getSessionId(): string {
   return id;
 }
 
+/** Adopt an account's canonical session id on this device after sign-in, so all
+ *  future plays and reads attach to that account (and prior plays made on this
+ *  device's anonymous id have already been merged server-side). */
+export function setSessionId(id: string): void {
+  if (typeof window === "undefined" || !id) return;
+  try {
+    window.localStorage.setItem(SESSION_KEY, id);
+  } catch {
+    /* non-fatal */
+  }
+}
+
 export function getLocalResult(date: string): StoredResult | null {
   if (typeof window === "undefined") return null;
   try {

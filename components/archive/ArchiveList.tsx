@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Badge, categoryLabel } from "@/components/ui/Badge";
 import { getLocalResult } from "@/lib/playStore";
+import { usePlayedResults } from "@/hooks/usePlayedResults";
 import { formatShortDate } from "@/lib/date";
 import type { DailyGame } from "@/types";
 
@@ -36,15 +37,21 @@ export function ArchiveList({ games }: { games: NumberedGame[] }) {
     () => [...games].sort((a, b) => (a.play_date < b.play_date ? 1 : -1)),
     [games]
   );
-  const [played, setPlayed] = useState<Record<string, PlayedResult>>({});
+  const serverResults = usePlayedResults();
+  const [local, setLocal] = useState<Record<string, PlayedResult>>({});
   useEffect(() => {
     const map: Record<string, PlayedResult> = {};
     for (const g of games) {
       const r = getLocalResult(g.play_date);
       if (r) map[g.play_date] = { reached: r.reached, rounds: r.rounds, lives: r.lives };
     }
-    setPlayed(map);
+    setLocal(map);
   }, [games]);
+  // Account history (server) merged with anything fresher on this device.
+  const played: Record<string, PlayedResult> = useMemo(
+    () => ({ ...serverResults, ...local }),
+    [serverResults, local]
+  );
 
   if (sorted.length === 0) {
     return (
