@@ -151,8 +151,9 @@ export function GameBoard({
           <LivesDisplay lives={state.lives} />
         </header>
 
-        {/* Date + game number + topic */}
-        <div className="mt-4 shrink-0 text-center">
+        {/* Date + game number + topic — hidden on phones for a cleaner,
+            pictures-first play view (kept on tablet/desktop). */}
+        <div className="mt-4 hidden shrink-0 text-center md:block">
           <p className="small-caps text-[11px] text-ink-secondary">
             {formatShortDate(date)} · {embedded ? "Preview" : `Game No. ${gameNumber}`}
           </p>
