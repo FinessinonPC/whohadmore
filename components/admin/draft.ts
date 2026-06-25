@@ -11,7 +11,7 @@ export interface DraftCard {
   loading: boolean;
 }
 
-export const CARD_COUNT = 15;
+export const CARD_COUNT = 16; // 16 cards => 15 rounds
 
 export function emptyCard(): DraftCard {
   return {

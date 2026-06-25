@@ -6,7 +6,7 @@ import type { GameCard } from "@/types";
 // ============================================================================
 
 export const STARTING_LIVES = 3;
-export const CHAIN_LENGTH = 15; // 15 cards => 14 guessable pairs
+export const CHAIN_LENGTH = 16; // 16 cards => 15 guessable rounds
 
 export type Side = "left" | "right";
 

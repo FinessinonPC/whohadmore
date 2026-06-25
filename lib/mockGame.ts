@@ -22,6 +22,7 @@ const NBA_2024_25: { name: string; ppg: number }[] = [
   { name: "De'Aaron Fox", ppg: 25.0 },
   { name: "Donovan Mitchell", ppg: 24.0 },
   { name: "Trae Young", ppg: 24.2 },
+  { name: "Jalen Brunson", ppg: 26.0 },
 ];
 
 export function buildMockGame(playDate: string): FullGame {

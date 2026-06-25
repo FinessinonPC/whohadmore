@@ -38,7 +38,7 @@ science (animal top speeds, gestation lengths, planet day-lengths, boiling point
 fun culture trivia (episode counts of shows, runtime of films, words in a song).
 
 Build it well:
-- 15 entities, real and verifiable, ACCURATE values, all the SAME unit/scale.
+- 16 entities, real and verifiable, ACCURATE values, all the SAME unit/scale.
 - Order the cards RANDOMLY (not sorted by value).
 - Use exact Wikipedia article titles as entity_name so images auto-populate.
 
@@ -50,7 +50,7 @@ Return ONLY this JSON — no explanation, no markdown fences:
   "stat_unit": "string",
   "cards": [
     { "entity_name": "string", "stat_value": number }
-    // 15 total
+    // 16 total
   ]
 }`;
 
