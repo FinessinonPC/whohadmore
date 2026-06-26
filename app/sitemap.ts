@@ -31,8 +31,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       (data ?? []).forEach((g) =>
         items.push({
           url: `${base}/play/${g.play_date}`,
+          lastModified: new Date(g.play_date),
           changeFrequency: "yearly",
-          priority: 0.4,
+          priority: 0.5,
         })
       );
     } catch {

@@ -32,6 +32,7 @@ export function DayEditor({ date }: DayEditorProps) {
   const [category, setCategory] = useState<TopicCategory>("sports");
   const [statLabel, setStatLabel] = useState("");
   const [statUnit, setStatUnit] = useState("");
+  const [description, setDescription] = useState("");
   const [cards, setCards] = useState<DraftCard[]>(() =>
     padToCount([])
   );
@@ -61,6 +62,7 @@ export function DayEditor({ date }: DayEditorProps) {
           setCategory((game.topic_category as TopicCategory) ?? "sports");
           setStatLabel(game.stat_label);
           setStatUnit(game.stat_unit ?? "");
+          setDescription(game.description ?? "");
           setSavedPublished(game.published);
           setExists(true);
           setCards(
@@ -119,6 +121,7 @@ export function DayEditor({ date }: DayEditorProps) {
     setCategory(game.topic_category);
     setStatLabel(game.stat_label);
     setStatUnit(game.stat_unit);
+    setDescription(game.description ?? "");
 
     const next = padToCount(
       game.cards.slice(0, CARD_COUNT).map((c) => ({
@@ -152,6 +155,7 @@ export function DayEditor({ date }: DayEditorProps) {
       topic_category: category,
       stat_label: statLabel,
       stat_unit: statUnit || null,
+      description: description.trim() || null,
       published,
       cards: cards.map((c, i) => ({
         position: i,
@@ -226,6 +230,7 @@ export function DayEditor({ date }: DayEditorProps) {
       topic_category: category,
       stat_label: statLabel || "Stat",
       stat_unit: statUnit || null,
+      description: description.trim() || null,
       published: false,
       created_at: now,
       cards: filled.map((c, i) => ({
@@ -306,6 +311,15 @@ export function DayEditor({ date }: DayEditorProps) {
                 onChange={(e) => setStatUnit(e.target.value)}
                 placeholder="PPG"
                 className="editor-input"
+              />
+            </Field>
+            <Field label="SEO description (optional)" className="sm:col-span-2">
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={2}
+                placeholder="1-2 sentences for search engines. Leave blank to auto-generate from the topic and stat."
+                className="editor-input resize-y"
               />
             </Field>
           </div>

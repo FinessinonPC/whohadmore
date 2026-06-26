@@ -61,6 +61,15 @@ export async function POST(req: Request) {
     );
   }
 
+  // SEO description - written separately and best-effort, so a not-yet-migrated
+  // `description` column can never block saving a game.
+  if (payload.description !== undefined) {
+    await supabase
+      .from("daily_games")
+      .update({ description: payload.description?.trim() || null })
+      .eq("id", game.id);
+  }
+
   // Replace the card set wholesale - simplest correct approach for an editor.
   const validCards = (payload.cards ?? [])
     .filter((c) => c.entity_name?.trim() && Number.isFinite(Number(c.stat_value)))

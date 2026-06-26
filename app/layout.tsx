@@ -50,6 +50,36 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const siteUrl = getSiteUrl();
+  const siteLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": `${siteUrl}/#website`,
+        url: siteUrl,
+        name: "WhoHadMore",
+        description: "A free daily higher-or-lower guessing game.",
+        publisher: { "@id": `${siteUrl}/#org` },
+      },
+      {
+        "@type": "Organization",
+        "@id": `${siteUrl}/#org`,
+        name: "WhoHadMore",
+        url: siteUrl,
+        logo: `${siteUrl}/icon.svg`,
+      },
+      {
+        "@type": "WebApplication",
+        name: "WhoHadMore",
+        url: siteUrl,
+        applicationCategory: "GameApplication",
+        operatingSystem: "Any",
+        browserRequirements: "Requires JavaScript",
+        offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      },
+    ],
+  };
   return (
     <html lang="en" className={`${inter.variable} ${oswald.variable}`} suppressHydrationWarning>
       <head>
@@ -61,6 +91,10 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-dvh bg-background text-ink antialiased">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteLd) }}
+        />
         {children}
         <Analytics />
       </body>

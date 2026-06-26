@@ -48,6 +48,7 @@ Return ONLY this JSON - no explanation, no markdown fences:
   "topic_category": "sports|geography|entertainment|science|current_events",
   "stat_label": "string",
   "stat_unit": "string",
+  "description": "string",        // 1-2 sentence SEO blurb: what this puzzle compares and why it's surprising. Natural and search-friendly, no hype.
   "cards": [
     { "entity_name": "string", "stat_value": number }
     // 16 total
@@ -97,6 +98,7 @@ function parseAiJson(raw: string): AiGameJson | null {
           topic_category: coerceCategory(obj.topic_category),
           stat_label: obj.stat_label,
           stat_unit: typeof obj.stat_unit === "string" ? obj.stat_unit : "",
+          description: typeof obj.description === "string" ? obj.description : "",
           cards,
         };
       }

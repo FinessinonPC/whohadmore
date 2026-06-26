@@ -28,6 +28,7 @@ export interface DailyGame {
   topic_category: TopicCategory | null;
   stat_label: string;
   stat_unit: string | null;
+  description?: string | null; // SEO blurb (optional; falls back to generated)
   published: boolean;
   created_at: string;
 }
@@ -86,6 +87,7 @@ export interface SaveGamePayload {
   topic_category: TopicCategory | null;
   stat_label: string;
   stat_unit: string | null;
+  description?: string | null;
   published: boolean;
   cards: SaveCardInput[];
 }
@@ -104,5 +106,6 @@ export interface AiGameJson {
   topic_category: TopicCategory;
   stat_label: string;
   stat_unit: string;
+  description?: string;
   cards: { entity_name: string; stat_value: number }[];
 }

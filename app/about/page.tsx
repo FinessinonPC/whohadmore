@@ -5,7 +5,54 @@ import { BrandMark } from "@/components/ui/Logo";
 export const dynamic = "force-static";
 
 const DESCRIPTION =
-  "WhoHadMore is a daily comparison game - two cards, one stat, tap whichever had more. Learn how to play, build a streak, and climb the leaderboard.";
+  "WhoHadMore is a free daily higher-or-lower game - two cards, one stat, tap whichever had more. Learn how to play, build a streak, and climb the leaderboard.";
+
+const FAQ_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "What is WhoHadMore?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "WhoHadMore is a free daily higher-or-lower game. Each day you get a new puzzle: two cards appear, each showing a person, place, or thing, and you tap whichever one had more of that day's stat.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How do you play WhoHadMore?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "You start with three lives and a chain of cards. One card's value is shown; tap the card you think had more. A correct guess moves you down the chain and a wrong guess costs a life.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is WhoHadMore free?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. WhoHadMore is completely free and plays in your browser on phone or desktop, with no download.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is there a new puzzle every day?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. A brand-new puzzle drops every day at midnight, spanning sports, pop culture, food, geography, science, and more.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Can I play past WhoHadMore puzzles?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. Every past puzzle lives in the archive and is always playable.",
+      },
+    },
+  ],
+};
 
 export const metadata: Metadata = {
   title: "About",
@@ -84,6 +131,10 @@ export default function AboutPage() {
           </Link>
         </div>
       </article>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }}
+      />
     </main>
   );
 }

@@ -8,20 +8,30 @@ import { getWikimediaThumbnail } from "@/lib/wikimedia";
 import { buildMockGame, isSupabaseConfigured } from "@/lib/mockGame";
 import type { DailyGame, FullGame, GameCard } from "@/types";
 
+type GameMeta = Pick<
+  DailyGame,
+  "topic_label" | "stat_label" | "topic_category" | "stat_unit" | "description"
+>;
+
 /** Lightweight meta for a published game (no cards) - used for SEO titles. */
-export async function getGameMeta(
-  date: string
-): Promise<Pick<DailyGame, "topic_label" | "stat_label" | "topic_category"> | null> {
+export async function getGameMeta(date: string): Promise<GameMeta | null> {
   if (!isSupabaseConfigured()) {
     const m = buildMockGame(date);
-    return { topic_label: m.topic_label, stat_label: m.stat_label, topic_category: m.topic_category };
+    return {
+      topic_label: m.topic_label,
+      stat_label: m.stat_label,
+      topic_category: m.topic_category,
+      stat_unit: m.stat_unit,
+      description: m.description ?? null,
+    };
   }
+  // select("*") stays resilient if the optional `description` column isn't added yet.
   const { data } = await getServerSupabase()
     .from("daily_games")
-    .select("topic_label, stat_label, topic_category")
+    .select("*")
     .eq("play_date", date)
     .eq("published", true)
-    .maybeSingle<Pick<DailyGame, "topic_label" | "stat_label" | "topic_category">>();
+    .maybeSingle<GameMeta>();
   return data ?? null;
 }
 
