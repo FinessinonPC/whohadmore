@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { TopNav } from "@/components/ui/TopNav";
 import { CountUp } from "./CountUp";
@@ -10,6 +10,7 @@ import { Confetti } from "./Confetti";
 import { ChainTimeline } from "./ChainTimeline";
 import { LivesDisplay } from "./LivesDisplay";
 import { useProfile } from "@/hooks/useProfile";
+import { getSessionId } from "@/lib/playStore";
 import { achievementById, dailyScore, heartsFor } from "@/lib/leaderboard";
 import { formatDisplayDate, isToday } from "@/lib/date";
 
@@ -68,10 +69,34 @@ export function ResultScreen({
   onClose,
 }: ResultScreenProps) {
   const [copied, setCopied] = useState(false);
+  const [pct, setPct] = useState<{ percentile: number | null; total: number } | null>(null);
   const daily = isToday(date);
   const clearedChain = mode === "play" && !alreadyPlayed && rounds > 0 && reached >= rounds;
   // The score that gets featured on the leaderboard (streak-free).
   const score = dailyScore(reached, heartsFor(lives), timeSeconds);
+
+  // How you stacked up against everyone else who played this day - honest
+  // social proof. Real plays only (not the admin preview).
+  useEffect(() => {
+    if (mode !== "play") return;
+    let cancelled = false;
+    fetch(`/api/leaderboard/percentile?date=${date}&session=${getSessionId()}&score=${score}`)
+      .then((r) => r.json())
+      .then((d: { percentile: number | null; total: number }) => {
+        if (!cancelled) setPct(d);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, date, score]);
+
+  const pctLabel =
+    pct?.percentile != null
+      ? `You beat ${pct.percentile}% of ${daily ? "today's" : "this puzzle's"} players`
+      : pct && pct.total === 0 && daily
+        ? "You're among the first to play today!"
+        : null;
 
   async function share() {
     const hearts = heartsFor(lives);
@@ -79,6 +104,7 @@ export function ResultScreen({
     const text = [
       `WhoHadMore No. ${gameNumber}`,
       `${reached}/${rounds}`,
+      pct?.percentile != null ? `Beat ${pct.percentile}% of players` : "",
       heartsBar,
       formatClock(timeSeconds),
       dailyScore(reached, hearts, timeSeconds).toLocaleString(),
@@ -128,6 +154,16 @@ export function ResultScreen({
         <p className="small-caps mt-1 text-[11px] text-ink-secondary">
           your score · featured on the leaderboard
         </p>
+        {pctLabel && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="mt-2.5 rounded-full bg-correct/10 px-4 py-1.5 text-sm font-bold text-correct"
+          >
+            {pctLabel}
+          </motion.div>
+        )}
         <p className="mt-2 text-sm font-semibold text-ink">
           Reached {reached}/{rounds} rounds
         </p>
