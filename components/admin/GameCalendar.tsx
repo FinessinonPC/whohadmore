@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminFetch } from "@/lib/adminClient";
 import { todayISO } from "@/lib/date";
@@ -19,27 +19,29 @@ export function GameCalendar() {
   const [games, setGames] = useState<Record<string, DailyGame>>({});
   const [loading, setLoading] = useState(true);
 
+  // Drag-to-move state.
+  const [dragDate, setDragDate] = useState<string | null>(null);
+  const [overDate, setOverDate] = useState<string | null>(null);
+  const [moving, setMoving] = useState(false);
+
   const monthKey = `${year}-${pad(month + 1)}`;
 
-  useEffect(() => {
-    let cancelled = false;
+  const load = useCallback(async () => {
     setLoading(true);
-    (async () => {
-      try {
-        const res = await adminFetch(`/api/admin/games?month=${monthKey}`);
-        const data = (await res.json()) as { games?: DailyGame[] };
-        if (cancelled) return;
-        const map: Record<string, DailyGame> = {};
-        (data.games ?? []).forEach((g) => (map[g.play_date] = g));
-        setGames(map);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    try {
+      const res = await adminFetch(`/api/admin/games?month=${monthKey}`);
+      const data = (await res.json()) as { games?: DailyGame[] };
+      const map: Record<string, DailyGame> = {};
+      (data.games ?? []).forEach((g) => (map[g.play_date] = g));
+      setGames(map);
+    } finally {
+      setLoading(false);
+    }
   }, [monthKey]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const { cells, label } = useMemo(() => {
     const firstWeekday = new Date(Date.UTC(year, month, 1)).getUTCDay();
@@ -60,6 +62,33 @@ export function GameCalendar() {
     const d = new Date(Date.UTC(year, month + delta, 1));
     setYear(d.getUTCFullYear());
     setMonth(d.getUTCMonth());
+  }
+
+  async function moveGame(from: string, to: string) {
+    if (from === to) return;
+    const fromGame = games[from];
+    if (!fromGame) return;
+    const target = games[to];
+    if (target) {
+      if (!confirm(`Swap dates between "${fromGame.topic_label}" and "${target.topic_label}"?`)) return;
+    } else if (fromGame.published) {
+      if (!confirm(`"${fromGame.topic_label}" is published. Move it to ${to}? ${from} will have no game.`)) return;
+    }
+    setMoving(true);
+    try {
+      const res = await adminFetch("/api/admin/move-game", {
+        method: "POST",
+        body: JSON.stringify({ from, to }),
+      });
+      if (!res.ok) {
+        const d = (await res.json().catch(() => ({}))) as { error?: string };
+        alert(d.error ?? "Couldn't move the game.");
+        return;
+      }
+      await load();
+    } finally {
+      setMoving(false);
+    }
   }
 
   return (
@@ -93,6 +122,8 @@ export function GameCalendar() {
           const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`;
           const game = games[dateStr];
           const isToday = dateStr === today;
+          const isDragging = dragDate === dateStr;
+          const isOver = overDate === dateStr && dragDate !== dateStr;
 
           // Full-cell color coding: green = published, amber = draft, grey = empty.
           const stateClass = game?.published
@@ -100,19 +131,53 @@ export function GameCalendar() {
             : game
               ? "border-[#FFB300] bg-[#FFB300]/25 hover:bg-[#FFB300]/35"
               : "border-border bg-surface/60 hover:bg-surface";
+          const ring = isOver
+            ? "ring-2 ring-ink ring-offset-1"
+            : isToday
+              ? "ring-2 ring-ink/40 ring-offset-1"
+              : "";
 
           return (
             <button
               key={dateStr}
-              onClick={() => router.push(`/admin/${dateStr}`)}
-              title="Open editor"
-              className={`flex aspect-square flex-col items-start gap-1 rounded-xl border-2 p-2 text-left transition-colors ${stateClass} ${
-                isToday ? "ring-2 ring-ink/40 ring-offset-1" : ""
-              }`}
+              draggable={Boolean(game) && !moving}
+              onDragStart={(e) => {
+                if (!game) return;
+                setDragDate(dateStr);
+                e.dataTransfer.effectAllowed = "move";
+                e.dataTransfer.setData("text/plain", dateStr);
+              }}
+              onDragEnd={() => {
+                setDragDate(null);
+                setOverDate(null);
+              }}
+              onDragOver={(e) => {
+                if (!dragDate || dragDate === dateStr) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                if (overDate !== dateStr) setOverDate(dateStr);
+              }}
+              onDragLeave={() => {
+                if (overDate === dateStr) setOverDate(null);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const from = dragDate ?? e.dataTransfer.getData("text/plain");
+                setOverDate(null);
+                setDragDate(null);
+                if (from && from !== dateStr) void moveGame(from, dateStr);
+              }}
+              onClick={() => {
+                if (!dragDate) router.push(`/admin/${dateStr}`);
+              }}
+              title={game ? "Drag to move · click to edit" : "Click to plan"}
+              className={`flex aspect-square flex-col items-start gap-1 rounded-xl border-2 p-2 text-left transition-colors ${stateClass} ${ring} ${
+                game ? "cursor-grab active:cursor-grabbing" : ""
+              } ${isDragging ? "opacity-40" : ""} ${isOver ? "scale-[1.03]" : ""}`}
             >
               <span className="text-xs font-bold text-ink">{day}</span>
               {game && (
-                <span className="line-clamp-2 text-[10px] font-semibold leading-tight text-ink/90">
+                <span className="pointer-events-none line-clamp-2 text-[10px] font-semibold leading-tight text-ink/90">
                   {game.topic_label}
                 </span>
               )}
@@ -122,7 +187,11 @@ export function GameCalendar() {
       </div>
 
       <p className="mt-4 text-center text-xs text-ink-secondary">
-        {loading ? "Loading…" : "Click a day to plan its game."}
+        {moving
+          ? "Moving…"
+          : loading
+            ? "Loading…"
+            : "Click a day to edit · drag a game onto another day to move it (or swap)."}
       </p>
     </div>
   );
