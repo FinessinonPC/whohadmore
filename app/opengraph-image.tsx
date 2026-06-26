@@ -4,7 +4,8 @@ export const alt = "WhoHadMore — a daily higher/lower game";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Branded share card, drawn entirely with primitives (no asset files).
+// Branded share card, drawn entirely with primitives (no asset files):
+// a green triangle up over a red triangle down — the higher/lower motif.
 export default function OpengraphImage() {
   return new ImageResponse(
     (
@@ -12,7 +13,7 @@ export default function OpengraphImage() {
         style={{
           width: "100%",
           height: "100%",
-          background: "#FFFFFF",
+          background: "linear-gradient(135deg, #17181D 0%, #0A0A0B 65%)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -20,38 +21,25 @@ export default function OpengraphImage() {
           fontFamily: "sans-serif",
         }}
       >
-        {/* Logo mark — two cards, the bigger one "had more" */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "center",
-            gap: 24,
-            width: 260,
-            height: 260,
-            background: "#111111",
-            borderRadius: 56,
-            paddingBottom: 58,
-            boxSizing: "border-box",
-          }}
-        >
-          <div style={{ width: 58, height: 96, borderRadius: 12, background: "rgba(255,255,255,0.5)" }} />
-          <div style={{ width: 58, height: 140, borderRadius: 12, background: "#00C853" }} />
-        </div>
+        {/* Logo mark — green ▲ (higher) over red ▼ (lower) */}
+        <svg width="210" height="300" viewBox="0 0 210 300">
+          <polygon points="105,0 0,135 210,135" fill="#00C853" />
+          <polygon points="0,165 210,165 105,300" fill="#FF3B30" />
+        </svg>
 
         <div
           style={{
-            marginTop: 56,
-            fontSize: 88,
+            marginTop: 60,
+            fontSize: 96,
             fontWeight: 800,
             letterSpacing: "-0.03em",
-            color: "#111111",
+            color: "#FFFFFF",
           }}
         >
           WhoHadMore
         </div>
-        <div style={{ marginTop: 12, fontSize: 34, color: "#888888" }}>
-          Two cards. One stat. Tap the bigger number.
+        <div style={{ marginTop: 16, fontSize: 40, fontWeight: 600, color: "#9AA0A6" }}>
+          A daily higher / lower game
         </div>
       </div>
     ),

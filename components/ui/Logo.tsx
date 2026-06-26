@@ -1,5 +1,5 @@
-// Clean, hand-built brand mark — two bars (one taller, green) reading as a
-// higher/lower comparison. No external assets; scales crisply at any size.
+// Clean, hand-built brand mark — a green triangle up over a red triangle down,
+// the higher/lower motif. No external assets; scales crisply at any size.
 
 interface MarkProps {
   className?: string;
@@ -18,9 +18,9 @@ export function BrandMark({ className = "", size }: MarkProps) {
       aria-label="WhoHadMore"
     >
       <rect width="64" height="64" rx="16" fill="#111111" />
-      {/* two cards compared — the right one "had more" (taller, green) */}
-      <rect x="14" y="24" width="15" height="24" rx="3" fill="#FFFFFF" fillOpacity="0.5" />
-      <rect x="35" y="13" width="15" height="35" rx="3" fill="#00C853" />
+      {/* higher = green triangle up, lower = red triangle down */}
+      <polygon points="32,12 18,30 46,30" fill="#00C853" />
+      <polygon points="18,34 46,34 32,52" fill="#FF3B30" />
     </svg>
   );
 }
