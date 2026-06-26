@@ -33,7 +33,6 @@ interface ResultScreenProps {
   newAchievements?: string[];
   onPlayAgain?: () => void;
   onClose?: () => void;
-  onReset?: () => void;
 }
 
 function formatClock(seconds: number): string {
@@ -67,7 +66,6 @@ export function ResultScreen({
   newAchievements = [],
   onPlayAgain,
   onClose,
-  onReset,
 }: ResultScreenProps) {
   const [copied, setCopied] = useState(false);
   const daily = isToday(date);
@@ -242,15 +240,6 @@ export function ResultScreen({
             <p className="text-center text-xs text-ink-secondary">
               {daily ? "A new game drops at midnight." : "Playing the archive."}
             </p>
-
-            {onReset && (
-              <button
-                onClick={onReset}
-                className="mx-auto text-xs font-semibold text-ink-secondary underline underline-offset-2 transition-colors hover:text-ink"
-              >
-                Reset &amp; replay (testing)
-              </button>
-            )}
           </div>
         )}
       </motion.div>

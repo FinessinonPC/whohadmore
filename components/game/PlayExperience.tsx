@@ -7,7 +7,6 @@ import { GameBoard } from "./GameBoard";
 import { StartScreen } from "./StartScreen";
 import { ResultScreen } from "./ResultScreen";
 import {
-  clearLocalResult,
   clearProgress,
   getLocalResult,
   getProgress,
@@ -186,21 +185,6 @@ export function PlayExperience({
   }
   const game = initialGame as FullGame;
 
-  // Testing-only: wipe this date's saved result and return to the start screen.
-  // Remove the onReset prop (and the button) before the public launch.
-  const resetForTesting = () => {
-    clearLocalResult(date);
-    clearProgress(date);
-    setResult(null);
-    setAlreadyPlayed(false);
-    setLevelUp(null);
-    setStreak(null);
-    setCreditedXp(null);
-    setNewAchievements([]);
-    setResumeSnap(null);
-    setMode("start");
-  };
-
   if (mode === "completed" && result) {
     return (
       <ResultScreen
@@ -218,7 +202,6 @@ export function PlayExperience({
         levelUp={levelUp}
         streak={streak}
         newAchievements={newAchievements}
-        onReset={resetForTesting}
       />
     );
   }
