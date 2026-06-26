@@ -48,6 +48,7 @@ export function PlayExperience({
   const [levelUp, setLevelUp] = useState<number | null>(null);
   const [streak, setStreak] = useState<number | null>(null);
   const [creditedXp, setCreditedXp] = useState<number | null>(null);
+  const [newAchievements, setNewAchievements] = useState<string[]>([]);
   const [resumeSnap, setResumeSnap] = useState<ProgressSnapshot | null>(null);
   const playedResults = usePlayedResults();
 
@@ -57,6 +58,7 @@ export function PlayExperience({
     setLevelUp(null);
     setStreak(null);
     setCreditedXp(null);
+    setNewAchievements([]);
     const stored = getLocalResult(date);
     if (stored) {
       setResult(stored);
@@ -122,6 +124,7 @@ export function PlayExperience({
       setLevelUp(null);
       setStreak(null);
       setCreditedXp(null);
+      setNewAchievements([]);
       setMode("completed");
 
       // Record the result + update leaderboard stats (best-effort; the route is
@@ -141,16 +144,23 @@ export function PlayExperience({
         }),
       })
         .then((r) => r.json())
-        .then((data: { profile: Profile | null; pointsEarned?: number }) => {
-          if (data.profile && typeof data.pointsEarned === "number") {
-            const after = levelFromXp(data.profile.xp);
-            const before = levelFromXp(data.profile.xp - data.pointsEarned);
-            if (after > before) setLevelUp(after);
-            // Streak (shown as a stat) and the actual credited XP (streak included).
-            setStreak(data.profile.current_streak);
-            if (data.pointsEarned > 0) setCreditedXp(data.pointsEarned);
+        .then(
+          (data: {
+            profile: Profile | null;
+            pointsEarned?: number;
+            newAchievements?: string[];
+          }) => {
+            if (data.newAchievements?.length) setNewAchievements(data.newAchievements);
+            if (data.profile && typeof data.pointsEarned === "number") {
+              const after = levelFromXp(data.profile.xp);
+              const before = levelFromXp(data.profile.xp - data.pointsEarned);
+              if (after > before) setLevelUp(after);
+              // Streak (shown as a stat) and the actual credited XP (streak included).
+              setStreak(data.profile.current_streak);
+              if (data.pointsEarned > 0) setCreditedXp(data.pointsEarned);
+            }
           }
-        })
+        )
         .catch(() => {
           /* never block the end screen on result tracking */
         });
@@ -186,6 +196,7 @@ export function PlayExperience({
     setLevelUp(null);
     setStreak(null);
     setCreditedXp(null);
+    setNewAchievements([]);
     setResumeSnap(null);
     setMode("start");
   };
@@ -206,6 +217,7 @@ export function PlayExperience({
         alreadyPlayed={alreadyPlayed}
         levelUp={levelUp}
         streak={streak}
+        newAchievements={newAchievements}
         onReset={resetForTesting}
       />
     );

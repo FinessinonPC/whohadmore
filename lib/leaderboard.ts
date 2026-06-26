@@ -169,6 +169,13 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: "level10", label: "Seasoned", description: "Reach level 10.", icon: "🏆" },
 ];
 
+const ACHIEVEMENT_BY_ID = new Map(ACHIEVEMENTS.map((a) => [a.id, a]));
+
+/** Look up an achievement definition by id (for rendering badges). */
+export function achievementById(id: string): AchievementDef | undefined {
+  return ACHIEVEMENT_BY_ID.get(id);
+}
+
 export interface AchievementContext {
   daysPlayed: number;
   totalStars: number;

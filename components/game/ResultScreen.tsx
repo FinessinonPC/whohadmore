@@ -10,7 +10,7 @@ import { Confetti } from "./Confetti";
 import { ChainTimeline } from "./ChainTimeline";
 import { LivesDisplay } from "./LivesDisplay";
 import { useProfile } from "@/hooks/useProfile";
-import { dailyScore, heartsFor } from "@/lib/leaderboard";
+import { achievementById, dailyScore, heartsFor } from "@/lib/leaderboard";
 import { formatDisplayDate, isToday } from "@/lib/date";
 
 interface ResultScreenProps {
@@ -29,6 +29,8 @@ interface ResultScreenProps {
   levelUp?: number | null;
   /** Current daily streak (signed-in players); shown as a stat. */
   streak?: number | null;
+  /** Achievement ids newly unlocked by this game (signed-in players). */
+  newAchievements?: string[];
   onPlayAgain?: () => void;
   onClose?: () => void;
   onReset?: () => void;
@@ -73,6 +75,7 @@ export function ResultScreen({
   alreadyPlayed = false,
   levelUp = null,
   streak = null,
+  newAchievements = [],
   onPlayAgain,
   onClose,
   onReset,
@@ -167,6 +170,33 @@ export function ResultScreen({
             <span className="text-base">⭐</span>
             <span className="text-sm font-extrabold">Level {levelUp}!</span>
           </motion.div>
+        )}
+
+        {/* Achievements unlocked this game */}
+        {newAchievements.length > 0 && (
+          <div className="mt-4 w-full">
+            <p className="small-caps text-[10px] text-ink-secondary">
+              Achievement{newAchievements.length > 1 ? "s" : ""} unlocked
+            </p>
+            <div className="mt-2 flex flex-wrap justify-center gap-2">
+              {newAchievements.map((id, i) => {
+                const a = achievementById(id);
+                if (!a) return null;
+                return (
+                  <motion.div
+                    key={id}
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.7 + i * 0.1, type: "spring", damping: 18, stiffness: 240 }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#FFB300]/40 bg-[#FFB300]/10 px-3 py-1.5"
+                  >
+                    <span className="text-base leading-none">{a.icon}</span>
+                    <span className="text-xs font-bold text-ink">{a.label}</span>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         {/* Streak · time · hearts */}

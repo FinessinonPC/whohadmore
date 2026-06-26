@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/Button";
 import { TopNav } from "@/components/ui/TopNav";
 import { SignUpFlow } from "@/components/auth/SignUpFlow";
 import { useProfile } from "@/hooks/useProfile";
-import { levelInfo, rankTitle, streakMultiplier } from "@/lib/leaderboard";
+import { usePlayedResults } from "@/hooks/usePlayedResults";
+import { ACHIEVEMENTS, levelInfo, rankTitle, streakMultiplier } from "@/lib/leaderboard";
 
 /** The player's own profile: level, streak multiplier, and lifetime stats. */
 export function ProfileView() {
@@ -75,7 +76,87 @@ export function ProfileView() {
           <SignUpFlow onDone={reload} />
         )}
       </section>
+
+      {hasName && (
+        <>
+          <PersonalStats
+            longestStreak={profile?.longest_streak ?? 0}
+            totalScore={profile?.total_score ?? 0}
+          />
+          <Achievements earned={profile?.achievements ?? []} />
+        </>
+      )}
     </main>
+  );
+}
+
+function PersonalStats({ longestStreak, totalScore }: { longestStreak: number; totalScore: number }) {
+  const results = usePlayedResults();
+  const list = Object.values(results);
+  const played = list.length;
+  const cleared = list.filter((r) => r.rounds > 0 && r.reached >= r.rounds).length;
+  const clearRate = played ? Math.round((cleared / played) * 100) : 0;
+  const best = list.reduce((m, r) => Math.max(m, r.reached), 0);
+
+  return (
+    <section className="mt-4 rounded-[28px] bg-surface p-6">
+      <h2 className="text-sm font-extrabold text-ink">Lifetime stats</h2>
+      <div className="mt-4 grid grid-cols-3 gap-y-5">
+        <Metric value={played} label="Games" />
+        <Metric value={cleared} label="Cleared" />
+        <Metric value={`${clearRate}%`} label="Clear rate" />
+        <Metric value={longestStreak} label="Best streak" accent="#FF7A00" />
+        <Metric value={best} label="Best run" />
+        <Metric value={totalScore} label="Total score" accent="#00C853" />
+      </div>
+    </section>
+  );
+}
+
+function Metric({ value, label, accent }: { value: number | string; label: string; accent?: string }) {
+  return (
+    <div className="flex flex-col items-center px-1">
+      <span
+        className={`tabular text-2xl font-extrabold leading-none ${accent ? "" : "text-ink"}`}
+        style={accent ? { color: accent } : undefined}
+      >
+        {typeof value === "number" ? value.toLocaleString() : value}
+      </span>
+      <span className="mt-1.5 small-caps text-[9px] text-ink-secondary">{label}</span>
+    </div>
+  );
+}
+
+function Achievements({ earned }: { earned: string[] }) {
+  const earnedSet = new Set(earned);
+  return (
+    <section className="mt-4 mb-2 rounded-[28px] bg-surface p-6">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-sm font-extrabold text-ink">Achievements</h2>
+        <span className="text-xs font-semibold text-ink-secondary">
+          {earnedSet.size} / {ACHIEVEMENTS.length}
+        </span>
+      </div>
+      <div className="mt-4 grid grid-cols-4 gap-3">
+        {ACHIEVEMENTS.map((a) => {
+          const got = earnedSet.has(a.id);
+          return (
+            <div
+              key={a.id}
+              title={`${a.label} — ${a.description}`}
+              className={`flex flex-col items-center gap-1.5 rounded-2xl border p-2.5 text-center transition-colors ${
+                got ? "border-correct/30 bg-correct/5" : "border-border bg-background"
+              }`}
+            >
+              <span className={`text-2xl leading-none ${got ? "" : "opacity-30 grayscale"}`}>{a.icon}</span>
+              <span className={`text-[9px] font-bold leading-tight ${got ? "text-ink" : "text-ink-secondary"}`}>
+                {a.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
