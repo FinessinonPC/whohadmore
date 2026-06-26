@@ -143,8 +143,7 @@ function Achievements({ earned }: { earned: string[] }) {
           return (
             <div
               key={a.id}
-              title={`${a.label} — ${a.description}`}
-              className={`flex flex-col items-center gap-1.5 rounded-2xl border p-2.5 text-center transition-colors ${
+              className={`group relative flex cursor-help flex-col items-center gap-1.5 rounded-2xl border p-2.5 text-center transition-colors ${
                 got ? "border-correct/30 bg-correct/5" : "border-border bg-background"
               }`}
             >
@@ -152,6 +151,19 @@ function Achievements({ earned }: { earned: string[] }) {
               <span className={`text-[9px] font-bold leading-tight ${got ? "text-ink" : "text-ink-secondary"}`}>
                 {a.label}
               </span>
+
+              {/* Hover tooltip — what it is and how to earn it */}
+              <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-40 -translate-x-1/2 rounded-xl bg-ink px-3 py-2 text-left opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                <p className="text-[11px] font-bold text-background">{a.label}</p>
+                <p className="mt-0.5 text-[10px] leading-snug text-background/80">{a.description}</p>
+                <p
+                  className={`mt-1 text-[9px] font-bold uppercase tracking-wide ${
+                    got ? "text-correct" : "text-background/50"
+                  }`}
+                >
+                  {got ? "Unlocked" : "Locked"}
+                </p>
+              </div>
             </div>
           );
         })}
