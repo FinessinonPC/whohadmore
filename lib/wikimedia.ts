@@ -31,7 +31,7 @@ export async function getWikimediaThumbnail(
         "User-Agent": USER_AGENT,
         Accept: "application/json",
       },
-      // Cache aggressively — entity images rarely change.
+      // Cache aggressively - entity images rarely change.
       next: { revalidate: 60 * 60 * 24 },
     });
 
@@ -47,7 +47,7 @@ export async function getWikimediaThumbnail(
     /* fall through to search */
   }
 
-  // No exact-title hit — fall back to a search so near-misses still resolve.
+  // No exact-title hit - fall back to a search so near-misses still resolve.
   const results = await searchWikimediaImages(title);
   return results[0]?.imageUrl ?? null;
 }

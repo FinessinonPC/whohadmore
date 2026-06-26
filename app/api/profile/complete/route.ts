@@ -46,7 +46,7 @@ export async function POST(req: Request) {
   const flawless = cleared && lives >= 3;
 
   // No backend configured (demo mode): still report the (streak-free) XP for
-  // display. `demo: true` makes this state visible — in this mode nothing is
+  // display. `demo: true` makes this state visible - in this mode nothing is
   // recorded, so the daily leaderboard will be empty no matter what.
   if (!isSupabaseConfigured()) {
     return NextResponse.json({
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     .eq("session_id", session_id)
     .maybeSingle<Profile>();
 
-  // Already counted — return current standing untouched.
+  // Already counted - return current standing untouched.
   if (existing) {
     return NextResponse.json({ profile: profile ?? null, pointsEarned: 0, stars, alreadyPlayed: true });
   }
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
 
   // Record the result with the credited points/stars (also enables backfill).
   // This row is what the daily leaderboard reads, so a silent failure here is
-  // exactly why the board can look empty — surface it instead of swallowing it.
+  // exactly why the board can look empty - surface it instead of swallowing it.
   const { error: insertError } = await supabase.from("game_results").insert({
     play_date,
     session_id,

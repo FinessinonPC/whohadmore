@@ -85,7 +85,7 @@ export function rankTitle(level: number): string {
 
 // --- Per-game scoring --------------------------------------------------------
 // XP is based on HOW FAR the player made it (rounds reached). The collectible
-// stat is HEARTS — the lives you finish a game with (0–3) — summed over time.
+// stat is HEARTS - the lives you finish a game with (0–3) - summed over time.
 
 /** Hearts banked from a game = lives remaining at the end (0–3). */
 export function heartsFor(lives: number): number {
@@ -102,7 +102,7 @@ const SPEED_SLOW_SEC = 9; // >= this many sec/round => no speed bonus
 
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 
-/** 0..1 — how fast the player decided, per round. */
+/** 0..1 - how fast the player decided, per round. */
 export function speedFactor(timeSeconds: number, reached: number): number {
   if (reached <= 0 || timeSeconds <= 0) return 0;
   const perRound = timeSeconds / reached;
@@ -137,7 +137,7 @@ export function pointsForGame(
 // --- Daily score -------------------------------------------------------------
 // The daily leaderboard ranks on one number. Weighted, in order: how many you
 // got right (the bulk), then the hearts you kept, then how fast you decided.
-// No streak multiplier — every day stands on its own.
+// No streak multiplier - every day stands on its own.
 const DAILY_CORRECT = 100; // per correct answer
 const DAILY_HEART = 150; // per heart still held at the end (0–3)
 const DAILY_SPEED = 30; // max per correct answer, scaled by decision speed

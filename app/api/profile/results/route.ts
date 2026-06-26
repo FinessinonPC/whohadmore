@@ -72,7 +72,7 @@ export async function GET(req: Request) {
     });
   }
 
-  // One entry per date — keep the best run if duplicates ever exist.
+  // One entry per date - keep the best run if duplicates ever exist.
   const results: Record<string, PlayedResult> = {};
   for (const r of list) {
     const reached = r.score ?? 0;

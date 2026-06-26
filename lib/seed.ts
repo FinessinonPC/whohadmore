@@ -20,7 +20,7 @@ export function hashSeed(input: string): number {
   return (h ^= h >>> 16) >>> 0;
 }
 
-/** mulberry32 — a tiny, fast, well-distributed seeded PRNG returning [0, 1). */
+/** mulberry32 - a tiny, fast, well-distributed seeded PRNG returning [0, 1). */
 export function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
   return function () {

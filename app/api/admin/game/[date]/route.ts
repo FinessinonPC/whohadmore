@@ -7,7 +7,7 @@ import type { DailyGame, FullGame, GameCard } from "@/types";
 
 export const dynamic = "force-dynamic";
 
-// Full game for a date INCLUDING drafts — for the editor (service role bypasses
+// Full game for a date INCLUDING drafts - for the editor (service role bypasses
 // the published-only RLS read policy).
 export async function GET(
   req: Request,

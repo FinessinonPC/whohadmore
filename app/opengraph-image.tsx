@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
-export const alt = "WhoHadMore — a daily higher/lower game";
+export const alt = "WhoHadMore - a daily higher/lower game";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -27,7 +27,7 @@ export default function OpengraphImage() {
           fontFamily: "Inter",
         }}
       >
-        {/* Mark — green ▲ (higher) over red ▼ (lower) */}
+        {/* Mark - green ▲ (higher) over red ▼ (lower) */}
         <svg width="200" height="230" viewBox="0 0 200 230">
           <polygon points="100,0 0,102 200,102" fill="#00C853" />
           <polygon points="0,128 200,128 100,230" fill="#FF3B30" />

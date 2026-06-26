@@ -12,7 +12,7 @@ interface CountUpProps {
 }
 
 /**
- * Counts a number up from 0 to `value` with an ease-out-expo curve — fast off
+ * Counts a number up from 0 to `value` with an ease-out-expo curve - fast off
  * the line, settling into the final figure. This is the hero beat of every
  * reveal, so the easing is deliberately weighty rather than linear.
  */

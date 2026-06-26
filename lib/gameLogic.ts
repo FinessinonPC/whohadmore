@@ -1,7 +1,7 @@
 import type { GameCard } from "@/types";
 
 // ============================================================================
-// Pure game logic — scoring, lives, chain progression.
+// Pure game logic - scoring, lives, chain progression.
 // No React, no side effects. Easy to reason about and test.
 // ============================================================================
 
@@ -60,7 +60,7 @@ export function formatStat(value: number): string {
 }
 
 /**
- * Reorder so no two ADJACENT cards share the same stat_value — that way a pair
+ * Reorder so no two ADJACENT cards share the same stat_value - that way a pair
  * is never a tie. Greedy: when neighbors match, swap the later card forward.
  */
 export function avoidAdjacentTies<T extends { stat_value: number }>(cards: T[]): T[] {
@@ -70,7 +70,7 @@ export function avoidAdjacentTies<T extends { stat_value: number }>(cards: T[]):
       let j = i + 1;
       while (j < out.length && out[j].stat_value === out[i - 1].stat_value) j++;
       if (j < out.length) [out[i], out[j]] = [out[j], out[i]];
-      // else: every remaining card ties — unavoidable, leave as-is.
+      // else: every remaining card ties - unavoidable, leave as-is.
     }
   }
   return out;

@@ -64,7 +64,7 @@ export function ImagePicker({ open, card, onClose, onConfirm }: ImagePickerProps
         </Button>
       </div>
 
-      {/* Results grid — landscape "card crop" preview, best-fit images first */}
+      {/* Results grid - landscape "card crop" preview, best-fit images first */}
       <p className="mt-3 text-[11px] text-ink-secondary">
         Previewed as cropped on the card · <span className="font-semibold text-correct">✓ Fits</span> = landscape
       </p>
@@ -98,7 +98,7 @@ export function ImagePicker({ open, card, onClose, onConfirm }: ImagePickerProps
           })
         ) : (
           <div className="col-span-2 flex h-24 items-center justify-center rounded-lg bg-surface text-xs text-ink-secondary">
-            {card?.entity_name ? "No results — try a different search or paste a URL." : "Search to find images."}
+            {card?.entity_name ? "No results - try a different search or paste a URL." : "Search to find images."}
           </div>
         )}
       </div>
@@ -111,7 +111,7 @@ export function ImagePicker({ open, card, onClose, onConfirm }: ImagePickerProps
             <img src={pending.url} alt="" className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-lg font-bold text-ink-secondary">
-              {card?.entity_name ? initialsFor(card.entity_name) : "—"}
+              {card?.entity_name ? initialsFor(card.entity_name) : "-"}
             </div>
           )}
         </div>

@@ -1,7 +1,7 @@
 import type { FullGame, GameCard } from "@/types";
 
 // ============================================================================
-// Mock game — used as a graceful fallback when Supabase isn't configured yet,
+// Mock game - used as a graceful fallback when Supabase isn't configured yet,
 // so `npm run dev` is instantly playable on a fresh clone. Real games come
 // from the database. Entity names match Wikipedia titles so images auto-fill.
 // ============================================================================

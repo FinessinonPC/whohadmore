@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Archive",
   description:
-    "Browse and replay every past WhoHadMore puzzle by date — a new daily comparison game across sports, pop culture, food, geography and science.",
+    "Browse and replay every past WhoHadMore puzzle by date - a new daily comparison game across sports, pop culture, food, geography and science.",
   alternates: { canonical: "/archive" },
 };
 
@@ -24,7 +24,7 @@ export default async function ArchivePage() {
       <div className="mb-6 mt-8">
         <h1 className="text-3xl font-extrabold tracking-tight text-ink">Archive</h1>
         <p className="mt-1 text-sm text-ink-secondary">
-          {games.length} games and counting — pick any day to play.
+          {games.length} games and counting - pick any day to play.
         </p>
       </div>
 

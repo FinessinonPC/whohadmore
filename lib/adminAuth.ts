@@ -1,5 +1,5 @@
 // ============================================================================
-// Server-side admin gate. NOT production auth — just a shared password (env
+// Server-side admin gate. NOT production auth - just a shared password (env
 // ADMIN_PASSWORD) sent in the `x-admin-password` header, enough to keep /admin
 // private during the build. Swap for real auth later.
 //

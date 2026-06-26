@@ -1,7 +1,7 @@
 "use client";
 
 // ============================================================================
-// STUB — not wired up yet.
+// STUB - not wired up yet.
 //
 // `game_results` carries a `play_date` per completed game, so a streak is just
 // a query for consecutive calendar dates ending today (per session_id now,

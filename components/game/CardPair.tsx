@@ -74,7 +74,7 @@ export function CardPair({
                   : { type: "spring", damping: 30, stiffness: 320, mass: 0.8 }
               }
             >
-              {/* Responsive tiles: square either way — sized by height when
+              {/* Responsive tiles: square either way - sized by height when
                   stacked on phones, and by width (centered, capped to the
                   available height) as side-by-side panels on desktop, so they
                   stay square instead of stretching into tall skinny strips. */}

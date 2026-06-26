@@ -16,7 +16,7 @@ interface LivesDisplayProps {
 
 /**
  * Lives as hearts. A lost heart gives a scale-punch and drains from red to grey
- * — the moment a life goes is meant to feel real.
+ * - the moment a life goes is meant to feel real.
  */
 export function LivesDisplay({ lives, max = STARTING_LIVES, size = "md" }: LivesDisplayProps) {
   // Detect which heart just flipped to empty so only that one pops.

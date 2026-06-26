@@ -29,7 +29,7 @@ interface GameBoardProps {
   /** Resume an in-progress game from a saved checkpoint. */
   resumeState?: GameCheckpoint | null;
   onCheckpoint?: (snap: GameCheckpoint) => void;
-  /** Embedded in the admin preview — hide site nav so nothing navigates away. */
+  /** Embedded in the admin preview - hide site nav so nothing navigates away. */
   embedded?: boolean;
   /** Tap-the-brand handler. On the daily route this returns to the start screen
    *  (saved progress lets the player resume); from an archived game it goes to
@@ -128,7 +128,7 @@ export function GameBoard({
       <HeartLossOverlay event={lossEvent} max={STARTING_LIVES} />
 
       <main className="mx-auto flex h-dvh w-full max-w-[440px] flex-col overflow-hidden px-4 pb-5 pt-5 md:max-w-[880px] lg:max-w-[1120px]">
-        {/* Header — kept minimal during play. The brand returns to the daily
+        {/* Header - kept minimal during play. The brand returns to the daily
             page; saved progress lets the player resume. */}
         <header className="flex shrink-0 items-center justify-between">
           {embedded ? (
@@ -151,7 +151,7 @@ export function GameBoard({
           <LivesDisplay lives={state.lives} />
         </header>
 
-        {/* Date + game number + topic — hidden on phones for a cleaner,
+        {/* Date + game number + topic - hidden on phones for a cleaner,
             pictures-first play view (kept on tablet/desktop). */}
         <div className="mt-4 hidden shrink-0 text-center md:block">
           <p className="small-caps text-[11px] text-ink-secondary">
@@ -161,7 +161,7 @@ export function GameBoard({
           <p className="mt-1 text-[13px] text-ink-secondary">{game.stat_label}</p>
         </div>
 
-        {/* The two cards — fill all remaining space */}
+        {/* The two cards - fill all remaining space */}
         <div className="relative flex min-h-0 flex-1 flex-col py-4">
           {state.pair && (
             <CardPair

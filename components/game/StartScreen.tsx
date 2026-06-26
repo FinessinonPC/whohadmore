@@ -46,7 +46,7 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
           {!isToday(date) ? " · Archive" : ""} · Game No. {gameNumber}
         </p>
 
-        {/* Hero montage — a fanned peek at today's lineup */}
+        {/* Hero montage - a fanned peek at today's lineup */}
         <div className="relative mt-6 flex h-44 w-full items-center justify-center sm:h-60">
           {hero.map((card, i) => {
             const offset = i - center;
@@ -84,7 +84,7 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
         </h1>
 
         <p className="mt-5 max-w-sm text-balance text-[15px] leading-relaxed text-ink-secondary sm:text-base">
-          Two cards, one stat — tap whichever had{" "}
+          Two cards, one stat - tap whichever had{" "}
           <span className="font-semibold text-ink">more {game.stat_unit || game.stat_label}</span>.
         </p>
 

@@ -42,7 +42,7 @@ export async function POST(req: Request) {
   }
   if (!data) {
     return NextResponse.json(
-      { error: "No saved game for that date yet — save it first." },
+      { error: "No saved game for that date yet - save it first." },
       { status: 404 }
     );
   }

@@ -1,5 +1,5 @@
 // ============================================================================
-// Game feedback — silent haptics only (no audio). Best-effort; no-ops where the
+// Game feedback - silent haptics only (no audio). Best-effort; no-ops where the
 // Vibration API is unavailable (e.g. desktop, iOS Safari).
 // ============================================================================
 

@@ -5,7 +5,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 // Supabase clients
 //   - browser():  anon client for client components (singleton)
 //   - server():   anon client for RSC / route handlers (reads public data)
-//   - service():  SERVICE-ROLE client, server-only. Bypasses RLS — use only in
+//   - service():  SERVICE-ROLE client, server-only. Bypasses RLS - use only in
 //                 trusted server routes (admin writes). Never import in a
 //                 "use client" module.
 // ============================================================================
@@ -22,7 +22,7 @@ function requireEnv(value: string | undefined, name: string): string {
   return value;
 }
 
-// --- Browser (anon) — single instance reused across the app -----------------
+// --- Browser (anon) - single instance reused across the app -----------------
 let browserClient: SupabaseClient | undefined;
 
 export function getBrowserSupabase(): SupabaseClient {
@@ -35,7 +35,7 @@ export function getBrowserSupabase(): SupabaseClient {
   return browserClient;
 }
 
-// --- Server (anon) — for reading public, published data ---------------------
+// --- Server (anon) - for reading public, published data ---------------------
 export function getServerSupabase(): SupabaseClient {
   return createClient(
     requireEnv(SUPABASE_URL, "NEXT_PUBLIC_SUPABASE_URL"),
@@ -44,7 +44,7 @@ export function getServerSupabase(): SupabaseClient {
   );
 }
 
-// --- Server (service role) — trusted writes only ----------------------------
+// --- Server (service role) - trusted writes only ----------------------------
 export function getServiceSupabase(): SupabaseClient {
   return createClient(
     requireEnv(SUPABASE_URL, "NEXT_PUBLIC_SUPABASE_URL"),

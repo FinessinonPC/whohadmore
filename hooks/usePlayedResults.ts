@@ -18,7 +18,7 @@ let cache: { sid: string; map: Record<string, PlayedResult> } | null = null;
 /**
  * Every date this account (current session) has completed, keyed by play_date.
  * Lets the daily game and the archive reflect games played on ANY device once
- * signed in — not just this device's localStorage.
+ * signed in - not just this device's localStorage.
  */
 export function usePlayedResults(): Record<string, PlayedResult> {
   const [map, setMap] = useState<Record<string, PlayedResult>>(() =>
@@ -38,7 +38,7 @@ export function usePlayedResults(): Record<string, PlayedResult> {
         setMap(m);
       })
       .catch(() => {
-        /* offline / not configured — leave whatever we have */
+        /* offline / not configured - leave whatever we have */
       });
     return () => {
       cancelled = true;

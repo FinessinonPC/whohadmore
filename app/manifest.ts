@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "WhoHadMore",
     short_name: "WhoHadMore",
     description:
-      "A daily higher/lower game. Two cards, one stat — tap the bigger number.",
+      "A daily higher/lower game. Two cards, one stat - tap the bigger number.",
     start_url: "/play",
     display: "standalone",
     background_color: "#FFFFFF",

@@ -82,7 +82,7 @@ export function Card({
         </div>
       )}
 
-      {/* Scrim for legibility — strong at the bottom, light up top for depth */}
+      {/* Scrim for legibility - strong at the bottom, light up top for depth */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/10" />
 
       {/* Verdict wash */}
@@ -93,7 +93,7 @@ export function Card({
         transition={{ duration: 0.25 }}
       />
 
-      {/* Thin keyline frame — editorial print detail */}
+      {/* Thin keyline frame - editorial print detail */}
       <div className="pointer-events-none absolute inset-[10px] border border-white/25" />
 
       {/* Caption block */}

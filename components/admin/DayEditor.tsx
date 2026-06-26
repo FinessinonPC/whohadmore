@@ -267,7 +267,7 @@ export function DayEditor({ date }: DayEditorProps) {
       </header>
 
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[1fr,360px]">
-        {/* LEFT — editor */}
+        {/* LEFT - editor */}
         <div>
           {/* Meta fields */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -365,7 +365,7 @@ export function DayEditor({ date }: DayEditorProps) {
           </div>
         </div>
 
-        {/* RIGHT — preview */}
+        {/* RIGHT - preview */}
         <aside className="lg:sticky lg:top-6 lg:self-start">
           <p className="mb-3 small-caps text-[10px] text-ink-secondary">Preview</p>
           <div className="rounded-2xl border border-border bg-surface p-4">
@@ -400,7 +400,7 @@ export function DayEditor({ date }: DayEditorProps) {
                       {c.entity_name}
                     </span>
                     <span className="tabular text-sm font-bold text-ink">
-                      {c.stat_value ? formatStat(Number(c.stat_value)) : "—"}
+                      {c.stat_value ? formatStat(Number(c.stat_value)) : "-"}
                     </span>
                   </div>
                 ))}

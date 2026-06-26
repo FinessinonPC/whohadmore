@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 // unique(play_date) constraint without a transaction.
 const TEMP_DATE = "0001-01-01";
 
-// POST { from, to } — move a game to another day. If `to` already has a game,
+// POST { from, to } - move a game to another day. If `to` already has a game,
 // the two games swap dates. Note: game_results are keyed by date, so they stay
 // with the day, not the game (fine for rescheduling drafts / future games).
 export async function POST(req: Request) {
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     .eq("play_date", to)
     .maybeSingle<{ id: string }>();
 
-  // Empty target — straight move.
+  // Empty target - straight move.
   if (!target) {
     const { error } = await supabase
       .from("daily_games")
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, swapped: false });
   }
 
-  // Occupied target — swap via the parking date.
+  // Occupied target - swap via the parking date.
   const park = await supabase.from("daily_games").update({ play_date: TEMP_DATE }).eq("id", source.id);
   if (park.error) return NextResponse.json({ error: park.error.message }, { status: 500 });
 

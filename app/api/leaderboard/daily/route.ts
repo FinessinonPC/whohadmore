@@ -34,7 +34,7 @@ export async function GET(req: Request) {
   try {
     const supabase = getServiceSupabase();
 
-    // Every result for the day — one per session, signed in or anonymous.
+    // Every result for the day - one per session, signed in or anonymous.
     const { data: results, error: resultsError } = await supabase
       .from("game_results")
       .select("session_id, score, time_seconds, lives_remaining, stars")

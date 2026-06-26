@@ -117,7 +117,7 @@ export function PlayExperience({
         completedAt: new Date().toISOString(),
       };
       saveLocalResult(date, stored);
-      clearProgress(date); // game is finished — nothing to resume
+      clearProgress(date); // game is finished - nothing to resume
       setResult(stored);
       setAlreadyPlayed(false);
       setLevelUp(null);
@@ -238,7 +238,7 @@ function EmptyState({ date, isDaily }: { date: string; isDaily: boolean }) {
         {isDaily ? "No game today" : "No game for this day"}
       </h1>
       <p className="text-sm text-ink-secondary">
-        {isDaily ? "Check back soon — a new game drops daily." : "This date doesn't have a published game."}
+        {isDaily ? "Check back soon - a new game drops daily." : "This date doesn't have a published game."}
       </p>
       <Link
         href="/archive"

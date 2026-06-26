@@ -1,4 +1,4 @@
-// Clean, hand-built brand mark — a green triangle up over a red triangle down,
+// Clean, hand-built brand mark - a green triangle up over a red triangle down,
 // the higher/lower motif. No external assets; scales crisply at any size.
 
 interface MarkProps {

@@ -35,7 +35,7 @@ export function LeaderboardView() {
 
       <h1 className="mt-8 text-4xl font-extrabold tracking-tight text-ink">Leaderboard</h1>
       <p className="mt-1 text-[15px] text-ink-secondary">
-        Pure performance — correct answers, hearts kept, and speed. No streak.
+        Ranked by correct answers, hearts kept, and speed.
       </p>
 
       {/* Daily / All-time toggle */}

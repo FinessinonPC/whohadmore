@@ -105,7 +105,7 @@ export function SignUpFlow({ onDone }: { onDone: () => void }) {
         <>
           <p className="text-xl font-extrabold text-ink">Sign up or log in</p>
           <p className="mx-auto mt-1 max-w-xs text-sm text-ink-secondary">
-            Enter your email and we&apos;ll send a verification code — no password.
+            Enter your email and we&apos;ll send a verification code - no password.
           </p>
           <div className="mt-5 flex flex-col gap-2.5">
             <input

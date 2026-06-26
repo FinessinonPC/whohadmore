@@ -8,7 +8,7 @@ import { getWikimediaThumbnail } from "@/lib/wikimedia";
 import { buildMockGame, isSupabaseConfigured } from "@/lib/mockGame";
 import type { DailyGame, FullGame, GameCard } from "@/types";
 
-/** Lightweight meta for a published game (no cards) — used for SEO titles. */
+/** Lightweight meta for a published game (no cards) - used for SEO titles. */
 export async function getGameMeta(
   date: string
 ): Promise<Pick<DailyGame, "topic_label" | "stat_label" | "topic_category"> | null> {

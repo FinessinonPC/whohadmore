@@ -65,7 +65,7 @@ export interface UseGameState {
   /** Right card reveals its value during a correct reveal. */
   revealRight: boolean;
   elapsedSeconds: number;
-  /** Round indices (0-based pairs) the player got wrong — for the timeline. */
+  /** Round indices (0-based pairs) the player got wrong - for the timeline. */
   wrongRounds: number[];
   guess: (side: Side) => void;
   restart: () => void;
@@ -127,7 +127,7 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
       roundsPlayedRef.current += 1; // a committed guess = a round played (how far)
 
       setChosenSide(side);
-      // 1) Count the value up with no verdict yet — pure suspense.
+      // 1) Count the value up with no verdict yet - pure suspense.
       setPhase("counting");
 
       schedule(() => {

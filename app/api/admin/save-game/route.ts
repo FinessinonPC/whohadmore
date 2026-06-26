@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // Replace the card set wholesale — simplest correct approach for an editor.
+  // Replace the card set wholesale - simplest correct approach for an editor.
   const validCards = (payload.cards ?? [])
     .filter((c) => c.entity_name?.trim() && Number.isFinite(Number(c.stat_value)))
     .map((c, index) => ({

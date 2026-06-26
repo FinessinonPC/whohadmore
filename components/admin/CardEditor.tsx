@@ -55,7 +55,7 @@ export function CardEditor({
           <img src={card.image_url} alt="" className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-[11px] font-bold text-ink-secondary">
-            {card.entity_name ? initialsFor(card.entity_name) : "—"}
+            {card.entity_name ? initialsFor(card.entity_name) : "-"}
           </div>
         )}
       </div>

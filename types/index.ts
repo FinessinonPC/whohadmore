@@ -1,5 +1,5 @@
 // ============================================================================
-// WhoHadMore — shared types
+// WhoHadMore - shared types
 // ============================================================================
 
 export type TopicCategory =
@@ -74,7 +74,7 @@ export interface LeaderboardEntry {
 
 // --- Composite / API shapes --------------------------------------------------
 
-/** A daily game with its ordered card chain — what the play screen consumes. */
+/** A daily game with its ordered card chain - what the play screen consumes. */
 export interface FullGame extends DailyGame {
   cards: GameCard[];
 }

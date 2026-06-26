@@ -2,7 +2,7 @@
 // Client-side play state (localStorage).
 //
 // Tracks an anonymous session id and a per-date result so a finished game stays
-// finished on this device — we show the saved score instead of letting players
+// finished on this device - we show the saved score instead of letting players
 // restart. Reviewing past games / cross-device history arrives with sign-in.
 // ============================================================================
 
@@ -58,7 +58,7 @@ export function saveLocalResult(date: string, result: StoredResult): void {
   try {
     window.localStorage.setItem(resultKey(date), JSON.stringify(result));
   } catch {
-    /* storage full / disabled — non-fatal */
+    /* storage full / disabled - non-fatal */
   }
 }
 

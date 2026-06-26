@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Oswald } from "next/font/google";
 import { getSiteUrl } from "@/lib/site";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const inter = Inter({
@@ -10,7 +11,7 @@ const inter = Inter({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-// Condensed display face for the big stat numbers — editorial, not generic.
+// Condensed display face for the big stat numbers - editorial, not generic.
 const oswald = Oswald({
   subsets: ["latin"],
   variable: "--font-oswald",
@@ -19,7 +20,7 @@ const oswald = Oswald({
 });
 
 const description =
-  "A daily higher/lower game. Two cards, one stat — tap the bigger number.";
+  "A daily higher/lower game. Two cards, one stat - tap the bigger number.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
@@ -61,6 +62,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-dvh bg-background text-ink antialiased">
         {children}
+        <Analytics />
       </body>
     </html>
   );

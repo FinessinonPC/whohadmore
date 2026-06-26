@@ -137,7 +137,7 @@ export function ResultScreen({
           <ChainTimeline position={reached} total={rounds} wrongRounds={wrongRounds} />
         </div>
 
-        {/* XP earned — on top */}
+        {/* XP earned - on top */}
         <div className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-correct/30 bg-correct/10 px-4 py-2">
           <span className="font-condensed text-xl font-bold text-correct">
             +<CountUp value={xpEarned} run duration={1} /> XP
@@ -220,7 +220,7 @@ export function ResultScreen({
               <button className="flex w-full items-center justify-between rounded-2xl bg-cta px-5 py-4 text-left text-white transition-colors hover:bg-black">
                 <span>
                   <span className="block text-[15px] font-bold">Play more games</span>
-                  <span className="block text-xs text-white/70">Jump into the archive — every past game is playable</span>
+                  <span className="block text-xs text-white/70">Jump into the archive - every past game is playable</span>
                 </span>
                 <span className="text-xl">→</span>
               </button>
@@ -263,7 +263,7 @@ function ClaimBlock() {
         <p className="text-sm text-ink">
           Signed in as <span className="font-extrabold">{profile.username}</span>
         </p>
-        <p className="mt-0.5 text-xs text-ink-secondary">Score added to your totals — keep your streak going.</p>
+        <p className="mt-0.5 text-xs text-ink-secondary">Score added to your totals - keep your streak going.</p>
       </div>
     );
   }

@@ -38,7 +38,7 @@ export function ProfileView() {
               </div>
               <div className="text-right">
                 <p className="small-caps text-[10px] text-ink-secondary">Rank</p>
-                <p className="text-2xl font-extrabold text-ink">{rank ? `#${rank}` : "—"}</p>
+                <p className="text-2xl font-extrabold text-ink">{rank ? `#${rank}` : "-"}</p>
               </div>
             </div>
 
@@ -152,7 +152,7 @@ function Achievements({ earned }: { earned: string[] }) {
                 {a.label}
               </span>
 
-              {/* Hover tooltip — what it is and how to earn it */}
+              {/* Hover tooltip - what it is and how to earn it */}
               <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-40 -translate-x-1/2 rounded-xl bg-ink px-3 py-2 text-left opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
                 <p className="text-[11px] font-bold text-background">{a.label}</p>
                 <p className="mt-0.5 text-[10px] leading-snug text-background/80">{a.description}</p>

@@ -15,7 +15,7 @@ export async function generateMetadata({
   if (!isValidISODate(date)) return {};
   const meta = await getGameMeta(date);
   if (!meta) return { title: "Game not found" };
-  const title = `${meta.topic_label} — Higher or Lower`;
+  const title = `${meta.topic_label} - Higher or Lower`;
   const description = `Can you guess which had more ${meta.stat_label.toLowerCase()}? Play the WhoHadMore puzzle from ${formatDisplayDate(date)}: ${meta.topic_label}.`;
   return {
     title,
@@ -39,7 +39,7 @@ export default async function PlayDatePage({
     getGameNumber(date),
   ]);
 
-  // Same experience as /play — isDaily just controls the midnight roll-over.
+  // Same experience as /play - isDaily just controls the midnight roll-over.
   return (
     <PlayExperience
       initialGame={game}

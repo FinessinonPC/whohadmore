@@ -17,7 +17,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     try {
       localStorage.setItem("theme", next ? "dark" : "light");
     } catch {
-      /* storage disabled — toggle still works for the session */
+      /* storage disabled - toggle still works for the session */
     }
   }
 

@@ -5,7 +5,7 @@ import { levelFromXp, type LeaderboardRow } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/leaderboard  ->  { rows } — top players all-time, by total score
+// GET /api/leaderboard  ->  { rows } - top players all-time, by total score
 // (streak-free). Level still comes from XP, which does carry the streak bonus.
 export async function GET() {
   if (!isSupabaseConfigured()) {

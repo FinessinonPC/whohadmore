@@ -1,7 +1,7 @@
 import { ADMIN_HEADER } from "@/lib/adminAuth";
 
 // Client-side admin session helpers. The password lives in sessionStorage and
-// rides along on every admin API call. (Not real auth — build-time gate only.)
+// rides along on every admin API call. (Not real auth - build-time gate only.)
 
 const ADMIN_PW_KEY = "whohadmore_admin_pw";
 

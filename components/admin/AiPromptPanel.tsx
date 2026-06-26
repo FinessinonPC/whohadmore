@@ -11,7 +11,7 @@ interface AiPromptPanelProps {
   onLoad: (game: AiGameJson) => void;
 }
 
-const PROMPT = `You are the creative director for a daily higher/lower game. Players see two cards and tap whichever has the higher value of one stat. Invent ONE genuinely ORIGINAL game — the kind that makes someone say "huh, I never thought to compare those."
+const PROMPT = `You are the creative director for a daily higher/lower game. Players see two cards and tap whichever has the higher value of one stat. Invent ONE genuinely ORIGINAL game - the kind that makes someone say "huh, I never thought to compare those."
 
 THREE rules that matter most:
 
@@ -19,7 +19,7 @@ THREE rules that matter most:
    HARD-AVOID (overdone): NBA/NFL stats, country populations, land area, net worth,
    tallest buildings, longest rivers, box office, Spotify streams, YouTube subs.
 
-2) OBJECTIVE — exactly one right answer, not debatable. Use a hard, measurable,
+2) OBJECTIVE - exactly one right answer, not debatable. Use a hard, measurable,
    verifiable NUMBER (count, length, weight, speed, year, calories, etc.). NO
    opinions, rankings, "best/greatest", quality scores, or anything subjective.
    For any two cards, which is higher must be a settled fact.
@@ -29,7 +29,7 @@ THREE rules that matter most:
    or divisive. Aim for playful, everyday, surprising.
 
 4) EDUCATED-GUESSABLE. Most people should have a rough intuition and be able to
-   reason about it — but very few will know the exact order. Include real upsets.
+   reason about it - but very few will know the exact order. Include real upsets.
 
 Good directions: hidden everyday numbers (water to grow foods, caffeine in drinks,
 ingredients in a recipe, weight of animals/objects), surprising "per X" stats
@@ -42,7 +42,7 @@ Build it well:
 - Order the cards RANDOMLY (not sorted by value).
 - Use exact Wikipedia article titles as entity_name so images auto-populate.
 
-Return ONLY this JSON — no explanation, no markdown fences:
+Return ONLY this JSON - no explanation, no markdown fences:
 {
   "topic_label": "string",        // specific & intriguing
   "topic_category": "sports|geography|entertainment|science|current_events",
@@ -118,7 +118,7 @@ export function AiPromptPanel({ open, onClose, onLoad }: AiPromptPanelProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
-      /* clipboard blocked — the prompt is visible to copy manually */
+      /* clipboard blocked - the prompt is visible to copy manually */
     }
   }
 

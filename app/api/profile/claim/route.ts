@@ -56,7 +56,7 @@ export async function POST(req: Request) {
   if (!session_id) return NextResponse.json({ error: "Missing session" }, { status: 400 });
   if (!USERNAME_RE.test(username)) {
     return NextResponse.json(
-      { error: "2–20 chars: letters, numbers, spaces, _ or -." },
+      { error: "2-20 chars: letters, numbers, spaces, _ or -." },
       { status: 400 }
     );
   }
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ profile: updated ?? existing });
   }
 
-  // New profile — backfill stats from this session's history.
+  // New profile - backfill stats from this session's history.
   const today = todayISO();
   const period = monthPeriod(today);
 

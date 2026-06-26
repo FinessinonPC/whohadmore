@@ -117,13 +117,13 @@ export async function POST(req: Request) {
   if (existing) {
     const canonical = existing.session_id;
 
-    // Same device as the account already — nothing to merge or recompute.
+    // Same device as the account already - nothing to merge or recompute.
     if (canonical === session_id) {
       return NextResponse.json({ profile: existing, loggedIn: true });
     }
 
     // Merge any plays made on THIS device (its anonymous session, pre-login)
-    // into the account's canonical session — so the game they just finished
+    // into the account's canonical session - so the game they just finished
     // counts and is attributed to their username, not orphaned.
     const { data: canonRows } = await supabase
       .from("game_results")
@@ -140,9 +140,9 @@ export async function POST(req: Request) {
     const dup = (curRows ?? []).filter((r) => canonDates.has(r.play_date)).map((r) => r.id);
     const move = (curRows ?? []).filter((r) => !canonDates.has(r.play_date)).map((r) => r.id);
 
-    // The account already has those days — drop this device's duplicates.
+    // The account already has those days - drop this device's duplicates.
     if (dup.length) await supabase.from("game_results").delete().in("id", dup);
-    // New days for the account — re-point them to the canonical session.
+    // New days for the account - re-point them to the canonical session.
     if (move.length) {
       await supabase.from("game_results").update({ session_id: canonical }).in("id", move);
     }
@@ -182,13 +182,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ profile: updated ?? existing, loggedIn: true });
   }
 
-  // No account yet — first ask for a username, then create the profile.
+  // No account yet - first ask for a username, then create the profile.
   if (!username) {
     return NextResponse.json({ needsUsername: true, email });
   }
   if (!USERNAME_RE.test(username)) {
     return NextResponse.json(
-      { error: "2–20 chars: letters, numbers, spaces, _ or -." },
+      { error: "2-20 chars: letters, numbers, spaces, _ or -." },
       { status: 400 }
     );
   }
@@ -225,7 +225,7 @@ export async function POST(req: Request) {
     if (error.code === UNIQUE_VIOLATION) {
       // Either the username or (rarely) the email is already taken.
       return NextResponse.json(
-        { error: "That username is taken — try another." },
+        { error: "That username is taken - try another." },
         { status: 409 }
       );
     }

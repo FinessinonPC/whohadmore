@@ -6,7 +6,7 @@ import type { DailyGame } from "@/types";
 
 export const dynamic = "force-dynamic";
 
-// Lists games for a month ("YYYY-MM") for the admin calendar — includes drafts.
+// Lists games for a month ("YYYY-MM") for the admin calendar - includes drafts.
 export async function GET(req: Request) {
   if (!checkAdmin(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
