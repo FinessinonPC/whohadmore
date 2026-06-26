@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Ensure the OG fonts ship with the on-demand per-puzzle share-card render.
+  outputFileTracingIncludes: {
+    "/play/[date]/opengraph-image": ["./app/Inter-Black.ttf", "./app/Inter-Bold.ttf"],
+  },
   images: {
     remotePatterns: [
       {
