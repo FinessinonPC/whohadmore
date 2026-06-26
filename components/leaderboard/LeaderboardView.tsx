@@ -58,7 +58,7 @@ export function LeaderboardView() {
                 <div
                   key={i}
                   className={`flex items-center gap-3 px-4 py-3 ${i > 0 ? "border-t border-border/70" : ""} ${
-                    r.you ? "bg-correct/10" : ""
+                    r.you ? "bg-correct/15 ring-1 ring-inset ring-correct/40" : ""
                   }`}
                 >
                   <RankBadge rank={r.rank} />
@@ -69,7 +69,7 @@ export function LeaderboardView() {
                       }`}
                     >
                       {r.name}
-                      {r.you && <span className="ml-1 text-ink-secondary">· You</span>}
+                      {r.you && <span className="ml-1.5 font-extrabold text-correct">(you)</span>}
                     </p>
                     <p className="mt-0.5 text-[11px] text-ink-secondary">
                       {r.reached}
@@ -99,13 +99,13 @@ export function LeaderboardView() {
                 <div
                   key={r.rank}
                   className={`flex items-center gap-3 px-4 py-3.5 ${i > 0 ? "border-t border-border/70" : ""} ${
-                    me ? "bg-correct/10" : ""
+                    me ? "bg-correct/15 ring-1 ring-inset ring-correct/40" : ""
                   }`}
                 >
                   <RankBadge rank={r.rank} />
                   <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-ink">
                     {r.username}
-                    {me && <span className="ml-1 text-ink-secondary">· You</span>}
+                    {me && <span className="ml-1.5 font-extrabold text-correct">(you)</span>}
                   </span>
                   <span className="rounded-full bg-background px-2 py-0.5 text-[11px] font-bold text-ink-secondary">
                     Lv {r.level}
