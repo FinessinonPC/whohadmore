@@ -48,6 +48,17 @@ function headline(reached: number, rounds: number, lives: number): string {
   return "Out of lives.";
 }
 
+/** Wordle-style result grid: one square per round played — green for correct,
+ *  red for a miss — wrapped to rows of five for a tidy shareable block. */
+function shareGrid(reached: number, rounds: number, wrongRounds: number[]): string {
+  const wrong = new Set(wrongRounds);
+  const cells: string[] = [];
+  for (let i = 0; i < Math.min(reached, rounds); i++) cells.push(wrong.has(i) ? "🟥" : "🟩");
+  const rows: string[] = [];
+  for (let i = 0; i < cells.length; i += 5) rows.push(cells.slice(i, i + 5).join(""));
+  return rows.join("\n");
+}
+
 export function ResultScreen({
   reached,
   rounds,
@@ -75,9 +86,17 @@ export function ResultScreen({
   async function share() {
     const hearts = heartsFor(lives);
     const heartsBar = "❤️".repeat(hearts) + "🤍".repeat(3 - hearts);
-    const text = `WhoHadMore No. ${gameNumber}\n${reached}/${rounds}\n${heartsBar}\n${formatClock(
-      timeSeconds
-    )}\n${dailyScore(reached, hearts, timeSeconds).toLocaleString()}`;
+    const text = [
+      `WhoHadMore No. ${gameNumber}`,
+      `${reached}/${rounds}`,
+      shareGrid(reached, rounds, wrongRounds),
+      heartsBar,
+      formatClock(timeSeconds),
+      dailyScore(reached, hearts, timeSeconds).toLocaleString(),
+      typeof window !== "undefined" ? window.location.origin : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
     try {
       if (navigator.share) await navigator.share({ title: "WhoHadMore", text });
       else {
