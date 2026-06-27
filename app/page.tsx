@@ -7,7 +7,7 @@ import { todayISO } from "@/lib/date";
 export const dynamic = "force-dynamic";
 
 const DESCRIPTION =
-  "WhoHadMore is a free daily higher-or-lower game: two cards, one stat, tap whichever had more. A new guessing puzzle every day across sports, pop culture, food, geography and science.";
+  "WhoHadMore is a free daily higher-or-lower game: two cards, one stat, tap whichever is higher. A new guessing puzzle every day across sports, pop culture, food, geography and science.";
 
 export const metadata: Metadata = {
   title: { absolute: "WhoHadMore - Daily Higher or Lower Game" },

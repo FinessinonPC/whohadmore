@@ -13,6 +13,5 @@ export function puzzleTitle(meta: Pick<DailyGame, "topic_label">): string {
 export function puzzleDescription(meta: PuzzleMeta): string {
   const custom = meta.description?.trim();
   if (custom) return custom;
-  const stat = meta.stat_label.toLowerCase();
-  return `Who had more ${stat}? Play "${meta.topic_label}" - a free daily higher-or-lower guessing game. Two cards, one stat, three lives, and a brand-new puzzle every day.`;
+  return `Play "${meta.topic_label}" - a free daily higher-or-lower game. Two cards, one stat: tap whichever is higher. A brand-new puzzle drops every day.`;
 }

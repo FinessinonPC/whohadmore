@@ -84,8 +84,8 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
         </h1>
 
         <p className="mt-5 max-w-sm text-balance text-[15px] leading-relaxed text-ink-secondary sm:text-base">
-          Two cards, one stat - tap whichever had{" "}
-          <span className="font-semibold text-ink">more {game.stat_unit || game.stat_label}</span>.
+          Two cards, one stat - tap{" "}
+          <span className="font-semibold text-ink">whichever is higher</span>.
         </p>
 
         {/* lives + rounds */}

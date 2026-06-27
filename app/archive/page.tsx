@@ -39,7 +39,7 @@ export default async function ArchivePage() {
         <h1 className="text-3xl font-extrabold tracking-tight text-ink">WhoHadMore Archive</h1>
         <p className="mt-1 text-sm text-ink-secondary">
           Every past WhoHadMore puzzle, free to replay - {games.length} daily higher-or-lower
-          games and counting. Pick any day below and guess which had more.
+          games and counting. Pick any day below and guess which is higher.
         </p>
       </div>
 

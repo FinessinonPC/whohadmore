@@ -5,7 +5,7 @@ import { BrandMark } from "@/components/ui/Logo";
 export const dynamic = "force-static";
 
 const DESCRIPTION =
-  "WhoHadMore is a free daily higher-or-lower game - two cards, one stat, tap whichever had more. Learn how to play, build a streak, and climb the leaderboard.";
+  "WhoHadMore is a free daily higher-or-lower game - two cards, one stat, tap whichever is higher. Learn how to play, build a streak, and climb the leaderboard.";
 
 const FAQ_LD = {
   "@context": "https://schema.org",
@@ -16,7 +16,7 @@ const FAQ_LD = {
       name: "What is WhoHadMore?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "WhoHadMore is a free daily higher-or-lower game. Each day you get a new puzzle: two cards appear, each showing a person, place, or thing, and you tap whichever one had more of that day's stat.",
+        text: "WhoHadMore is a free daily higher-or-lower game. Each day you get a new puzzle: two cards appear, each showing a person, place, or thing, and you tap whichever one is higher on that day's stat.",
       },
     },
     {
@@ -24,7 +24,7 @@ const FAQ_LD = {
       name: "How do you play WhoHadMore?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "You start with three lives and a chain of cards. One card's value is shown; tap the card you think had more. A correct guess moves you down the chain and a wrong guess costs a life.",
+        text: "You start with three lives and a chain of cards. One card's value is shown; tap the card you think is higher. A correct guess moves you down the chain and a wrong guess costs a life.",
       },
     },
     {
@@ -79,18 +79,17 @@ export default function AboutPage() {
 
         <p>
           <span className="font-semibold text-ink">WhoHadMore</span> is a daily
-          comparison game. Every day you get a fresh higher-or-lower
-          puzzle: two cards appear side by side, each showing a person, place, or
-          thing, and you simply tap whichever one had{" "}
-          <span className="font-semibold text-ink">more</span> of that day&apos;s
-          stat - more points, more streams, more calories, more anything.
+          higher-or-lower game. Every day you get a fresh puzzle: two cards appear
+          side by side, each showing a person, place, or thing, and you simply tap{" "}
+          <span className="font-semibold text-ink">whichever is higher</span> on
+          that day&apos;s stat - more points, taller, faster, whatever it is.
         </p>
 
         <div>
           <h2 className="mb-2 text-xl font-extrabold text-ink">How to play</h2>
           <ul className="list-disc space-y-1.5 pl-5">
             <li>You start with three lives and a chain of cards.</li>
-            <li>One card&apos;s value is shown; tap the card you think had more.</li>
+            <li>One card&apos;s value is shown; tap the card you think is higher.</li>
             <li>A correct guess moves you down the chain. A wrong guess costs a life.</li>
             <li>The further you make it, the more XP you earn.</li>
           </ul>

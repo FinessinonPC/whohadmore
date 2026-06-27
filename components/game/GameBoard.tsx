@@ -44,7 +44,7 @@ function hintFor(phase: GamePhase): { text: string; tone: string } {
     case "reveal-wrong":
       return { text: "Wrong", tone: "text-wrong" };
     case "idle":
-      return { text: "Tap whoever had more", tone: "text-ink-secondary" };
+      return { text: "Tap whichever is higher", tone: "text-ink-secondary" };
     default:
       return { text: "", tone: "text-ink-secondary" };
   }

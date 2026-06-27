@@ -7,7 +7,7 @@ import type { FullGame } from "@/types";
 /**
  * Crawlable, keyword-rich content rendered BELOW the game (below the fold, so it
  * never disturbs play). This is what lets each puzzle rank for its topic + the
- * "who had more / higher or lower" intent, plus breadcrumb + Game structured
+ * "higher or lower" search intent, plus breadcrumb + Game structured
  * data. The lineup is hidden for today's puzzle to avoid spoiling it.
  */
 export function GameSeoFooter({ game, date }: { game: FullGame; date: string }) {
@@ -47,15 +47,13 @@ export function GameSeoFooter({ game, date }: { game: FullGame; date: string }) 
   return (
     <section className="border-t border-border bg-surface/40">
       <div className="mx-auto w-full max-w-2xl px-5 py-12 text-[15px] leading-relaxed text-ink-secondary">
-        <h2 className="text-2xl font-extrabold tracking-tight text-ink">
-          Who had more {statLower}? {topic}
-        </h2>
+        <h2 className="text-2xl font-extrabold tracking-tight text-ink">{topic}</h2>
         <p className="mt-3">{lead}</p>
 
         <h3 className="mt-7 text-lg font-extrabold text-ink">How to play</h3>
         <p className="mt-1">
-          Two cards appear with one card&apos;s {statLower} shown. Tap whichever you think had
-          more. A correct guess continues the chain; a wrong one costs a life, and you start with
+          Two cards appear with one card&apos;s {statLower} shown. Tap whichever you think is
+          higher. A correct guess continues the chain; a wrong one costs a life, and you start with
           three. It&apos;s free, plays in your browser on phone or desktop, and a brand-new
           higher-or-lower puzzle drops every day.
         </p>
