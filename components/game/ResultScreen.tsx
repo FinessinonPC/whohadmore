@@ -9,6 +9,7 @@ import { CountUp } from "./CountUp";
 import { Confetti } from "./Confetti";
 import { ChainTimeline } from "./ChainTimeline";
 import { LivesDisplay } from "./LivesDisplay";
+import { DayStandings } from "./DayStandings";
 import { useProfile } from "@/hooks/useProfile";
 import { getSessionId } from "@/lib/playStore";
 import { achievementById, dailyScore, heartsFor } from "@/lib/leaderboard";
@@ -236,6 +237,11 @@ export function ResultScreen({
             <span className="small-caps text-[9px] text-ink-secondary">Hearts</span>
           </div>
         </div>
+
+        {/* Archived games: that day's standings, so replayers see how they did */}
+        {mode === "play" && !daily && (
+          <DayStandings date={date} me={{ reached, hearts: heartsFor(lives), timeSeconds, score }} />
+        )}
 
         {/* Actions */}
         {mode === "preview" ? (
