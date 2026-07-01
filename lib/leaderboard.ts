@@ -98,15 +98,14 @@ const DISTANCE_XP = 10; // per round reached
 const CLEAR_BONUS = 50; // for going the full distance
 const SPEED_XP = 6; // max per round, scaled by how fast you decided
 const SPEED_FAST_SEC = 3; // <= this many sec/round => full speed bonus
-const SPEED_SLOW_SEC = 9; // >= this many sec/round => no speed bonus
 
-const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
-
-/** 0..1 - how fast the player decided, per round. */
+/** 0..1 - how fast the player decided, per round. Decays smoothly with time and
+ *  never floors to 0, so a faster run always outscores a slower one with the same
+ *  correct answers and hearts (no more identical scores on the leaderboard). */
 export function speedFactor(timeSeconds: number, reached: number): number {
   if (reached <= 0 || timeSeconds <= 0) return 0;
   const perRound = timeSeconds / reached;
-  return clamp01((SPEED_SLOW_SEC - perRound) / (SPEED_SLOW_SEC - SPEED_FAST_SEC));
+  return Math.min(1, SPEED_FAST_SEC / perRound);
 }
 
 export function speedBonus(reached: number, timeSeconds: number): number {
