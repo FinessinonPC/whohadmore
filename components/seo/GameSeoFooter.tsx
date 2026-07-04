@@ -1,21 +1,40 @@
 import Link from "next/link";
 import { puzzleDescription } from "@/lib/seo";
 import { getSiteUrl } from "@/lib/site";
+import { getRecentGameLinks } from "@/lib/games";
 import { formatDisplayDate, todayISO } from "@/lib/date";
 import type { FullGame } from "@/types";
 
+/** Format a stat value with thousands separators and its unit. */
+function formatStat(value: number, unit: string | null): string {
+  const num = Number.isInteger(value)
+    ? value.toLocaleString("en-US")
+    : value.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  return unit ? `${num} ${unit}` : num;
+}
+
 /**
  * Crawlable, keyword-rich content rendered BELOW the game (below the fold, so it
- * never disturbs play). This is what lets each puzzle rank for its topic + the
- * "higher or lower" search intent, plus breadcrumb + Game structured
- * data. The lineup is hidden for today's puzzle to avoid spoiling it.
+ * never disturbs play). Each puzzle ranks for its topic, the people/things in it,
+ * and the "higher or lower" / "who had more" search intent.
+ *
+ * Archived puzzles publish the full ranked answer - so the page literally answers
+ * "who had more {stat}, {A} or {B}?" for its entities (strong long-tail SEO).
+ * Today's puzzle only names the lineup so the result stays a surprise. Emits
+ * Breadcrumb + Game + (for archived games) ItemList structured data, and internal
+ * links to other puzzles so Google crawls the whole archive.
  */
-export function GameSeoFooter({ game, date }: { game: FullGame; date: string }) {
+export async function GameSeoFooter({ game, date }: { game: FullGame; date: string }) {
   const topic = game.topic_label;
-  const statLower = game.stat_label.toLowerCase();
+  const stat = game.stat_label;
+  const statLower = stat.toLowerCase();
   const lead = puzzleDescription(game);
   const isToday = date === todayISO();
   const entities = game.cards.map((c) => c.entity_name).filter(Boolean);
+  const ranked = [...game.cards]
+    .filter((c) => c.entity_name)
+    .sort((a, b) => b.stat_value - a.stat_value);
+  const recent = await getRecentGameLinks(date, 6);
 
   const base = getSiteUrl();
   const url = `${base}/play/${date}`;
@@ -40,7 +59,23 @@ export function GameSeoFooter({ game, date }: { game: FullGame; date: string }) 
         datePublished: date,
         inLanguage: "en",
         author: { "@type": "Organization", name: "WhoHadMore" },
+        about: entities.map((name) => ({ "@type": "Thing", name })),
       },
+      ...(!isToday && ranked.length > 0
+        ? [
+            {
+              "@type": "ItemList",
+              name: `${topic} ranked by ${stat}`,
+              itemListOrder: "https://schema.org/ItemListOrderDescending",
+              numberOfItems: ranked.length,
+              itemListElement: ranked.map((c, i) => ({
+                "@type": "ListItem",
+                position: i + 1,
+                name: c.entity_name,
+              })),
+            },
+          ]
+        : []),
     ],
   };
 
@@ -58,12 +93,54 @@ export function GameSeoFooter({ game, date }: { game: FullGame; date: string }) 
           higher-or-lower puzzle drops every day.
         </p>
 
-        {!isToday && entities.length > 0 && (
+        {isToday && entities.length > 0 && (
           <>
-            <h3 className="mt-7 text-lg font-extrabold text-ink">Featured in this puzzle</h3>
+            <h3 className="mt-7 text-lg font-extrabold text-ink">In today&apos;s puzzle</h3>
             <p className="mt-1">
-              {topic} ({formatDisplayDate(date)}) compares {statLower} across {entities.join(", ")}.
+              Today&apos;s higher-or-lower puzzle features {entities.join(", ")}. Play now and guess
+              which is higher on {statLower} - the full ranking reveals as you go.
             </p>
+          </>
+        )}
+
+        {!isToday && ranked.length > 0 && (
+          <>
+            <h3 className="mt-7 text-lg font-extrabold text-ink">
+              Who had more? {topic}, ranked by {statLower}
+            </h3>
+            <p className="mt-1">
+              Here is how all {ranked.length} compare on {statLower} ({formatDisplayDate(date)}),
+              highest to lowest - so you can see exactly who had more:
+            </p>
+            <ol className="mt-3 space-y-1.5">
+              {ranked.map((c, i) => (
+                <li key={c.id} className="flex items-baseline gap-2">
+                  <span className="w-5 shrink-0 tabular-nums text-ink-secondary">{i + 1}.</span>
+                  <span className="font-semibold text-ink">{c.entity_name}</span>
+                  <span className="text-ink-secondary">
+                    - {formatStat(c.stat_value, game.stat_unit)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
+
+        {recent.length > 0 && (
+          <>
+            <h3 className="mt-8 text-lg font-extrabold text-ink">More daily puzzles</h3>
+            <ul className="mt-3 flex flex-wrap gap-2.5">
+              {recent.map((g) => (
+                <li key={g.play_date}>
+                  <Link
+                    href={`/play/${g.play_date}`}
+                    className="inline-block rounded-full bg-surface px-4 py-2 text-xs font-bold text-ink"
+                  >
+                    {g.topic_label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </>
         )}
 

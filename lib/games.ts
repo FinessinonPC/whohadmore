@@ -3,9 +3,11 @@
 // /api/game route so first paint is instant (no client fetch waterfall).
 // ============================================================================
 
+import { cache } from "react";
 import { getServerSupabase } from "@/lib/supabase";
 import { getWikimediaThumbnail } from "@/lib/wikimedia";
 import { buildMockGame, isSupabaseConfigured } from "@/lib/mockGame";
+import { todayISO } from "@/lib/date";
 import type { DailyGame, FullGame, GameCard } from "@/types";
 
 type GameMeta = Pick<
@@ -35,8 +37,9 @@ export async function getGameMeta(date: string): Promise<GameMeta | null> {
   return data ?? null;
 }
 
-/** The published game for a date (with its ordered cards), or null. */
-export async function getFullGame(date: string): Promise<FullGame | null> {
+/** The published game for a date (with its ordered cards), or null.
+ *  Cached per-request so generateMetadata and the page share a single fetch. */
+export const getFullGame = cache(async (date: string): Promise<FullGame | null> => {
   // Fresh-clone fallback: serve a playable mock enriched with live images.
   if (!isSupabaseConfigured()) {
     const mock = buildMockGame(date);
@@ -67,7 +70,7 @@ export async function getFullGame(date: string): Promise<FullGame | null> {
     .returns<GameCard[]>();
 
   return { ...game, cards: cards ?? [] };
-}
+});
 
 /**
  * Game number = the Nth published game in chronological order. The first game
@@ -105,4 +108,23 @@ export async function getPublishedGamesWithNumbers(
     .returns<DailyGame[]>();
 
   return (data ?? []).map((g, i) => ({ ...g, game_number: i + 1 }));
+}
+
+/** A handful of recent published puzzles (date + topic) for internal SEO links
+ *  that cross-connect every game page and help Google crawl the whole archive. */
+export async function getRecentGameLinks(
+  excludeDate: string,
+  limit = 6
+): Promise<{ play_date: string; topic_label: string }[]> {
+  if (!isSupabaseConfigured()) return [];
+  const { data } = await getServerSupabase()
+    .from("daily_games")
+    .select("play_date, topic_label")
+    .eq("published", true)
+    .lte("play_date", todayISO())
+    .neq("play_date", excludeDate)
+    .order("play_date", { ascending: false })
+    .limit(limit)
+    .returns<{ play_date: string; topic_label: string }[]>();
+  return data ?? [];
 }
