@@ -62,7 +62,7 @@ export function Fireworks() {
       rockets.push({
         x: w * (0.14 + Math.random() * 0.72),
         y: h + 8,
-        vy: -(8.5 + Math.random() * 3),
+        vy: -(6.8 + Math.random() * 2.4),
         targetY: h * (0.08 + Math.random() * 0.34),
         color: COLORS[(Math.random() * COLORS.length) | 0],
       });
@@ -71,14 +71,14 @@ export function Fireworks() {
       const n = 44 + ((Math.random() * 26) | 0);
       for (let i = 0; i < n; i++) {
         const a = (Math.PI * 2 * i) / n + Math.random() * 0.15;
-        const s = 1.6 + Math.random() * 3.4;
+        const s = 1.25 + Math.random() * 2.7;
         parts.push({
           x,
           y,
           vx: Math.cos(a) * s,
           vy: Math.sin(a) * s,
           life: 0,
-          maxLife: 52 + Math.random() * 40,
+          maxLife: 66 + Math.random() * 48,
           color,
           size: 1.4 + Math.random() * 1.4,
         });
@@ -91,7 +91,7 @@ export function Fireworks() {
       ctx.globalCompositeOperation = "lighter";
       ctx.lineCap = "round";
 
-      if (ts - last > 580 && rockets.length < 4) {
+      if (ts - last > 680 && rockets.length < 4) {
         launch();
         last = ts;
       }
@@ -99,7 +99,7 @@ export function Fireworks() {
       for (let i = rockets.length - 1; i >= 0; i--) {
         const r = rockets[i];
         r.y += r.vy;
-        r.vy += 0.05;
+        r.vy += 0.04;
         ctx.globalAlpha = 1;
         ctx.strokeStyle = r.color;
         ctx.lineWidth = 2.4;
@@ -117,7 +117,7 @@ export function Fireworks() {
         p.life++;
         p.x += p.vx;
         p.y += p.vy;
-        p.vy += 0.04;
+        p.vy += 0.028;
         p.vx *= 0.985;
         p.vy *= 0.985;
         ctx.globalAlpha = Math.max(0, 1 - p.life / p.maxLife);
