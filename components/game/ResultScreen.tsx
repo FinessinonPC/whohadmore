@@ -141,8 +141,8 @@ export function ResultScreen({
         transition={{ type: "spring", damping: 30, stiffness: 280 }}
       >
         {isJuly4th(date) && (
-          <div className="mb-3 flex items-center gap-2 rounded-full border-2 border-[#FF3B30]/40 bg-[#FF3B30]/10 px-4 py-1.5 text-sm font-extrabold text-ink">
-            🎆 Happy 4th of July! 🌭
+          <div className="mb-3 rounded-full border border-[#FF3B30]/25 bg-gradient-to-r from-[#FF3B30]/12 via-transparent to-[#2E6BFF]/12 px-5 py-1.5 text-sm font-bold text-ink">
+            Happy Fourth of July 🌭
           </div>
         )}
         <p className="small-caps text-[11px] text-ink-secondary">
