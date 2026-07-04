@@ -3,6 +3,7 @@ import { getSiteUrl } from "@/lib/site";
 import { getServerSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import { todayISO } from "@/lib/date";
+import { CATEGORIES } from "@/lib/categories";
 
 export const revalidate = 3600; // refresh hourly so new games appear
 
@@ -15,6 +16,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/archive`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
     { url: `${base}/leaderboard`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
+    { url: `${base}/category`, lastModified: now, changeFrequency: "weekly", priority: 0.6 },
+    ...CATEGORIES.map((c) => ({
+      url: `${base}/category/${c.slug}`,
+      lastModified: now,
+      changeFrequency: "daily" as const,
+      priority: 0.6,
+    })),
   ];
 
   // Every published game is its own crawlable page (good long-tail SEO).

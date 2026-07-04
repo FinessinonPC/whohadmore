@@ -2,6 +2,7 @@ import Link from "next/link";
 import { puzzleDescription } from "@/lib/seo";
 import { getSiteUrl } from "@/lib/site";
 import { getRecentGameLinks } from "@/lib/games";
+import { getCategorySeo } from "@/lib/categories";
 import { todayISO } from "@/lib/date";
 import type { FullGame } from "@/types";
 
@@ -26,6 +27,7 @@ export async function GameSeoFooter({ game, date }: { game: FullGame; date: stri
     .filter(Boolean)
     .sort((a, b) => a.localeCompare(b));
   const recent = await getRecentGameLinks(date, 6);
+  const cat = getCategorySeo(game.topic_category ?? "");
 
   const base = getSiteUrl();
   const url = `${base}/play/${date}`;
@@ -104,8 +106,19 @@ export async function GameSeoFooter({ game, date }: { game: FullGame; date: stri
           <Link href="/" className="rounded-full bg-cta px-4 py-2 text-xs font-bold text-white">
             Play today&apos;s game
           </Link>
+          {cat && (
+            <Link
+              href={`/category/${cat.slug}`}
+              className="rounded-full bg-surface px-4 py-2 text-xs font-bold text-ink"
+            >
+              More {cat.label} puzzles
+            </Link>
+          )}
           <Link href="/archive" className="rounded-full bg-surface px-4 py-2 text-xs font-bold text-ink">
             Browse all puzzles
+          </Link>
+          <Link href="/category" className="rounded-full bg-surface px-4 py-2 text-xs font-bold text-ink">
+            All categories
           </Link>
           <Link href="/about" className="rounded-full bg-surface px-4 py-2 text-xs font-bold text-ink">
             How it works

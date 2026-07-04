@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ArchiveCalendar } from "@/components/archive/ArchiveCalendar";
 import { ArchiveList } from "@/components/archive/ArchiveList";
 import { TopNav } from "@/components/ui/TopNav";
+import { CATEGORIES } from "@/lib/categories";
 import { getPublishedGamesWithNumbers } from "@/lib/games";
 import { getSiteUrl } from "@/lib/site";
 import { todayISO } from "@/lib/date";
@@ -41,6 +43,19 @@ export default async function ArchivePage() {
           Every past WhoHadMore puzzle, free to replay - {games.length} daily higher-or-lower
           games and counting. Pick any day below and guess which is higher.
         </p>
+      </div>
+
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <span className="mr-1 text-xs font-semibold text-ink-secondary">Browse by category:</span>
+        {CATEGORIES.map((c) => (
+          <Link
+            key={c.slug}
+            href={`/category/${c.slug}`}
+            className="rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs font-bold text-ink transition-colors hover:border-ink/20"
+          >
+            {c.label}
+          </Link>
+        ))}
       </div>
 
       {/* Calendar on desktop, list on mobile */}
