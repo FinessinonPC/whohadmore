@@ -19,6 +19,8 @@ import { STARTING_LIVES, avoidAdjacentTies } from "@/lib/gameLogic";
 import { hashSeed, mulberry32, seededShuffle } from "@/lib/seed";
 import { getSessionId } from "@/lib/playStore";
 import { formatShortDate } from "@/lib/date";
+import { isJuly4th } from "@/lib/festive";
+import { Fireworks } from "./Fireworks";
 import type { FullGame } from "@/types";
 
 interface GameBoardProps {
@@ -126,8 +128,9 @@ export function GameBoard({
   return (
     <>
       <HeartLossOverlay event={lossEvent} max={STARTING_LIVES} />
+      {isJuly4th(date) && <Fireworks />}
 
-      <main className="mx-auto flex h-dvh w-full max-w-[440px] flex-col overflow-hidden px-4 pb-5 pt-5 md:max-w-[880px] lg:max-w-[1120px]">
+      <main className="relative z-[46] mx-auto flex h-dvh w-full max-w-[440px] flex-col overflow-hidden px-4 pb-5 pt-5 md:max-w-[880px] lg:max-w-[1120px]">
         {/* Header - kept minimal during play. The brand returns to the daily
             page; saved progress lets the player resume. */}
         <header className="flex shrink-0 items-center justify-between">
