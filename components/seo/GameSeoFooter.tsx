@@ -109,20 +109,28 @@ export async function GameSeoFooter({ game, date }: { game: FullGame; date: stri
               Who had more? {topic}, ranked by {statLower}
             </h3>
             <p className="mt-1">
-              Here is how all {ranked.length} compare on {statLower} ({formatDisplayDate(date)}),
-              highest to lowest - so you can see exactly who had more:
+              Curious how it shook out, or settling a debate? The full {statLower} ranking for all{" "}
+              {ranked.length} ({formatDisplayDate(date)}) is tucked away below - it&apos;s the
+              complete answer key, so open it only if you don&apos;t mind the spoiler.
             </p>
-            <ol className="mt-3 space-y-1.5">
-              {ranked.map((c, i) => (
-                <li key={c.id} className="flex items-baseline gap-2">
-                  <span className="w-5 shrink-0 tabular-nums text-ink-secondary">{i + 1}.</span>
-                  <span className="font-semibold text-ink">{c.entity_name}</span>
-                  <span className="text-ink-secondary">
-                    - {formatStat(c.stat_value, game.stat_unit)}
-                  </span>
-                </li>
-              ))}
-            </ol>
+            {/* In the HTML (crawlable) but collapsed by default, so players can't
+                skim the answers by scrolling - they have to choose to reveal them. */}
+            <details className="mt-3 rounded-xl border border-border bg-background/60 px-4 py-3">
+              <summary className="cursor-pointer select-none text-sm font-bold text-ink">
+                Reveal the full ranking (spoiler)
+              </summary>
+              <ol className="mt-3 space-y-1.5">
+                {ranked.map((c, i) => (
+                  <li key={c.id} className="flex items-baseline gap-2">
+                    <span className="w-5 shrink-0 tabular-nums text-ink-secondary">{i + 1}.</span>
+                    <span className="font-semibold text-ink">{c.entity_name}</span>
+                    <span className="text-ink-secondary">
+                      - {formatStat(c.stat_value, game.stat_unit)}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </details>
           </>
         )}
 
