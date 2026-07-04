@@ -17,7 +17,11 @@ export async function generateMetadata({
   if (!isValidISODate(date)) return {};
   const game = await getFullGame(date);
   if (!game) return { title: "Game not found" };
-  const entities = game.cards.map((c) => c.entity_name).filter(Boolean);
+  // Alphabetized so the names in the snippet never hint at the ranking.
+  const entities = game.cards
+    .map((c) => c.entity_name)
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
   const title = puzzleTitle(game);
   const description = puzzleDescription(game, entities);
   return {
