@@ -14,6 +14,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { getSessionId } from "@/lib/playStore";
 import { achievementById, dailyScore, heartsFor } from "@/lib/leaderboard";
 import { formatDisplayDate, isToday } from "@/lib/date";
+import { isJuly4th } from "@/lib/festive";
+import { Fireworks } from "./Fireworks";
 
 interface ResultScreenProps {
   reached: number;
@@ -128,15 +130,21 @@ export function ResultScreen({
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-5 pb-10 pt-5 sm:max-w-xl">
       {clearedChain && <Confetti />}
+      {isJuly4th(date) && <Fireworks />}
 
       {mode === "play" && <TopNav />}
 
       <motion.div
-        className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center py-6 text-center sm:max-w-md"
+        className="relative z-[46] mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center py-6 text-center sm:max-w-md"
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", damping: 30, stiffness: 280 }}
       >
+        {isJuly4th(date) && (
+          <div className="mb-3 flex items-center gap-2 rounded-full border-2 border-[#FF3B30]/40 bg-[#FF3B30]/10 px-4 py-1.5 text-sm font-extrabold text-ink">
+            🎆 Happy 4th of July! 🌭
+          </div>
+        )}
         <p className="small-caps text-[11px] text-ink-secondary">
           {formatDisplayDate(date)} · {mode === "preview" ? "Preview" : `Game No. ${gameNumber}`}
         </p>

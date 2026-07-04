@@ -7,6 +7,8 @@ import { TopNav } from "@/components/ui/TopNav";
 import { initialsFor } from "@/lib/wikimedia";
 import { STARTING_LIVES, maxScore } from "@/lib/gameLogic";
 import { formatDisplayDate, isToday } from "@/lib/date";
+import { isJuly4th } from "@/lib/festive";
+import { Fireworks } from "./Fireworks";
 import type { FullGame, GameCard } from "@/types";
 
 interface StartScreenProps {
@@ -33,10 +35,17 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-5 pb-10 pt-5 sm:max-w-2xl">
+      {isJuly4th(date) && <Fireworks />}
       <TopNav />
 
+      {isJuly4th(date) && (
+        <div className="relative z-[46] mx-auto mt-2 flex items-center gap-2 rounded-full border-2 border-[#FF3B30]/40 bg-[#FF3B30]/10 px-5 py-2 text-sm font-extrabold text-ink">
+          🎆 Happy 4th of July! 🌭
+        </div>
+      )}
+
       <motion.div
-        className="flex flex-1 flex-col items-center justify-center text-center"
+        className="relative z-[46] flex flex-1 flex-col items-center justify-center text-center"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
