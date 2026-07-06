@@ -5,8 +5,14 @@ import { isValidISODate } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
 
-const MODES = new Set(["rank", "pinpoint"]);
-const MAX_SCORE = 2000;
+// Per-mode score ceilings (see docs/BLUEPRINT.md §3 - every quick game caps
+// around 1000 so no mode dominates the combined total).
+const MODE_MAX: Record<string, number> = {
+  rank: 1000,
+  pinpoint: 1000,
+  recall: 1000,
+  split: 1000,
+};
 
 // POST /api/modes/complete - record a finished extra-mode game (rank/pinpoint).
 // First play counts: duplicate submissions for the same session+date+mode are
@@ -22,16 +28,17 @@ export async function POST(req: Request) {
     };
     const { session_id, play_date, mode, score } = body;
 
+    const maxScore = mode ? MODE_MAX[mode] : undefined;
     if (
       !session_id ||
       !play_date ||
       !isValidISODate(play_date) ||
       !mode ||
-      !MODES.has(mode) ||
+      maxScore === undefined ||
       typeof score !== "number" ||
       !Number.isFinite(score) ||
       score < 0 ||
-      score > MAX_SCORE
+      score > maxScore
     ) {
       return NextResponse.json({ ok: false, error: "invalid_payload" }, { status: 400 });
     }

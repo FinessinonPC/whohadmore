@@ -1,25 +1,23 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import { BrandMark } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
+import { GameShell, NextGameCTA } from "./GameShell";
 import { initialsFor } from "@/lib/wikimedia";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
 import {
   RANK_POINTS_PER_SLOT,
   formatValue,
+  modeDef,
   pickRankCards,
   rankScore,
 } from "@/lib/modes";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
-import { isJuly4th } from "@/lib/festive";
-import { Fireworks } from "@/components/game/Fireworks";
 import type { FullGame, GameCard } from "@/types";
 
-const ACCENT = "#2E6BFF";
+const ACCENT = modeDef("rank").accent;
 
 interface RankGameProps {
   game: FullGame;
@@ -27,7 +25,7 @@ interface RankGameProps {
 }
 
 /**
- * Rank Five: five of today's cards, tap them in order from highest to lowest,
+ * Rank: five of today's cards, tap them in order from highest to lowest,
  * lock in, and see how many you placed exactly right. 200 points per slot.
  */
 export function RankGame({ game, date }: RankGameProps) {
@@ -95,165 +93,141 @@ export function RankGame({ game, date }: RankGameProps) {
   const max = cards.length * RANK_POINTS_PER_SLOT;
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-5 pb-10 pt-5">
-      {isJuly4th(date) && <Fireworks />}
-      <header className="relative z-[46] flex items-center justify-between">
-        <Link href="/" className="inline-flex items-center gap-1.5" aria-label="Back to today's games">
-          <BrandMark className="h-5 w-5" />
-          <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
-        </Link>
-        <span
-          className="rounded-full px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white"
-          style={{ background: ACCENT }}
-        >
-          Rank Five
-        </span>
-      </header>
+    <GameShell mode="rank" date={date}>
+      {already && !revealed ? (
+        <div className="flex flex-1 flex-col items-center justify-center text-center">
+          <p className="small-caps text-xs text-ink-secondary">Already played</p>
+          <p className="mt-3 text-5xl font-extrabold tracking-tight text-ink tabular">
+            {already.score}
+            <span className="text-2xl text-ink-secondary"> / {already.max}</span>
+          </p>
+          <p className="mb-6 mt-2 text-sm text-ink-secondary">Come back tomorrow for a fresh five.</p>
+          <div className="w-full max-w-xs">
+            <NextGameCTA date={date} current="rank" />
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className="small-caps text-center text-xs text-ink-secondary">{game.topic_label}</p>
+          <h1 className="mt-1.5 text-center text-2xl font-extrabold tracking-tight text-ink tabular">
+            {revealed ? (
+              <>
+                {score} <span className="text-ink-secondary">/ {max}</span>
+              </>
+            ) : (
+              <>Order them, highest first</>
+            )}
+          </h1>
+          <p className="mt-1 text-center text-[13px] text-ink-secondary">
+            {revealed
+              ? `${score / RANK_POINTS_PER_SLOT} of ${cards.length} in exactly the right spot`
+              : `Tap in order of ${game.stat_label.toLowerCase()} - most first. Tap again to undo.`}
+          </p>
 
-      <div className="relative z-[46] mt-6 flex flex-1 flex-col">
-        {already && !revealed ? (
-          <PlayedSummary score={already.score} max={already.max} />
-        ) : (
-          <>
-            <p className="small-caps text-center text-xs text-ink-secondary">{game.topic_label}</p>
-            <h1 className="mt-1.5 text-center text-2xl font-extrabold tracking-tight text-ink">
-              {revealed ? (
-                <>
-                  {score} <span className="text-ink-secondary">/ {max}</span>
-                </>
-              ) : (
-                <>Order them, highest first</>
-              )}
-            </h1>
-            <p className="mt-1 text-center text-[13px] text-ink-secondary">
-              {revealed
-                ? `${score / RANK_POINTS_PER_SLOT} of ${cards.length} in exactly the right spot`
-                : `Tap in order of ${game.stat_label.toLowerCase()} - most first. Tap again to undo.`}
-            </p>
-
-            <ul className="mt-5 flex flex-col gap-2.5">
-              {cards.map((card, idx) => {
-                const slot = slotOf(card.id);
-                const rightSlot = correct.findIndex((c) => c.id === card.id);
-                const wasRight = revealed && slot === rightSlot;
-                return (
-                  <motion.li
-                    key={card.id}
-                    initial={{ opacity: 0, y: 14 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.05 * idx }}
+          <ul className="mt-5 flex flex-col gap-2.5">
+            {cards.map((card, idx) => {
+              const slot = slotOf(card.id);
+              const rightSlot = correct.findIndex((c) => c.id === card.id);
+              const wasRight = revealed && slot === rightSlot;
+              return (
+                <motion.li
+                  key={card.id}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05 * idx }}
+                >
+                  <button
+                    onClick={() => tap(card)}
+                    disabled={revealed}
+                    className={`flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition-all ${
+                      revealed
+                        ? wasRight
+                          ? "border-correct bg-correct/10"
+                          : "border-wrong/60 bg-wrong/5"
+                        : slot >= 0
+                          ? "bg-surface"
+                          : "border-border bg-surface hover:border-ink/25"
+                    }`}
+                    style={!revealed && slot >= 0 ? { borderColor: ACCENT } : undefined}
                   >
-                    <button
-                      onClick={() => tap(card)}
-                      disabled={revealed}
-                      className={`flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition-all ${
-                        revealed
-                          ? wasRight
-                            ? "border-correct bg-correct/10"
-                            : "border-wrong/60 bg-wrong/5"
-                          : slot >= 0
-                            ? "bg-surface"
-                            : "border-border bg-surface hover:border-ink/25"
-                      }`}
-                      style={!revealed && slot >= 0 ? { borderColor: ACCENT } : undefined}
-                    >
-                      <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-ink">
-                        {card.image_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={card.image_url} alt="" className="h-full w-full object-cover" draggable={false} />
-                        ) : (
-                          <span className="flex h-full w-full items-center justify-center font-condensed text-lg font-bold text-white/80">
-                            {initialsFor(card.entity_name)}
-                          </span>
-                        )}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[15px] font-bold text-ink">
-                          {card.entity_name}
-                        </span>
-                        {revealed && (
-                          <span className="tabular text-sm font-semibold text-ink-secondary">
-                            {formatValue(card.stat_value, game.stat_unit)}
-                            {!wasRight && (
-                              <span className="ml-2 text-xs font-bold text-wrong">
-                                should be #{rightSlot + 1}
-                              </span>
-                            )}
-                          </span>
-                        )}
-                      </span>
-                      {revealed ? (
-                        <span
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-extrabold text-white ${
-                            wasRight ? "bg-correct" : "bg-wrong"
-                          }`}
-                        >
-                          {wasRight ? "✓" : "✕"}
-                        </span>
+                    <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-ink">
+                      {card.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={card.image_url} alt="" className="h-full w-full object-cover" draggable={false} />
                       ) : (
-                        <span
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${
-                            slot >= 0 ? "text-white" : "border-2 border-border text-ink-secondary"
-                          }`}
-                          style={slot >= 0 ? { background: ACCENT } : undefined}
-                        >
-                          {slot >= 0 ? slot + 1 : ""}
+                        <span className="flex h-full w-full items-center justify-center font-condensed text-lg font-bold text-white/80">
+                          {initialsFor(card.entity_name)}
                         </span>
                       )}
-                    </button>
-                  </motion.li>
-                );
-              })}
-            </ul>
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] font-bold text-ink">
+                        {card.entity_name}
+                      </span>
+                      {revealed && (
+                        <span className="tabular text-sm font-semibold text-ink-secondary">
+                          {formatValue(card.stat_value, game.stat_unit)}
+                          {!wasRight && (
+                            <span className="ml-2 text-xs font-bold text-wrong">
+                              should be #{rightSlot + 1}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </span>
+                    {revealed ? (
+                      <span
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-extrabold text-white ${
+                          wasRight ? "bg-correct" : "bg-wrong"
+                        }`}
+                      >
+                        {wasRight ? "✓" : "✕"}
+                      </span>
+                    ) : (
+                      <span
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${
+                          slot >= 0 ? "text-white" : "border-2 border-border text-ink-secondary"
+                        }`}
+                        style={slot >= 0 ? { background: ACCENT } : undefined}
+                      >
+                        {slot >= 0 ? slot + 1 : ""}
+                      </span>
+                    )}
+                  </button>
+                </motion.li>
+              );
+            })}
+          </ul>
 
-            <div className="mt-6 flex items-center gap-2.5">
-              {revealed ? (
-                <Button size="lg" className="w-full" onClick={() => (window.location.href = "/")}>
-                  Back to today&apos;s games
+          <div className="mt-6">
+            {revealed ? (
+              <NextGameCTA date={date} current="rank" />
+            ) : (
+              <div className="flex items-center gap-2.5">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className="shrink-0"
+                  onClick={() => setPicked([])}
+                  disabled={picked.length === 0}
+                >
+                  Reset
                 </Button>
-              ) : (
-                <>
-                  <Button
-                    variant="secondary"
-                    size="lg"
-                    className="shrink-0"
-                    onClick={() => setPicked([])}
-                    disabled={picked.length === 0}
-                  >
-                    Reset
-                  </Button>
-                  <Button
-                    size="lg"
-                    className="w-full"
-                    onClick={lockIn}
-                    disabled={picked.length !== cards.length}
-                  >
-                    {picked.length === cards.length
-                      ? "Lock it in"
-                      : `Pick ${cards.length - picked.length} more`}
-                  </Button>
-                </>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-    </main>
-  );
-}
-
-function PlayedSummary({ score, max }: { score: number; max: number }) {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center text-center">
-      <p className="small-caps text-xs text-ink-secondary">Already played</p>
-      <p className="mt-3 text-5xl font-extrabold tracking-tight text-ink">
-        {score}
-        <span className="text-2xl text-ink-secondary"> / {max}</span>
-      </p>
-      <p className="mt-2 text-sm text-ink-secondary">Come back tomorrow for a fresh five.</p>
-      <Link href="/" className="mt-6 rounded-2xl bg-cta px-6 py-3.5 text-[15px] font-bold text-white">
-        Back to today&apos;s games
-      </Link>
-    </div>
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={lockIn}
+                  disabled={picked.length !== cards.length}
+                >
+                  {picked.length === cards.length
+                    ? "Lock it in"
+                    : `Pick ${cards.length - picked.length} more`}
+                </Button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </GameShell>
   );
 }

@@ -4,11 +4,12 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { TopNav } from "@/components/ui/TopNav";
+import { GameIconTile } from "@/components/ui/GameIcons";
 import { initialsFor } from "@/lib/wikimedia";
 import { formatDisplayDate } from "@/lib/date";
 import { getLocalResult, getProgress } from "@/lib/playStore";
 import { getModeResult } from "@/lib/modeStore";
-import { MODES, type ModeDef } from "@/lib/modes";
+import { LIVE_MODES, MODES } from "@/lib/modes";
 import { isJuly4th } from "@/lib/festive";
 import { Fireworks } from "@/components/game/Fireworks";
 import type { FullGame, GameCard } from "@/types";
@@ -25,45 +26,17 @@ interface TileState {
   score: number; // contribution to today's total
 }
 
-function iconFor(id: ModeDef["id"], accent: string) {
-  switch (id) {
-    case "chain":
-      return (
-        <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden>
-          <path d="M12 3.5 L19 11 H5 Z" fill={accent} />
-          <path d="M12 20.5 L5 13 H19 Z" fill="#FF3B30" />
-        </svg>
-      );
-    case "rank":
-      return (
-        <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden>
-          <rect x="4" y="4" width="16" height="3.6" rx="1.8" fill={accent} />
-          <rect x="4" y="10.2" width="11" height="3.6" rx="1.8" fill={accent} opacity="0.65" />
-          <rect x="4" y="16.4" width="6.5" height="3.6" rx="1.8" fill={accent} opacity="0.35" />
-        </svg>
-      );
-    case "pinpoint":
-      return (
-        <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden>
-          <rect x="3" y="11" width="18" height="2.4" rx="1.2" fill={accent} opacity="0.35" />
-          <circle cx="14.5" cy="12.2" r="4.4" fill={accent} />
-          <circle cx="14.5" cy="12.2" r="1.7" fill="white" />
-        </svg>
-      );
-  }
-}
-
-/** A fanned peek at today's cards, for the flagship tile. */
-function MiniMontage({ cards }: { cards: GameCard[] }) {
+/** A fanned peek at today's cards, shown under the topic. */
+function TopicMontage({ cards }: { cards: GameCard[] }) {
   const withImg = cards.filter((c) => c.image_url);
-  const pool = (withImg.length >= 3 ? withImg : cards).slice(0, 4);
+  const pool = (withImg.length >= 3 ? withImg : cards).slice(0, 5);
   return (
-    <div className="flex -space-x-3">
+    <div className="mt-4 flex justify-center -space-x-3">
       {pool.map((c, i) => (
         <span
           key={c.id}
-          className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border-2 border-background bg-ink shadow-sm"
-          style={{ zIndex: pool.length - i, transform: `rotate(${(i - 1.5) * 3}deg)` }}
+          className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border-2 border-background bg-ink shadow-md"
+          style={{ zIndex: pool.length - i, transform: `rotate(${(i - 2) * 4}deg) translateY(${Math.abs(i - 2) * 2}px)` }}
         >
           {c.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -80,8 +53,9 @@ function MiniMontage({ cards }: { cards: GameCard[] }) {
 }
 
 /**
- * The daily hub: one topic, three ways to play, one combined total.
- * Sleek lessgames-style tile list - each game is a quick one-screen session.
+ * The daily hub: one topic, a collection of quick games, one combined total.
+ * Live games link out; upcoming games sit greyed with a "Soon" chip so the
+ * roster reads as a collection that keeps growing.
  */
 export function GameHub({ game, date, gameNumber }: GameHubProps) {
   const [tiles, setTiles] = useState<Record<string, TileState>>({});
@@ -104,8 +78,8 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
     });
   }, [date]);
 
-  const playedCount = Object.values(tiles).filter((t) => t.played).length;
-  const total = Object.values(tiles).reduce((a, t) => a + t.score, 0);
+  const playedCount = LIVE_MODES.filter((m) => tiles[m.id]?.played).length;
+  const total = LIVE_MODES.reduce((a, m) => a + (tiles[m.id]?.score ?? 0), 0);
 
   if (!game || game.cards.length < 2) {
     return (
@@ -139,18 +113,19 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
         {/* Today header */}
         <div className="mt-7 text-center">
           <p className="small-caps text-xs text-ink-secondary">
-            {formatDisplayDate(date)} · Game No. {gameNumber}
+            {formatDisplayDate(date)} · No. {gameNumber}
           </p>
           <h1 className="mx-auto mt-2 max-w-md text-balance text-3xl font-extrabold leading-[1.08] tracking-tight text-ink sm:text-4xl">
             {game.topic_label}
           </h1>
-          <p className="mt-2 text-sm text-ink-secondary">
-            One topic. Three quick games. One total.
+          <TopicMontage cards={game.cards} />
+          <p className="mt-4 text-sm text-ink-secondary">
+            One topic. {LIVE_MODES.length} quick games. One total.
           </p>
         </div>
 
         {/* Combined total */}
-        <div className="mt-6 flex items-center justify-between rounded-2xl border border-border bg-surface px-5 py-4">
+        <div className="mt-6 flex items-center justify-between rounded-3xl border border-border bg-surface px-5 py-4">
           <div>
             <p className="small-caps text-[11px] text-ink-secondary">Today&apos;s total</p>
             <p className="mt-0.5 text-3xl font-extrabold tracking-tight text-ink tabular">
@@ -159,7 +134,7 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
           </div>
           <div className="text-right">
             <div className="flex items-center justify-end gap-1.5">
-              {MODES.map((m) => (
+              {LIVE_MODES.map((m) => (
                 <span
                   key={m.id}
                   className="h-2.5 w-2.5 rounded-full"
@@ -170,7 +145,7 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
               ))}
             </div>
             <p className="mt-1.5 text-xs font-semibold text-ink-secondary">
-              {playedCount} of {MODES.length} played
+              {playedCount} of {LIVE_MODES.length} played
             </p>
           </div>
         </div>
@@ -180,48 +155,63 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
           {MODES.map((mode, i) => {
             const t = tiles[mode.id];
             const played = t?.played ?? false;
+            const soon = mode.status === "soon";
+
+            const inner = (
+              <>
+                <GameIconTile mode={mode.id} accent={mode.accent} />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-baseline gap-2">
+                    <span className="text-[17px] font-extrabold tracking-tight text-ink">
+                      {mode.name}
+                    </span>
+                    <span
+                      className="small-caps text-[10px] font-bold"
+                      style={{ color: mode.accent }}
+                    >
+                      {mode.verb}
+                    </span>
+                  </span>
+                  <span className="mt-0.5 block text-[13px] leading-snug text-ink-secondary">
+                    {mode.tagline}
+                  </span>
+                </span>
+                {soon ? (
+                  <span className="shrink-0 rounded-full border border-border bg-background px-3.5 py-1.5 text-xs font-bold text-ink-secondary">
+                    Soon
+                  </span>
+                ) : played ? (
+                  <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-correct/30 bg-correct/10 px-3.5 py-1.5 text-sm font-extrabold text-correct tabular">
+                    ✓ {t.label}
+                  </span>
+                ) : (
+                  <span className="shrink-0 rounded-full bg-cta px-5 py-2 text-sm font-bold text-white transition-transform group-hover:scale-[1.03]">
+                    {t?.label ?? "Play"}
+                  </span>
+                )}
+              </>
+            );
+
             return (
               <motion.div
                 key={mode.id}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08 + i * 0.07 }}
+                transition={{ delay: 0.08 + i * 0.06 }}
               >
-                <Link
-                  href={mode.href(date)}
-                  className="group flex items-center gap-4 rounded-3xl border border-border bg-surface p-4 transition-all hover:border-ink/20 hover:shadow-sm sm:p-5"
-                >
-                  <span
-                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl"
-                    style={{ background: `${mode.accent}1A` }}
+                {soon ? (
+                  <div className="flex items-center gap-4 rounded-3xl border border-dashed border-border bg-surface/50 p-4 opacity-80 sm:p-5">
+                    {inner}
+                  </div>
+                ) : (
+                  <Link
+                    href={mode.href(date)}
+                    className="group flex items-center gap-4 rounded-3xl border border-border bg-surface p-4 transition-all hover:-translate-y-0.5 hover:shadow-md sm:p-5"
+                    style={{ ["--tw-shadow-color" as string]: `${mode.accent}22` }}
                   >
-                    {iconFor(mode.id, mode.accent)}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2">
-                      <span className="text-[17px] font-extrabold tracking-tight text-ink">
-                        {mode.name}
-                      </span>
-                      {mode.id === "chain" && (
-                        <span className="hidden sm:block">
-                          <MiniMontage cards={game.cards} />
-                        </span>
-                      )}
-                    </span>
-                    <span className="mt-0.5 block text-[13px] leading-snug text-ink-secondary">
-                      {mode.tagline}
-                    </span>
-                  </span>
-                  {played ? (
-                    <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-correct/30 bg-correct/10 px-3.5 py-1.5 text-sm font-extrabold text-correct tabular">
-                      ✓ {t.label}
-                    </span>
-                  ) : (
-                    <span className="shrink-0 rounded-full bg-cta px-5 py-2 text-sm font-bold text-white transition-transform group-hover:scale-[1.03]">
-                      {t?.label ?? "Play"}
-                    </span>
-                  )}
-                </Link>
+                    {inner}
+                  </Link>
+                )}
               </motion.div>
             );
           })}

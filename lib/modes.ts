@@ -6,49 +6,87 @@
 import { hashSeed, mulberry32, seededShuffle } from "@/lib/seed";
 import type { GameCard } from "@/types";
 
-export type ModeId = "chain" | "rank" | "pinpoint";
+export type ModeId = "chain" | "rank" | "pinpoint" | "recall" | "split";
 
 export interface ModeDef {
   id: ModeId;
+  /** Short product name (one word - the holistic naming scheme). */
   name: string;
+  /** The verb that makes this game different from the others. */
+  verb: string;
   tagline: string;
   /** Fixed accent used for the tile icon, ring, and score chip. */
   accent: string;
   maxPoints: number;
+  status: "live" | "soon";
   href: (date: string) => string;
 }
 
 export const RANK_SLOTS = 5;
 export const PINPOINT_ROUNDS = 4;
+export const RECALL_CARDS = 4;
+export const SPLIT_ROUNDS = 5;
 export const RANK_POINTS_PER_SLOT = 200;
 export const PINPOINT_POINTS_PER_ROUND = 250;
+export const RECALL_POINTS_PER_MATCH = 250;
+export const SPLIT_POINTS_PER_ROUND = 200;
 
+/** The daily roster. One topic powers every game; each game is a different
+ *  verb so the hub feels like a collection, not five flavors of one idea. */
 export const MODES: ModeDef[] = [
   {
     id: "chain",
-    name: "Higher or Lower",
-    tagline: "Two cards, one stat - keep the chain alive.",
+    name: "Chain",
+    verb: "Compare",
+    tagline: "The classic higher-or-lower run. How far can you go?",
     accent: "#00C853",
     maxPoints: 0, // open-ended (XP formula); shown as its own score
+    status: "live",
     href: (date) => `/play/${date}`,
   },
   {
     id: "rank",
-    name: "Rank Five",
-    tagline: "Put five of today's cards in order, highest to lowest.",
+    name: "Rank",
+    verb: "Order",
+    tagline: "Five cards. Put them in order, top to bottom.",
     accent: "#2E6BFF",
     maxPoints: RANK_SLOTS * RANK_POINTS_PER_SLOT,
+    status: "live",
     href: (date) => `/rank/${date}`,
   },
   {
     id: "pinpoint",
     name: "Pinpoint",
-    tagline: "Slide to guess the exact number. Closer = more points.",
+    verb: "Estimate",
+    tagline: "Slide to the exact number. Closer scores more.",
     accent: "#FFB300",
     maxPoints: PINPOINT_ROUNDS * PINPOINT_POINTS_PER_ROUND,
+    status: "live",
     href: (date) => `/pinpoint/${date}`,
   },
+  {
+    id: "recall",
+    name: "Recall",
+    verb: "Remember",
+    tagline: "Study the board, then match every number from memory.",
+    accent: "#A44BFF",
+    maxPoints: RECALL_CARDS * RECALL_POINTS_PER_MATCH,
+    status: "soon",
+    href: (date) => `/recall/${date}`,
+  },
+  {
+    id: "split",
+    name: "Split",
+    verb: "Judge",
+    tagline: "Over or under the line? Five snap calls.",
+    accent: "#FF7A00",
+    maxPoints: SPLIT_ROUNDS * SPLIT_POINTS_PER_ROUND,
+    status: "soon",
+    href: (date) => `/split/${date}`,
+  },
 ];
+
+export const LIVE_MODES = MODES.filter((m) => m.status === "live");
 
 export function modeDef(id: ModeId): ModeDef {
   return MODES.find((m) => m.id === id) as ModeDef;

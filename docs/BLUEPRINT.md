@@ -1,0 +1,205 @@
+# WhoHadMore - Product & Design Blueprint
+
+The single source of truth for building out the multi-game daily hub.
+Read this before adding or changing any game. The goal: a **lessgames.com-style
+collection** - simple, addicting, one-screen daily games - with WhoHadMore's
+own identity: **every game is powered by one daily topic and its numbers.**
+
+---
+
+## 1. The concept
+
+- One **daily topic** (e.g. "NBA Scoring Leaders 2024-25"): a set of cards,
+  each card = entity name + stat value + image. Published once per day in the
+  admin. **This one dataset powers every game** - adding games must never add
+  daily admin work.
+- The homepage (`/`) is the **hub**: the topic, the game tiles, and one
+  combined **Today's Total**. Each game is a different *verb* on the same
+  numbers, so the collection has variety without losing the theme.
+- Retention loop: finish any game → `NextGameCTA` pulls you into the next
+  unplayed one → all done → leaderboard. Tomorrow it resets.
+
+### The roster (registry: `lib/modes.ts`)
+
+| id | Name | Verb | Accent | Status | One-liner |
+|----|------|------|--------|--------|-----------|
+| `chain` | Chain | Compare | `#00C853` green | live | Classic higher-or-lower run (the original game) |
+| `rank` | Rank | Order | `#2E6BFF` blue | live | Order 5 cards top to bottom, 200/slot |
+| `pinpoint` | Pinpoint | Estimate | `#FFB300` amber | live | Slider-guess the exact value, ≤250/round by closeness |
+| `recall` | Recall | Remember | `#A44BFF` violet | **soon - spec §5** | Memorize the board, match numbers to cards |
+| `split` | Split | Judge | `#FF7A00` orange | **soon - spec §6** | Over/under snap calls, 5 rounds |
+
+Naming scheme: **one strong word per game** (the lessgames "-less" suffix
+equivalent). Taglines carry the SEO phrases ("higher-or-lower") - product
+names stay short.
+
+---
+
+## 2. Design system (do not drift)
+
+Tokens live in `tailwind.config.ts` + `app/globals.css` (CSS vars flip for dark).
+
+- **Neutrals**: `background`, `surface`, `border`, `ink`, `ink-secondary` -
+  always via the tokens, never hex. Dark mode is automatic.
+- **Semantic**: `correct` green / `wrong` red are for RESULTS ONLY. A game's
+  accent is identity, not correctness - never use an accent to mean right/wrong.
+- **Game accents**: exactly one per game, defined ONLY in `lib/modes.ts`.
+  Components read `modeDef(id).accent`. Tints via hex-alpha suffix (`${accent}17`).
+- **Type**: Inter (`font-sans`) everywhere; Oswald (`font-condensed`) only for
+  big stat numbers on cards. Headings: `font-extrabold tracking-tight`.
+  Numbers that change: always `.tabular`.
+- **Shape**: cards/tiles `rounded-2xl`/`rounded-3xl`; chips/buttons pill
+  (`rounded-full`) or `rounded-2xl` (Button component). Borders 1px `border`;
+  2px only for selectable game cards.
+- **Spacing rhythm**: tiles `p-4 sm:p-5`, gaps `gap-2.5`/`gap-3`, section
+  spacing `mt-5`-`mt-7`. Game pages: `max-w-game` (540px), hub `sm:max-w-xl`.
+- **Motion** (framer-motion): entrance = fade + 14-16px rise, staggered
+  ~60-80ms; transitions 0.25-0.45s ease `[0.16,1,0.3,1]`. Feedback beats
+  decoration - one orchestrated reveal is worth ten hover effects.
+  `prefers-reduced-motion` is already respected globally.
+
+### Icons (`components/ui/GameIcons.tsx`)
+24px grid · filled geometric shapes only (no thin strokes) · rounded corners ·
+**duotone**: accent at 100% + accent at ~35% for the secondary shape · must
+read at 20px. Every game gets an icon here + `GameIconTile` renders the
+accent-tinted square. New game = new icon following these exact rules.
+
+---
+
+## 3. Architecture contracts
+
+### Adding a game (the recipe)
+1. **Registry**: add to `MODES` in `lib/modes.ts` (id, name, verb, tagline,
+   accent, maxPoints, `status: "live"`, href). Add its card-picker + scoring
+   as pure functions in the same file (seeded, see below).
+2. **Icon**: add to `GameIcons.tsx` per the icon rules.
+3. **Component**: `components/games/<Name>Game.tsx` - client component,
+   wrapped in `<GameShell mode="<id>" date={date}>`. End states render
+   `<NextGameCTA date={date} current="<id>" />`.
+4. **Route**: `app/<id>/[date]/page.tsx` - copy `app/rank/[date]/page.tsx`
+   verbatim, swap component + metadata.
+5. **Persistence**: `saveModeResult("<id>", date, {...})` on completion +
+   POST `/api/modes/complete`. First play counts; replays never overwrite.
+6. **Server**: add the id to `MODES` set in `app/api/modes/complete/route.ts`
+   AND to the `mode` check constraint in a new SQL migration.
+7. **Hub**: nothing - tiles render from the registry. Flip `status` to `live`.
+
+### Rules that keep it fair & consistent
+- **Seeding**: any random pick must be `mulberry32(hashSeed(\`${sessionId}:${date}:<id>\`))`
+  so a reload never re-deals an easier hand. Never `Math.random()` for gameplay.
+- **Ties**: filter cards to distinct `stat_value` before picking (see
+  `pickRankCards`) - ordering/judging ties is unfair.
+- **Score budget**: every quick game maxes at **1000-1250 points** so no mode
+  dominates the combined total. Chain is open-ended (it's the flagship).
+- **One-screen rule**: a game session is ≤60 seconds, no scrolling mid-play
+  on a 390px phone. Intro copy is one sentence, on the board itself.
+- **Already-played state**: score + "come back tomorrow" + NextGameCTA.
+  Replays are view-only; never resubmit.
+
+### Data & persistence
+- Local: `lib/modeStore.ts` → key `whohadmore:<mode>:<date>` =
+  `{score, maxScore, detail[], completedAt}`.
+- Server: `game_mode_results` table (`supabase/migrations/0002_...sql`,
+  **run in Supabase SQL editor before deploying any of this**). Unique on
+  `(play_date, session_id, mode)`; API upserts with `ignoreDuplicates`.
+- Daily leaderboard (`/api/leaderboard/daily`) folds `SUM(mode scores)` into
+  each player's chain score and seats mode-only players. It degrades to
+  chain-only if the table is missing - keep that resilience.
+
+---
+
+## 4. Hub spec (`components/hub/GameHub.tsx`)
+
+Order: TopNav → (festive banner) → date + No. → topic H1 → card montage →
+"One topic. N quick games. One total." → **Today's Total** card (sum + one
+accent dot per live game) → tiles (live first, then `soon` tiles: dashed
+border, 80% opacity, "Soon" chip, not clickable) → footer links.
+The hub must render every tile purely from the registry - zero per-game code.
+
+---
+
+## 5. SPEC - Recall (`recall`, violet `#A44BFF`) - BUILD NEXT
+
+**Fantasy**: "I just saw these numbers - can I keep them straight?"
+
+**Flow** (single screen, 3 phases):
+1. **Study** - `RECALL_CARDS` (4) cards face-up in a 2×2 grid, each showing
+   entity image + name + its stat value. A 5-second ring counts down
+   (`5s`; pause-free). Then values hide.
+2. **Match** - the four values return as shuffled pills in a row under the
+   grid (seeded shuffle; must not equal the original order). Tap a pill →
+   it highlights (accent border) → tap a card to place it. Tap a placed pill
+   to pick it back up. All four placed → "Lock it in".
+3. **Reveal** - per card: correct → green ring + ✓; wrong → red ring, show
+   the right value beneath. Score: `RECALL_POINTS_PER_MATCH` (250) per
+   correct match, max 1000. Then score header + NextGameCTA.
+
+**Picking**: `pickRecallCards(cards, seedKey)` = distinct-value seeded pick of
+4, mirroring `pickRankCards` (add to `lib/modes.ts`, seed suffix `:recall`).
+**Edge**: if fewer than 4 distinct-value cards exist, use 3 (min 2).
+**Anti-cheese**: values formatted with `formatValue` so pills are compact.
+Study phase timer starts on first render; no replay of study phase.
+
+**Files**: `components/games/RecallGame.tsx`, `app/recall/[date]/page.tsx`,
+registry flip to live, icon exists, API mode-set + SQL check constraint update.
+
+---
+
+## 6. SPEC - Split (`split`, orange `#FF7A00`) - BUILD AFTER RECALL
+
+**Fantasy**: instant gut calls - the TikTok-speed game of the roster.
+
+**Flow**: `SPLIT_ROUNDS` (5) rounds. Each round: one card (image + name) and a
+big centered **line value** ("OVER or UNDER **26.5 PPG**?"). Two full-width
+buttons: OVER (accent, up arrow) / UNDER (muted, down arrow). Instant reveal:
+actual value stamps in, correct/wrong flash + haptic (`feedbackCorrect/Wrong`),
+auto-advance after ~900ms. Progress dots like Pinpoint.
+
+**Line construction** (pure function `splitLine(card, allCards, rng)`):
+the line must be plausible, not trivial - take the card's actual value `v` and
+offset it by ±(8-20%) of the day's value range, rounded to a "clean" number
+(1-2 significant decimals via the existing formatting rules). The rng (seeded
+`:split`) decides direction & magnitude, so half are genuinely over, half under.
+**Never** place the line outside the day's min/max padded range.
+
+**Scoring**: `SPLIT_POINTS_PER_ROUND` (200) per correct call, max 1000.
+`detail[]` = per-round 200/0. Same persistence recipe as the others.
+
+**Files**: `components/games/SplitGame.tsx`, `app/split/[date]/page.tsx`,
+registry flip, API mode-set + SQL constraint update.
+
+---
+
+## 7. Future concepts (do not build without a spec pass)
+
+- **Blitz** (`#FF3B30`, lightning icon): 60-second endless higher-or-lower
+  pulling random pairs from the WHOLE archive via a new
+  `/api/blitz/pairs` route. Big infra value: makes the archive a game.
+  Score = streak length; global daily best.
+- **Duel**: challenge link = same seed as the challenger, head-to-head result
+  screen. This is the viral share loop - pairs with the growth playbook.
+
+---
+
+## 8. Guardrails
+
+- **SEO**: `/` keeps its title/description/canonical + `GameSeoFooter`. Never
+  put stat values in crawlable HTML (site policy: no answer keys - the game
+  data payload is fine). Keep "higher or lower" phrasing in taglines/copy.
+- **No new admin burden**: if a game idea needs new daily content, it's wrong
+  for this roster (or it goes through a spec pass first).
+- **July 4th layer**: `GameShell` handles `isJuly4th` fireworks - new games
+  get festive support for free by using the shell.
+- **Score integrity**: server API clamps score to `maxPoints` per mode
+  (update `MAX_SCORE` map when adding modes); first-play-counts everywhere.
+- **A11y**: every interactive element keyboard-reachable; guesses/locks are
+  real `<button>`s; `aria-label` on icon-only controls; respect the global
+  reduced-motion rule.
+
+## 9. Deploy checklist (when the user says go)
+
+1. Run `supabase/migrations/0002_game_mode_results.sql` in Supabase.
+2. Merge branch → `main` (Vercel deploys).
+3. Smoke test: play all live games on prod, confirm hub total + daily
+   leaderboard combines, `Unknown####` naming for anon mode-only players.
+4. Request indexing on `/` in Search Console (title changed).
