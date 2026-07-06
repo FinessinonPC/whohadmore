@@ -51,6 +51,32 @@ export async function GET(req: Request) {
     if (resultsError) throw resultsError;
 
     const rows = results ?? [];
+
+    // Extra-mode points (Rank Five, Pinpoint) fold into the daily total.
+    // Best-effort: if the game_mode_results table doesn't exist yet, the
+    // board simply shows chain-only scores.
+    const modeSum = new Map<string, number>();
+    try {
+      const { data: modeRows } = await supabase
+        .from("game_mode_results")
+        .select("session_id, score")
+        .eq("play_date", date)
+        .returns<{ session_id: string; score: number | null }[]>();
+      for (const m of modeRows ?? []) {
+        modeSum.set(m.session_id, (modeSum.get(m.session_id) ?? 0) + (m.score ?? 0));
+      }
+    } catch {
+      /* table not created yet - chain-only board */
+    }
+
+    // Players who only played an extra mode still make the board.
+    const chainSessions = new Set(rows.map((r) => r.session_id));
+    for (const sid of modeSum.keys()) {
+      if (!chainSessions.has(sid)) {
+        rows.push({ session_id: sid, score: 0, time_seconds: null, lives_remaining: 0, stars: 0 });
+      }
+    }
+
     if (rows.length === 0) {
       return NextResponse.json({ date, rounds: 0, rows: [], configured: true });
     }
@@ -92,7 +118,9 @@ export async function GET(req: Request) {
           reached,
           hearts,
           timeSeconds,
-          score: dailyScore(reached, hearts, timeSeconds ?? 0),
+          score:
+            dailyScore(reached, hearts, timeSeconds ?? 0) +
+            (modeSum.get(r.session_id) ?? 0),
         };
       })
       .sort((a, b) => {

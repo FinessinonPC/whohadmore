@@ -1,0 +1,121 @@
+// ============================================================================
+// Game modes. Every mode is derived from the SAME daily card set, so one
+// published game per day powers the whole hub - no extra admin work.
+// ============================================================================
+
+import { hashSeed, mulberry32, seededShuffle } from "@/lib/seed";
+import type { GameCard } from "@/types";
+
+export type ModeId = "chain" | "rank" | "pinpoint";
+
+export interface ModeDef {
+  id: ModeId;
+  name: string;
+  tagline: string;
+  /** Fixed accent used for the tile icon, ring, and score chip. */
+  accent: string;
+  maxPoints: number;
+  href: (date: string) => string;
+}
+
+export const RANK_SLOTS = 5;
+export const PINPOINT_ROUNDS = 4;
+export const RANK_POINTS_PER_SLOT = 200;
+export const PINPOINT_POINTS_PER_ROUND = 250;
+
+export const MODES: ModeDef[] = [
+  {
+    id: "chain",
+    name: "Higher or Lower",
+    tagline: "Two cards, one stat - keep the chain alive.",
+    accent: "#00C853",
+    maxPoints: 0, // open-ended (XP formula); shown as its own score
+    href: (date) => `/play/${date}`,
+  },
+  {
+    id: "rank",
+    name: "Rank Five",
+    tagline: "Put five of today's cards in order, highest to lowest.",
+    accent: "#2E6BFF",
+    maxPoints: RANK_SLOTS * RANK_POINTS_PER_SLOT,
+    href: (date) => `/rank/${date}`,
+  },
+  {
+    id: "pinpoint",
+    name: "Pinpoint",
+    tagline: "Slide to guess the exact number. Closer = more points.",
+    accent: "#FFB300",
+    maxPoints: PINPOINT_ROUNDS * PINPOINT_POINTS_PER_ROUND,
+    href: (date) => `/pinpoint/${date}`,
+  },
+];
+
+export function modeDef(id: ModeId): ModeDef {
+  return MODES.find((m) => m.id === id) as ModeDef;
+}
+
+/** Distinct-value cards only (ties make ordering/guessing unfair). */
+function distinctByValue(cards: GameCard[]): GameCard[] {
+  const seen = new Set<number>();
+  return cards.filter((c) => {
+    if (seen.has(c.stat_value)) return false;
+    seen.add(c.stat_value);
+    return true;
+  });
+}
+
+/** The five cards a given player ranks today - seeded per session+date so a
+ *  reload never deals an easier hand, but every player gets their own mix. */
+export function pickRankCards(cards: GameCard[], seedKey: string): GameCard[] {
+  const pool = distinctByValue(cards);
+  const rng = mulberry32(hashSeed(`${seedKey}:rank`));
+  return seededShuffle(pool, rng).slice(0, Math.min(RANK_SLOTS, pool.length));
+}
+
+/** The cards a given player pinpoints today (same seeding idea). */
+export function pickPinpointCards(cards: GameCard[], seedKey: string): GameCard[] {
+  const pool = distinctByValue(cards);
+  const rng = mulberry32(hashSeed(`${seedKey}:pinpoint`));
+  return seededShuffle(pool, rng).slice(0, Math.min(PINPOINT_ROUNDS, pool.length));
+}
+
+/** Slider bounds for pinpoint: the day's full value range with a little air,
+ *  so the day's other cards give you an honest sense of scale. */
+export function pinpointRange(cards: GameCard[]): { min: number; max: number; step: number } {
+  const values = cards.map((c) => c.stat_value);
+  const lo = Math.min(...values);
+  const hi = Math.max(...values);
+  const pad = (hi - lo) * 0.1 || Math.abs(hi) * 0.1 || 1;
+  const min = lo - pad;
+  const max = hi + pad;
+  const step = (max - min) / 200;
+  return { min, max, step };
+}
+
+/** Pinpoint round score: linear accuracy over the range, curved to reward
+ *  real precision (a mid-range shrug earns little). */
+export function pinpointScore(guess: number, actual: number, min: number, max: number): number {
+  const range = max - min;
+  if (range <= 0) return 0;
+  const accuracy = Math.max(0, 1 - Math.abs(guess - actual) / range);
+  return Math.round(PINPOINT_POINTS_PER_ROUND * Math.pow(accuracy, 1.6));
+}
+
+/** Rank score: exact-position matches only, no partial credit. */
+export function rankScore(order: GameCard[], correct: GameCard[]): number {
+  let hits = 0;
+  for (let i = 0; i < order.length; i++) if (order[i].id === correct[i].id) hits++;
+  return hits * RANK_POINTS_PER_SLOT;
+}
+
+/** Compact stat formatting shared by the new modes (1.2M, 34.5K, 12.3). */
+export function formatValue(value: number, unit: string | null): string {
+  const abs = Math.abs(value);
+  let num: string;
+  if (abs >= 1_000_000_000) num = `${(value / 1_000_000_000).toFixed(1).replace(/\.0$/, "")}B`;
+  else if (abs >= 1_000_000) num = `${(value / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  else if (abs >= 10_000) num = `${(value / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
+  else if (Number.isInteger(value)) num = value.toLocaleString("en-US");
+  else num = value.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  return unit ? `${num} ${unit}` : num;
+}
