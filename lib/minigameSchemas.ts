@@ -23,31 +23,33 @@ type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 export function validateDuality(raw: unknown): Result<DualityDay> {
   const p = raw as Partial<DualityDay>;
   if (!p || typeof p !== "object") return { ok: false, error: "Not an object." };
-  if (typeof p.left !== "string" || !p.left.trim()) return { ok: false, error: "Missing 'left' category." };
-  if (typeof p.right !== "string" || !p.right.trim()) return { ok: false, error: "Missing 'right' category." };
-  if (p.left.trim().toLowerCase() === p.right.trim().toLowerCase())
-    return { ok: false, error: "Categories must differ." };
-  if (!Array.isArray(p.items) || p.items.length !== 8)
-    return { ok: false, error: "Needs exactly 8 items." };
-  const items = [];
-  const seen = new Set<string>();
-  let l = 0;
-  for (const it of p.items) {
-    if (!it || typeof it.text !== "string" || !it.text.trim())
-      return { ok: false, error: "Every item needs text." };
-    if (it.side !== "L" && it.side !== "R") return { ok: false, error: "Item sides must be 'L' or 'R'." };
-    const key = it.text.trim().toLowerCase();
-    if (seen.has(key)) return { ok: false, error: `Duplicate item: ${it.text}` };
-    seen.add(key);
-    if (it.side === "L") l++;
-    items.push({
-      text: it.text.trim(),
-      side: it.side,
-      ...(typeof it.note === "string" && it.note.trim() ? { note: it.note.trim() } : {}),
-    });
+  if (!Array.isArray(p.pairs) || p.pairs.length !== 4)
+    return { ok: false, error: "Needs exactly 4 pairs (easiest first)." };
+  const words = new Set<string>();
+  const defs = new Set<string>();
+  const pairs = [];
+  for (const pr of p.pairs) {
+    if (!pr || typeof pr.word !== "string" || !pr.word.trim())
+      return { ok: false, error: "Every pair needs a 'word'." };
+    const word = pr.word.trim().toUpperCase();
+    if (words.has(word)) return { ok: false, error: `Duplicate word: ${word}` };
+    words.add(word);
+    if (!Array.isArray(pr.defs) || pr.defs.length !== 2)
+      return { ok: false, error: `${word}: needs exactly 2 definitions.` };
+    const cleaned: string[] = [];
+    for (const d of pr.defs) {
+      if (typeof d !== "string" || !d.trim())
+        return { ok: false, error: `${word}: empty definition.` };
+      const key = d.trim().toLowerCase();
+      if (defs.has(key)) return { ok: false, error: `Duplicate definition: "${d.trim()}"` };
+      defs.add(key);
+      if (d.trim().toUpperCase().includes(word))
+        return { ok: false, error: `${word}: a definition contains the word itself.` };
+      cleaned.push(d.trim());
+    }
+    pairs.push({ word, defs: [cleaned[0], cleaned[1]] as [string, string] });
   }
-  if (l !== 4) return { ok: false, error: `Needs exactly 4 per side (got ${l} left).` };
-  return { ok: true, value: { left: p.left.trim(), right: p.right.trim(), items } };
+  return { ok: true, value: { pairs } };
 }
 
 // --- Word ---------------------------------------------------------------------

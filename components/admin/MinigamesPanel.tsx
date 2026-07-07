@@ -13,23 +13,21 @@ const MODE_META: { id: MinigameMode; name: string; accent: string; blurb: string
 ];
 
 const PROMPTS: Record<MinigameMode, string> = {
-  duality: `Create ONE round of "Duality" - a daily sorting game. Players see two category names and eight items one at a time; they tap which category each item belongs to.
+  duality: `Create ONE round of "Duality" - a daily pairing game. Players see EIGHT short definitions on a board (shuffled). Hidden among them are FOUR PAIRS: each pair is two definitions of the SAME word (two unrelated meanings - like "Place that holds your money" + "The side of a river" = BANK). Players tap two boxes they think go together.
 
 Rules that matter:
-1) The two categories must be a FUN, surprising pairing where items genuinely confuse (e.g. "Harry Potter spell" vs "IKEA product", "Pasta shape" vs "Italian city").
-2) EXACTLY 8 items: EXACTLY 4 with side "L" (the left category) and 4 with side "R".
-3) Every item belongs UNAMBIGUOUSLY to exactly one side - no items that could be both.
-4) Mix the order so sides alternate unpredictably.
-5) Keep it light and safe - no politics, religion, tragedy.
-6) Add a short fun "note" to 3-4 items (a payoff fact shown after answering).
+1) Each pair's word must have two genuinely DIFFERENT meanings (homonyms/double meanings). Both definitions must be unmistakably correct for the word.
+2) A definition must NEVER contain its word (or an obvious form of it).
+3) Definitions are SHORT (3-6 words), vivid, tile-sized.
+4) Order pairs EASIEST first, HARDEST last (pair 1 = instant, pair 4 = makes you think). Difficulty comes from less-known second meanings.
+5) No definition should plausibly match a different pair's word - avoid overlap.
+6) Keep it light and safe - no politics, religion, tragedy.
 
 Return ONLY this JSON, no markdown fences:
 {
-  "left": "Category A name",
-  "right": "Category B name",
-  "items": [
-    { "text": "Item", "side": "L", "note": "optional fun fact" }
-    // 8 total, exactly 4 L and 4 R
+  "pairs": [
+    { "word": "BANK", "defs": ["Place that holds your money", "The side of a river"] }
+    // exactly 4 pairs, easiest first
   ]
 }`,
   word: `Pick ONE five-letter English word for a daily Wordle-style game.

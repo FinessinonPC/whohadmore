@@ -20,8 +20,9 @@ export interface ModeDef {
   href: (date: string) => string;
 }
 
-export const DUALITY_ITEMS = 8;
-export const DUALITY_POINTS_PER_ITEM = 125;
+export const DUALITY_PAIRS = 4;
+export const DUALITY_POINTS_PER_PAIR = 250;
+export const DUALITY_MAX_MISTAKES = 4;
 
 export const WORD_MAX_GUESSES = 6;
 /** Points by number of guesses used (index 0 = solved in 1). Fail = 0. */
@@ -48,10 +49,10 @@ export const MODES: ModeDef[] = [
   {
     id: "duality",
     name: "Duality",
-    tagline: "Two worlds, eight things. Sort every one to its side.",
+    tagline: "Eight definitions, four hidden pairs. Two meanings, one word.",
     accent: "#06B6D4",
     contrast: "#0B0D10",
-    maxPoints: DUALITY_ITEMS * DUALITY_POINTS_PER_ITEM,
+    maxPoints: DUALITY_PAIRS * DUALITY_POINTS_PER_PAIR,
     status: "live",
     href: (date) => `/duality/${date}`,
   },

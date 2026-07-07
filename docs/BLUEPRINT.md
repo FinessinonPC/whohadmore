@@ -34,7 +34,7 @@ were cut on 2026-07-07 (code in git history).
 | id | Name | Copies | Accent | Kind | One-liner |
 |----|------|--------|--------|------|-----------|
 | `chain` | Chain | The Higher Lower Game | `#00C853` green | stat | Classic higher-or-lower run (the original game) |
-| `duality` | Duality | the viral "X or Y?" sorting quiz | `#06B6D4` cyan | pack | Two categories, 8 items - sort each to its side, 125/item |
+| `duality` | Duality | NYT Connections (pairs twist) | `#06B6D4` cyan | pack | 8 definitions hide 4 pairs (two meanings, one word), difficulty-colored, 250/pair, 4 mistakes |
 | `word` | Word | Wordle | `#FFC400` yellow | pack | Daily 5-letter word, 6 tries; 1000..500 pts by guess count |
 | `mini` | Mini | NYT Mini crossword | `#2E6BFF` blue | pack | 5x5 grid; 1000 pts, -100 per failed check (floor 400), reveal = 0 |
 

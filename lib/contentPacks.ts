@@ -8,159 +8,68 @@
 
 import { hashSeed } from "@/lib/seed";
 
-// --- Duality: two categories, eight things - sort each to its side ----------
+// --- Duality: eight definitions hide four pairs - two meanings, one word ----
+// Connections-style: pairs are ordered EASY -> HARD (the four difficulty
+// colors). Each pair is one word with two unrelated meanings; the player
+// matches the two definitions, then the word is the reveal payoff.
 
-export interface DualityItem {
-  text: string;
-  side: "L" | "R";
-  note?: string;
+export interface DualityPair {
+  /** The word both definitions describe - the payoff on match. */
+  word: string;
+  defs: [string, string];
 }
 
 export interface DualityDay {
-  left: string;
-  right: string;
-  items: DualityItem[]; // 8, mixed order as presented
+  pairs: DualityPair[]; // exactly 4, easiest first
 }
 
 export const DUALITY_PACK: DualityDay[] = [
   {
-    left: "Tarantino",
-    right: "Scorsese",
-    items: [
-      { text: "Pulp Fiction", side: "L" },
-      { text: "Goodfellas", side: "R" },
-      { text: "Kill Bill", side: "L" },
-      { text: "The Departed", side: "R", note: "Won Scorsese his Best Director Oscar" },
-      { text: "Casino", side: "R" },
-      { text: "Reservoir Dogs", side: "L", note: "Tarantino's debut" },
-      { text: "Django Unchained", side: "L" },
-      { text: "Taxi Driver", side: "R" },
+    pairs: [
+      { word: "BANK", defs: ["Place that holds your money", "The side of a river"] },
+      { word: "BAT", defs: ["Flying mammal of the night", "Swung at a baseball"] },
+      { word: "JAM", defs: ["Spread made from fruit", "Cars stuck, going nowhere"] },
+      { word: "NOVEL", defs: ["A long work of fiction", "Never seen before"] },
     ],
   },
   {
-    left: "The Beatles",
-    right: "Rolling Stones",
-    items: [
-      { text: "Hey Jude", side: "L" },
-      { text: "Paint It Black", side: "R" },
-      { text: "Eleanor Rigby", side: "L" },
-      { text: "Gimme Shelter", side: "R" },
-      { text: "Come Together", side: "L" },
-      { text: "Angie", side: "R" },
-      { text: "Let It Be", side: "L" },
-      { text: "Sympathy for the Devil", side: "R" },
+    pairs: [
+      { word: "WAVE", defs: ["The ocean's rolling swell", "A hand saying hello"] },
+      { word: "RULER", defs: ["Twelve inches of measuring", "One who wears the crown"] },
+      { word: "LETTER", defs: ["One of twenty-six", "Sealed inside an envelope"] },
+      { word: "CURRENT", defs: ["A river's steady pull", "Happening right now"] },
     ],
   },
   {
-    left: "Country in Africa",
-    right: "Country in Asia",
-    items: [
-      { text: "Mali", side: "L" },
-      { text: "Laos", side: "R" },
-      { text: "Ghana", side: "L" },
-      { text: "Nepal", side: "R" },
-      { text: "Oman", side: "R" },
-      { text: "Chad", side: "L" },
-      { text: "Bhutan", side: "R" },
-      { text: "Benin", side: "L" },
+    pairs: [
+      { word: "PARK", defs: ["Green space with benches", "Leave the car somewhere"] },
+      { word: "BARK", defs: ["A dog's warning", "A tree's outer coat"] },
+      { word: "PITCH", defs: ["Thrown from the mound", "How high a note sits"] },
+      { word: "GRAVE", defs: ["A final resting place", "Deeply serious"] },
     ],
   },
   {
-    left: "NBA team",
-    right: "NFL team",
-    items: [
-      { text: "Jazz", side: "L", note: "Utah Jazz" },
-      { text: "Ravens", side: "R", note: "Baltimore" },
-      { text: "Raptors", side: "L", note: "Toronto" },
-      { text: "Titans", side: "R", note: "Tennessee" },
-      { text: "Chargers", side: "R", note: "Los Angeles" },
-      { text: "Bucks", side: "L", note: "Milwaukee" },
-      { text: "Texans", side: "R", note: "Houston" },
-      { text: "Pacers", side: "L", note: "Indiana" },
+    pairs: [
+      { word: "MATCH", defs: ["Strike it for fire", "A contest of equals"] },
+      { word: "SEAL", defs: ["Whiskered ocean swimmer", "Close something airtight"] },
+      { word: "TRUNK", defs: ["An elephant's reach", "Where the luggage goes"] },
+      { word: "FAIR", defs: ["Rides and cotton candy", "Free from bias"] },
     ],
   },
   {
-    left: "Pixar",
-    right: "DreamWorks",
-    items: [
-      { text: "Coco", side: "L" },
-      { text: "Shrek", side: "R" },
-      { text: "Up", side: "L" },
-      { text: "Kung Fu Panda", side: "R" },
-      { text: "Madagascar", side: "R" },
-      { text: "Ratatouille", side: "L" },
-      { text: "How to Train Your Dragon", side: "R" },
-      { text: "Brave", side: "L" },
+    pairs: [
+      { word: "RING", defs: ["Worn on a finger", "The phone's cry"] },
+      { word: "DATE", defs: ["A square on the calendar", "Dinner for two, maybe"] },
+      { word: "BOLT", defs: ["Lightning's strike", "Take off running"] },
+      { word: "STABLE", defs: ["Where horses sleep", "Not likely to tip over"] },
     ],
   },
   {
-    left: "Greek god",
-    right: "Roman god",
-    items: [
-      { text: "Hermes", side: "L" },
-      { text: "Mars", side: "R" },
-      { text: "Athena", side: "L" },
-      { text: "Venus", side: "R" },
-      { text: "Juno", side: "R" },
-      { text: "Poseidon", side: "L" },
-      { text: "Mercury", side: "R", note: "The Roman Hermes" },
-      { text: "Ares", side: "L", note: "The Greek Mars" },
-    ],
-  },
-  {
-    left: "Pasta shape",
-    right: "Italian city",
-    items: [
-      { text: "Rigatoni", side: "L" },
-      { text: "Modena", side: "R", note: "Home of balsamic vinegar" },
-      { text: "Farfalle", side: "L", note: "The bow-tie one" },
-      { text: "Perugia", side: "R" },
-      { text: "Bergamo", side: "R" },
-      { text: "Orecchiette", side: "L", note: "'Little ears'" },
-      { text: "Ravenna", side: "R" },
-      { text: "Gemelli", side: "L" },
-    ],
-  },
-  {
-    left: "Harry Potter spell",
-    right: "IKEA product",
-    items: [
-      { text: "Alohomora", side: "L", note: "Unlocks doors" },
-      { text: "MALM", side: "R", note: "The bed frame" },
-      { text: "Expelliarmus", side: "L" },
-      { text: "KALLAX", side: "R", note: "The shelf everyone owns" },
-      { text: "POÄNG", side: "R", note: "The bouncy chair" },
-      { text: "Lumos", side: "L" },
-      { text: "BILLY", side: "R", note: "The bookcase" },
-      { text: "Muffliato", side: "L" },
-    ],
-  },
-  {
-    left: "Chemical element",
-    right: "Constellation",
-    items: [
-      { text: "Argon", side: "L" },
-      { text: "Orion", side: "R" },
-      { text: "Krypton", side: "L", note: "A real noble gas, not just Superman's home" },
-      { text: "Lyra", side: "R" },
-      { text: "Draco", side: "R" },
-      { text: "Cobalt", side: "L" },
-      { text: "Cygnus", side: "R", note: "The swan" },
-      { text: "Radon", side: "L" },
-    ],
-  },
-  {
-    left: "Shakespeare play",
-    right: "Jane Austen novel",
-    items: [
-      { text: "Othello", side: "L" },
-      { text: "Emma", side: "R" },
-      { text: "Macbeth", side: "L" },
-      { text: "Persuasion", side: "R" },
-      { text: "Mansfield Park", side: "R" },
-      { text: "Twelfth Night", side: "L" },
-      { text: "Northanger Abbey", side: "R" },
-      { text: "The Tempest", side: "L" },
+    pairs: [
+      { word: "SPRING", defs: ["Coiled metal that bounces", "When the flowers return"] },
+      { word: "CLUB", defs: ["A group with members", "A suit in the deck"] },
+      { word: "CRANE", defs: ["Long-necked wading bird", "Lifts steel downtown"] },
+      { word: "SOUND", defs: ["Anything you can hear", "Sturdy and dependable"] },
     ],
   },
 ];
