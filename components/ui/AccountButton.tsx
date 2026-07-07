@@ -31,7 +31,7 @@ export function AccountButton() {
   return (
     <Link
       href="/profile"
-      className="whitespace-nowrap rounded-full bg-cta px-4 py-1.5 text-xs font-bold text-white transition-colors hover:bg-black"
+      className="whitespace-nowrap rounded-full bg-cta px-4 py-1.5 text-xs font-bold text-background transition-colors hover:opacity-90"
     >
       Sign up
     </Link>

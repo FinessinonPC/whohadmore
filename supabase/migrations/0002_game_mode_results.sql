@@ -8,7 +8,7 @@ create table if not exists public.game_mode_results (
   id uuid primary key default gen_random_uuid(),
   play_date date not null,
   session_id text not null,
-  mode text not null check (mode in ('rank', 'pinpoint', 'recall', 'split')),
+  mode text not null check (mode in ('rank', 'pinpoint', 'duality', 'impostor', 'recall', 'split')),
   score integer not null default 0 check (score >= 0 and score <= 2000),
   created_at timestamptz not null default now(),
   unique (play_date, session_id, mode)

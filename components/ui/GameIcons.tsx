@@ -55,6 +55,30 @@ export function RecallIcon({ accent, className }: IconProps) {
   );
 }
 
+/** Duality: two worlds, one line between them. */
+export function DualityIcon({ accent, className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <path d="M12 3 a9 9 0 0 0 0 18 Z" fill={accent} />
+      <path d="M12 3 a9 9 0 0 1 0 18 Z" fill={accent} opacity="0.35" />
+      <circle cx="12" cy="8" r="1.8" fill="#FFFFFF" opacity="0.9" />
+      <circle cx="12" cy="16" r="1.8" fill={accent} />
+    </svg>
+  );
+}
+
+/** Impostor: three fit, one doesn't. */
+export function ImpostorIcon({ accent, className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <rect x="3.4" y="3.4" width="8" height="8" rx="2.4" fill={accent} opacity="0.35" />
+      <rect x="12.6" y="3.4" width="8" height="8" rx="2.4" fill={accent} opacity="0.35" />
+      <rect x="3.4" y="12.6" width="8" height="8" rx="2.4" fill={accent} opacity="0.35" />
+      <circle cx="16.6" cy="16.6" r="4.2" fill={accent} />
+    </svg>
+  );
+}
+
 /** Split: over or under the line. */
 export function SplitIcon({ accent, className }: IconProps) {
   return (
@@ -77,7 +101,9 @@ export function BlitzIcon({ accent, className }: IconProps) {
 
 const ICONS: Record<ModeId, (p: IconProps) => React.ReactNode> = {
   chain: ChainIcon,
+  duality: DualityIcon,
   rank: RankIcon,
+  impostor: ImpostorIcon,
   pinpoint: PinpointIcon,
   recall: RecallIcon,
   split: SplitIcon,

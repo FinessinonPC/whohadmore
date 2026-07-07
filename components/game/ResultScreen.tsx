@@ -193,7 +193,7 @@ export function ResultScreen({
         {/* Level-up moment */}
         {levelUp != null && (
           <motion.div
-            className="mt-3 inline-flex items-center gap-2 rounded-full bg-cta px-4 py-2 text-white"
+            className="mt-3 inline-flex items-center gap-2 rounded-full bg-cta px-4 py-2 text-background"
             initial={{ scale: 0.6, opacity: 0 }}
             animate={{ scale: [0.6, 1.12, 1], opacity: 1 }}
             transition={{ duration: 0.5, ease: "easeOut", delay: 0.6 }}
@@ -267,7 +267,7 @@ export function ResultScreen({
 
             {/* Push to the archive */}
             <Link href="/archive" className="contents">
-              <button className="flex w-full items-center justify-between rounded-2xl bg-cta px-5 py-4 text-left text-white transition-colors hover:bg-black">
+              <button className="flex w-full items-center justify-between rounded-2xl bg-cta px-5 py-4 text-left text-background transition-colors hover:opacity-90">
                 <span>
                   <span className="block text-[15px] font-bold">Play more games</span>
                   <span className="block text-xs text-white/70">Jump into the archive - every past game is playable</span>

@@ -21,13 +21,21 @@ own identity: **every game is powered by one daily topic and its numbers.**
 
 ### The roster (registry: `lib/modes.ts`)
 
-| id | Name | Verb | Accent | Status | One-liner |
-|----|------|------|--------|--------|-----------|
-| `chain` | Chain | Compare | `#00C853` green | live | Classic higher-or-lower run (the original game) |
-| `rank` | Rank | Order | `#2E6BFF` blue | live | Order 5 cards top to bottom, 200/slot |
-| `pinpoint` | Pinpoint | Estimate | `#FFB300` amber | live | Slider-guess the exact value, ≤250/round by closeness |
-| `recall` | Recall | Remember | `#A44BFF` violet | **soon - spec §5** | Memorize the board, match numbers to cards |
-| `split` | Split | Judge | `#FF7A00` orange | **soon - spec §6** | Over/under snap calls, 5 rounds |
+Two kinds of games share the hub:
+- **Stat games** derive from the daily card set (zero extra content).
+- **Content games** run on bundled daily packs (`lib/contentPacks.ts`),
+  rotated deterministically by date - zero daily admin, refreshed by shipping
+  pack updates (or later, per-date DB overrides - see §7).
+
+| id | Name | Verb | Accent | Kind | Status | One-liner |
+|----|------|------|--------|------|--------|-----------|
+| `chain` | Chain | Compare | `#00C853` green | stat | live | Classic higher-or-lower run (the original game) |
+| `duality` | Duality | Sort | `#06B6D4` cyan | content | live | Two categories, 8 items - sort each to its side, 125/item |
+| `rank` | Rank | Order | `#2E6BFF` blue | stat | live | Order 5 cards top to bottom, 200/slot |
+| `impostor` | Impostor | Spot | `#FF4D8D` pink | content | live | 4 things, 3 connected, 1 lying - tap it, 200/round |
+| `pinpoint` | Pinpoint | Estimate | `#FFB300` amber | stat | live | Slider-guess the exact value, ≤250/round by closeness |
+| `recall` | Recall | Remember | `#A44BFF` violet | stat | **soon - spec §5** | Memorize the board, match numbers to cards |
+| `split` | Split | Judge | `#FF7A00` orange | stat | **soon - spec §6** | Over/under snap calls, 5 rounds |
 
 Naming scheme: **one strong word per game** (the lessgames "-less" suffix
 equivalent). Taglines carry the SEO phrases ("higher-or-lower") - product
@@ -39,6 +47,15 @@ names stay short.
 
 Tokens live in `tailwind.config.ts` + `app/globals.css` (CSS vars flip for dark).
 
+- **DARK-FIRST**: the flagship look is the dark theme (deep ink `#0B0D10`
+  canvas, bright per-game accents). New visitors get dark; the toggle still
+  offers light. Design every screen dark first, then check light.
+- **Display type**: big headlines, game names, and score numerals are Oswald
+  (`font-condensed font-semibold uppercase tracking-wide`) - the scoreboard
+  voice. Body/UI text stays Inter. Never mix within one text block.
+- **Primary actions**: `bg-cta text-background` (cta is the canvas inverse -
+  white-on-dark in dark mode, dark-on-white in light). Never `text-white` on
+  cta.
 - **Neutrals**: `background`, `surface`, `border`, `ink`, `ink-secondary` -
   always via the tokens, never hex. Dark mode is automatic.
 - **Semantic**: `correct` green / `wrong` red are for RESULTS ONLY. A game's
@@ -170,12 +187,34 @@ registry flip, API mode-set + SQL constraint update.
 
 ---
 
-## 7. Future concepts (do not build without a spec pass)
+## 7. Content games - how they work & what's next
 
+**Architecture**: `lib/contentPacks.ts` holds typed day-packs;
+`getDualityDaily(date)` / `getImpostorDaily(date)` pick `hashSeed(mode:date) %
+pack.length`, so every player gets the same round on the same day with no
+backend. **Planned override**: a `daily_minigames` table
+(`play_date, mode, payload jsonb`, unique on date+mode) checked first, pack as
+fallback - lets specific dates get hand-made content (a July 4th Duality),
+authored via an AiPromptPanel extension in the admin. Packs must GROW over
+time (aim: 30+ days per game) so weekly players rarely see repeats.
+
+**Content rules**: facts must be unambiguous and verifiable; every Duality
+item belongs to exactly one side; every Impostor round has exactly one clean
+impostor and a satisfying one-line connection. Fun beats difficulty; notes
+(`note`, `connection`) are the "huh, neat" payoff.
+
+**Next non-stat concepts (spec-approved shapes, build in this order):**
+- **Faux** (real-or-fake, `#8BC34A`): six statements on one theme - real or
+  made up? Two-button flow like Duality. Pack: `{theme, statements:
+  [{text, real, note}]}`. 165/correct ≈ 1000.
+- **Link** (common thread, violet-blue): four clues revealed one at a time -
+  lock your guess early for more points, from 4 multiple-choice options.
+  Pack: `{options[4], answerIndex, clues[4]}`. 250 max, -50 per extra clue.
+- **Timeline** (before-or-after): "Did X happen before Y?" five snap calls.
+  Pack: `{pairs: [{a, b, answer}]}`.
 - **Blitz** (`#FF3B30`, lightning icon): 60-second endless higher-or-lower
-  pulling random pairs from the WHOLE archive via a new
-  `/api/blitz/pairs` route. Big infra value: makes the archive a game.
-  Score = streak length; global daily best.
+  pulling random pairs from the WHOLE archive via a new `/api/blitz/pairs`
+  route. Makes the archive a game. Score = streak; global daily best.
 - **Duel**: challenge link = same seed as the challenger, head-to-head result
   screen. This is the viral share loop - pairs with the growth playbook.
 

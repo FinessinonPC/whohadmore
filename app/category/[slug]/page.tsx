@@ -107,7 +107,7 @@ export default async function CategoryPage({
           {games.length} {games.length === 1 ? "puzzle" : "puzzles"} and counting - updated daily.
         </p>
         <div className="mt-4 flex flex-wrap gap-2.5">
-          <Link href="/" className="rounded-full bg-cta px-4 py-2 text-xs font-bold text-white">
+          <Link href="/" className="rounded-full bg-cta px-4 py-2 text-xs font-bold text-background">
             Play today&apos;s game
           </Link>
           <Link href="/category" className="rounded-full bg-surface px-4 py-2 text-xs font-bold text-ink">

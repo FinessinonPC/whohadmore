@@ -93,7 +93,7 @@ export function NextGameCTA({ date, current }: { date: string; current: ModeId }
     <div className="flex flex-col gap-2.5">
       <Link
         href="/leaderboard"
-        className="flex h-14 w-full items-center justify-center rounded-2xl bg-cta text-base font-bold text-white transition-transform active:scale-[0.98]"
+        className="flex h-14 w-full items-center justify-center rounded-2xl bg-cta text-base font-bold text-background transition-transform active:scale-[0.98]"
       >
         All done - see today&apos;s leaderboard
       </Link>

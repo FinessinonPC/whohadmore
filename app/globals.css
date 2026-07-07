@@ -3,25 +3,26 @@
 @tailwind utilities;
 
 @layer base {
-  /* Neutral palette as RGB channels (light default). */
+  /* Neutral palette as RGB channels. The site is DARK-FIRST (the flagship
+     look - deep ink canvas, bright per-game accents); light stays available
+     via the toggle. CTA is the inverse of the canvas, so primary actions pair
+     with `text-background` and stay punchy in both themes. */
   :root {
     --bg: 255 255 255;
-    --surface: 248 248 248;
-    --border: 232 232 232;
-    --ink: 17 17 17;
-    --ink-2: 136 136 136;
-    --cta: 26 26 26;
+    --surface: 247 248 250;
+    --border: 231 233 238;
+    --ink: 16 18 22;
+    --ink-2: 124 131 141;
+    --cta: 16 18 22;
   }
 
-  /* Dark mode — neutral greys (Twitter-ish, not blue). cta stays dark enough
-     to keep white button text readable on the dark canvas. */
   .dark {
-    --bg: 22 24 27;
-    --surface: 32 35 39;
-    --border: 49 53 58;
-    --ink: 233 235 238;
-    --ink-2: 150 157 164;
-    --cta: 58 62 67;
+    --bg: 11 13 16;
+    --surface: 21 24 30;
+    --border: 38 43 52;
+    --ink: 237 240 244;
+    --ink-2: 146 155 167;
+    --cta: 237 240 244;
     color-scheme: dark;
   }
 

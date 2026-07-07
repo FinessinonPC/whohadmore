@@ -61,21 +61,22 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
   const [tiles, setTiles] = useState<Record<string, TileState>>({});
 
   useEffect(() => {
-    const chain = getLocalResult(date);
-    const prog = getProgress(date);
-    const rank = getModeResult("rank", date);
-    const pin = getModeResult("pinpoint", date);
-    setTiles({
-      chain: chain
-        ? { played: true, label: `${chain.reached}/${chain.rounds}`, score: chain.xpEarned }
-        : { played: false, label: prog && prog.roundsPlayed > 0 ? "Resume" : "Play", score: 0 },
-      rank: rank
-        ? { played: true, label: `${rank.score}`, score: rank.score }
-        : { played: false, label: "Play", score: 0 },
-      pinpoint: pin
-        ? { played: true, label: `${pin.score}`, score: pin.score }
-        : { played: false, label: "Play", score: 0 },
-    });
+    const next: Record<string, TileState> = {};
+    for (const m of LIVE_MODES) {
+      if (m.id === "chain") {
+        const chain = getLocalResult(date);
+        const prog = getProgress(date);
+        next.chain = chain
+          ? { played: true, label: `${chain.reached}/${chain.rounds}`, score: chain.xpEarned }
+          : { played: false, label: prog && prog.roundsPlayed > 0 ? "Resume" : "Play", score: 0 };
+      } else {
+        const r = getModeResult(m.id, date);
+        next[m.id] = r
+          ? { played: true, label: `${r.score}`, score: r.score }
+          : { played: false, label: "Play", score: 0 };
+      }
+    }
+    setTiles(next);
   }, [date]);
 
   const playedCount = LIVE_MODES.filter((m) => tiles[m.id]?.played).length;
@@ -115,7 +116,7 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
           <p className="small-caps text-xs text-ink-secondary">
             {formatDisplayDate(date)} · No. {gameNumber}
           </p>
-          <h1 className="mx-auto mt-2 max-w-md text-balance text-3xl font-extrabold leading-[1.08] tracking-tight text-ink sm:text-4xl">
+          <h1 className="mx-auto mt-2 max-w-md text-balance font-condensed text-4xl font-semibold uppercase leading-[1.02] tracking-wide text-ink sm:text-5xl">
             {game.topic_label}
           </h1>
           <TopicMontage cards={game.cards} />
@@ -128,7 +129,7 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
         <div className="mt-6 flex items-center justify-between rounded-3xl border border-border bg-surface px-5 py-4">
           <div>
             <p className="small-caps text-[11px] text-ink-secondary">Today&apos;s total</p>
-            <p className="mt-0.5 text-3xl font-extrabold tracking-tight text-ink tabular">
+            <p className="mt-0.5 font-condensed text-4xl font-semibold leading-none text-ink tabular">
               {total.toLocaleString("en-US")}
             </p>
           </div>
@@ -162,7 +163,7 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
                 <GameIconTile mode={mode.id} accent={mode.accent} />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-baseline gap-2">
-                    <span className="text-[17px] font-extrabold tracking-tight text-ink">
+                    <span className="font-condensed text-xl font-semibold uppercase tracking-wide text-ink">
                       {mode.name}
                     </span>
                     <span
@@ -185,7 +186,7 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
                     ✓ {t.label}
                   </span>
                 ) : (
-                  <span className="shrink-0 rounded-full bg-cta px-5 py-2 text-sm font-bold text-white transition-transform group-hover:scale-[1.03]">
+                  <span className="shrink-0 rounded-full bg-cta px-5 py-2 text-sm font-bold text-background transition-transform group-hover:scale-[1.03]">
                     {t?.label ?? "Play"}
                   </span>
                 )}

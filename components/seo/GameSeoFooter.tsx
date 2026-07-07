@@ -103,7 +103,7 @@ export async function GameSeoFooter({ game, date }: { game: FullGame; date: stri
         )}
 
         <div className="mt-8 flex flex-wrap gap-2.5">
-          <Link href="/" className="rounded-full bg-cta px-4 py-2 text-xs font-bold text-white">
+          <Link href="/" className="rounded-full bg-cta px-4 py-2 text-xs font-bold text-background">
             Play today&apos;s game
           </Link>
           {cat && (

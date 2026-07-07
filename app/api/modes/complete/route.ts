@@ -10,6 +10,8 @@ export const dynamic = "force-dynamic";
 const MODE_MAX: Record<string, number> = {
   rank: 1000,
   pinpoint: 1000,
+  duality: 1000,
+  impostor: 1000,
   recall: 1000,
   split: 1000,
 };

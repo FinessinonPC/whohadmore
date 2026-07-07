@@ -91,7 +91,7 @@ export function ArchiveList({ games }: { games: NumberedGame[] }) {
                   </span>
                 </div>
               ) : (
-                <span className="shrink-0 rounded-full bg-cta px-4 py-1.5 text-xs font-bold text-white">
+                <span className="shrink-0 rounded-full bg-cta px-4 py-1.5 text-xs font-bold text-background">
                   Play
                 </span>
               )}

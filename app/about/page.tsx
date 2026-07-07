@@ -69,7 +69,7 @@ export default function AboutPage() {
           <BrandMark className="h-5 w-5" />
           <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
         </Link>
-        <Link href="/" className="rounded-full bg-cta px-4 py-1.5 text-xs font-semibold text-white">
+        <Link href="/" className="rounded-full bg-cta px-4 py-1.5 text-xs font-semibold text-background">
           Play
         </Link>
       </header>
@@ -119,7 +119,7 @@ export default function AboutPage() {
         </div>
 
         <div className="flex flex-wrap gap-3 pt-2">
-          <Link href="/" className="rounded-2xl bg-cta px-5 py-3 text-sm font-bold text-white">
+          <Link href="/" className="rounded-2xl bg-cta px-5 py-3 text-sm font-bold text-background">
             Play today&apos;s game
           </Link>
           <Link

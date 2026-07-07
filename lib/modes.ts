@@ -6,7 +6,14 @@
 import { hashSeed, mulberry32, seededShuffle } from "@/lib/seed";
 import type { GameCard } from "@/types";
 
-export type ModeId = "chain" | "rank" | "pinpoint" | "recall" | "split";
+export type ModeId =
+  | "chain"
+  | "duality"
+  | "rank"
+  | "impostor"
+  | "pinpoint"
+  | "recall"
+  | "split";
 
 export interface ModeDef {
   id: ModeId;
@@ -26,10 +33,14 @@ export const RANK_SLOTS = 5;
 export const PINPOINT_ROUNDS = 4;
 export const RECALL_CARDS = 4;
 export const SPLIT_ROUNDS = 5;
+export const DUALITY_ITEMS = 8;
+export const IMPOSTOR_ROUNDS = 5;
 export const RANK_POINTS_PER_SLOT = 200;
 export const PINPOINT_POINTS_PER_ROUND = 250;
 export const RECALL_POINTS_PER_MATCH = 250;
 export const SPLIT_POINTS_PER_ROUND = 200;
+export const DUALITY_POINTS_PER_ITEM = 125;
+export const IMPOSTOR_POINTS_PER_ROUND = 200;
 
 /** The daily roster. One topic powers every game; each game is a different
  *  verb so the hub feels like a collection, not five flavors of one idea. */
@@ -45,6 +56,16 @@ export const MODES: ModeDef[] = [
     href: (date) => `/play/${date}`,
   },
   {
+    id: "duality",
+    name: "Duality",
+    verb: "Sort",
+    tagline: "Two worlds, eight things. Sort every one to its side.",
+    accent: "#06B6D4",
+    maxPoints: DUALITY_ITEMS * DUALITY_POINTS_PER_ITEM,
+    status: "live",
+    href: (date) => `/duality/${date}`,
+  },
+  {
     id: "rank",
     name: "Rank",
     verb: "Order",
@@ -53,6 +74,16 @@ export const MODES: ModeDef[] = [
     maxPoints: RANK_SLOTS * RANK_POINTS_PER_SLOT,
     status: "live",
     href: (date) => `/rank/${date}`,
+  },
+  {
+    id: "impostor",
+    name: "Impostor",
+    verb: "Spot",
+    tagline: "Three belong together. One is lying. Find it.",
+    accent: "#FF4D8D",
+    maxPoints: IMPOSTOR_ROUNDS * IMPOSTOR_POINTS_PER_ROUND,
+    status: "live",
+    href: (date) => `/impostor/${date}`,
   },
   {
     id: "pinpoint",

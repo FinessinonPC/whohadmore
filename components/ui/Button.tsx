@@ -16,7 +16,7 @@ const base =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:ring-offset-2";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-cta text-white hover:opacity-90",
+  primary: "bg-cta text-background hover:opacity-90",
   secondary: "bg-surface text-ink border border-border hover:bg-border/40",
   ghost: "bg-transparent text-ink-secondary hover:text-ink hover:bg-surface",
 };
