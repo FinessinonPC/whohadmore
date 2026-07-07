@@ -12,6 +12,8 @@ type PlayedResult = { reached: number; rounds: number };
 
 interface ArchiveCalendarProps {
   games: NumberedGame[];
+  /** Where a day cell links (defaults to that day's hub). */
+  hrefFor?: (date: string) => string;
 }
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
@@ -29,7 +31,7 @@ function tierText(reached: number, rounds: number): string {
   return "text-wrong";
 }
 
-export function ArchiveCalendar({ games }: ArchiveCalendarProps) {
+export function ArchiveCalendar({ games, hrefFor }: ArchiveCalendarProps) {
   const today = todayISO();
   const [ty, tm] = today.split("-").map(Number);
 
@@ -137,15 +139,15 @@ export function ArchiveCalendar({ games }: ArchiveCalendarProps) {
           return (
             <Link
               key={dateStr}
-              href={`/day/${dateStr}`}
+              href={hrefFor ? hrefFor(dateStr) : `/day/${dateStr}`}
               title={game.topic_label}
               className={`group flex min-h-[84px] flex-col gap-1 rounded-xl border p-2 transition-colors sm:min-h-[112px] ${state} ${
                 isToday ? "ring-2 ring-ink/30" : ""
               }`}
             >
               <span className="text-xs font-bold text-ink">{day}</span>
-              <span className="line-clamp-3 text-[10px] font-semibold leading-tight text-ink/85 sm:text-xs">
-                {game.topic_label}
+              <span className="font-condensed text-base font-semibold text-ink/85 sm:text-lg">
+                No. {game.game_number}
               </span>
               {result && (
                 <span className={`mt-auto tabular text-[10px] font-extrabold sm:text-xs ${tierText(result.reached, result.rounds)}`}>

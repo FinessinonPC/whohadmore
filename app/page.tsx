@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { GameHub } from "@/components/hub/GameHub";
-import { GameSeoFooter } from "@/components/seo/GameSeoFooter";
+import { SiteSeoFooter } from "@/components/seo/SiteSeoFooter";
 import { getFullGame, getGameNumber } from "@/lib/games";
 import { todayISO } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
 
 const DESCRIPTION =
-  "WhoHadMore is a free daily higher-or-lower game hub: one topic, three quick games - Higher or Lower, Rank Five, and Pinpoint - one combined score. A new puzzle every day across sports, pop culture, food, geography and science.";
+  "WhoHadMore is a free set of quick daily games - the higher-or-lower Chain, Duality, Word, and the Mini crossword - with one combined score and a daily leaderboard. New games every midnight.";
 
 export const metadata: Metadata = {
   title: { absolute: "WhoHadMore - Daily Higher or Lower Games" },
@@ -39,7 +39,7 @@ export default async function HomePage() {
   return (
     <>
       <GameHub game={game} date={date} gameNumber={gameNumber} />
-      {game && <GameSeoFooter game={game} date={date} />}
+      <SiteSeoFooter />
     </>
   );
 }

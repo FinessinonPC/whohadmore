@@ -35,9 +35,36 @@ export function GameStats() {
     total: 0,
   };
 
+  const quickPlays = Object.values(stats).reduce((a, s) => a + s.played, 0);
+  const quickPoints = Object.values(stats).reduce((a, s) => a + s.total, 0);
+  const perfects = Object.values(stats).reduce(
+    (a, s) => a + (s.best >= 1000 ? 1 : 0),
+    0
+  );
+
   return (
     <section className="mt-4 rounded-[28px] bg-surface p-6">
-      <h2 className="text-sm font-extrabold text-ink">By game</h2>
+      <h2 className="text-sm font-extrabold text-ink">Across every game</h2>
+      <div className="mt-3 grid grid-cols-3 gap-3 text-center">
+        <div>
+          <p className="tabular font-condensed text-3xl font-semibold text-ink">
+            {(chainAgg.played + quickPlays).toLocaleString()}
+          </p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-secondary">Total plays</p>
+        </div>
+        <div>
+          <p className="tabular font-condensed text-3xl font-semibold text-ink">
+            {quickPoints.toLocaleString()}
+          </p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-secondary">Quick-game pts</p>
+        </div>
+        <div>
+          <p className="tabular font-condensed text-3xl font-semibold text-ink">{perfects}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-secondary">Games perfected</p>
+        </div>
+      </div>
+
+      <h2 className="mt-6 text-sm font-extrabold text-ink">By game</h2>
       <div className="mt-4 flex flex-col gap-3">
         {LIVE_MODES.map((m) => {
           const agg = m.id === "chain" ? chainAgg : stats[m.id];

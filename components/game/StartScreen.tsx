@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { TopNav } from "@/components/ui/TopNav";
@@ -119,15 +118,7 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
         <Button size="lg" onClick={onStart} className="mt-8 w-full max-w-xs">
           {resuming ? "Resume game" : "Start game"}
         </Button>
-        <p className="mt-3 text-xs text-ink-secondary">
-          {resuming ? "Pick up where you left off." : "A fresh game every day"}
-        </p>
-        <Link
-          href="/about"
-          className="mt-4 text-xs font-semibold text-ink-secondary underline underline-offset-2 transition-colors hover:text-ink"
-        >
-          What is WhoHadMore?
-        </Link>
+
       </motion.div>
     </main>
   );

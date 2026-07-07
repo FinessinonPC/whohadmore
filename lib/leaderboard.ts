@@ -166,6 +166,12 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: "stars25", label: "Heart Collector", description: "Bank 25 hearts.", icon: "❤️" },
   { id: "stars100", label: "Big Heart", description: "Bank 100 hearts.", icon: "💖" },
   { id: "level10", label: "Seasoned", description: "Reach level 10.", icon: "🏆" },
+  // Collection achievements - earned across the whole roster, granted by the
+  // quick-game recorder (/api/modes/complete).
+  { id: "all_rounder", label: "The Full Sweep", description: "Play all four games in one day.", icon: "🃏" },
+  { id: "duality_perfect", label: "Mind Reader", description: "Solve Duality without a single mistake.", icon: "🧠" },
+  { id: "word_ace", label: "Third Try's a Charm", description: "Solve Word in three guesses or fewer.", icon: "✍️" },
+  { id: "mini_clean", label: "Ink Only", description: "Solve the Mini clean on your first check.", icon: "🖋️" },
 ];
 
 const ACHIEVEMENT_BY_ID = new Map(ACHIEVEMENTS.map((a) => [a.id, a]));

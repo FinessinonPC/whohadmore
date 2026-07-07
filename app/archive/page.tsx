@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArchiveCalendar } from "@/components/archive/ArchiveCalendar";
-import { ArchiveList } from "@/components/archive/ArchiveList";
+import { ArchiveBrowser } from "@/components/archive/ArchiveBrowser";
 import { TopNav } from "@/components/ui/TopNav";
 import { CATEGORIES } from "@/lib/categories";
 import { getPublishedGamesWithNumbers } from "@/lib/games";
@@ -59,13 +58,7 @@ export default async function ArchivePage() {
         ))}
       </div>
 
-      {/* Calendar on desktop, list on mobile */}
-      <div className="hidden sm:block">
-        <ArchiveCalendar games={games} />
-      </div>
-      <div className="sm:hidden">
-        <ArchiveList games={games} />
-      </div>
+      <ArchiveBrowser games={games} />
 
       <script
         type="application/ld+json"

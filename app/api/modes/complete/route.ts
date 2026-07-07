@@ -59,6 +59,46 @@ export async function POST(req: Request) {
       console.error("[modes] record failed (is game_mode_results created?):", error.message);
       return NextResponse.json({ ok: true, recorded: false });
     }
+
+    // Collection achievements - best-effort, never blocks recording.
+    try {
+      const supabase = getServiceSupabase();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, achievements")
+        .eq("session_id", session_id)
+        .maybeSingle<{ id: string; achievements: string[] | null }>();
+      if (profile) {
+        const earned: string[] = [];
+        if (mode === "duality" && score >= 1000) earned.push("duality_perfect");
+        if (mode === "word" && score >= 800) earned.push("word_ace");
+        if (mode === "mini" && score >= 1000) earned.push("mini_clean");
+
+        // All four in one day: the three quick games recorded + a chain result.
+        const { count: modeCount } = await supabase
+          .from("game_mode_results")
+          .select("id", { count: "exact", head: true })
+          .eq("session_id", session_id)
+          .eq("play_date", play_date);
+        if ((modeCount ?? 0) >= 3) {
+          const { count: chainCount } = await supabase
+            .from("game_results")
+            .select("id", { count: "exact", head: true })
+            .eq("session_id", session_id)
+            .eq("play_date", play_date);
+          if ((chainCount ?? 0) > 0) earned.push("all_rounder");
+        }
+
+        const have = profile.achievements ?? [];
+        const merged = Array.from(new Set([...have, ...earned]));
+        if (merged.length > have.length) {
+          await supabase.from("profiles").update({ achievements: merged }).eq("id", profile.id);
+        }
+      }
+    } catch {
+      /* achievements are decorative - recording already succeeded */
+    }
+
     return NextResponse.json({ ok: true, recorded: true });
   } catch {
     return NextResponse.json({ ok: false, error: "bad_request" }, { status: 400 });

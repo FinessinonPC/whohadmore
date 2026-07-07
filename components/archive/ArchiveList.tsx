@@ -33,7 +33,7 @@ function Hearts({ lives, max = 3 }: { lives: number; max?: number }) {
 }
 
 /** Mobile-friendly scrollable list of every game, newest first. */
-export function ArchiveList({ games }: { games: NumberedGame[] }) {
+export function ArchiveList({ games, hrefFor }: { games: NumberedGame[]; hrefFor?: (date: string) => string }) {
   const sorted = useMemo(
     () => [...games].sort((a, b) => (a.play_date < b.play_date ? 1 : -1)),
     [games]
@@ -80,11 +80,15 @@ export function ArchiveList({ games }: { games: NumberedGame[] }) {
         return (
           <li key={game.id}>
             <Link
-              href={`/day/${game.play_date}`}
+              href={hrefFor ? hrefFor(game.play_date) : `/day/${game.play_date}`}
               className="flex items-center gap-3 py-3.5 transition-colors hover:bg-surface"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-ink">{game.topic_label}</p>
+                <p className="truncate text-sm font-bold text-ink">
+                  <span className="font-condensed text-ink-secondary">No. {game.game_number}</span>
+                  <span className="mx-1.5 text-ink-secondary">·</span>
+                  {game.topic_label}
+                </p>
                 <div className="mt-1 flex items-center gap-2">
                   <span className="text-xs text-ink-secondary">{formatShortDate(game.play_date)}</span>
                   <Badge tone="category">{categoryLabel(game.topic_category)}</Badge>

@@ -1,0 +1,67 @@
+"use client";
+
+import { useState } from "react";
+import { ArchiveCalendar } from "./ArchiveCalendar";
+import { ArchiveList } from "./ArchiveList";
+import { GameWordmark } from "@/components/ui/GameWordmarks";
+import { LIVE_MODES, type ModeId } from "@/lib/modes";
+import type { DailyGame } from "@/types";
+
+type NumberedGame = DailyGame & { game_number: number };
+type Filter = "all" | ModeId;
+
+/**
+ * The archive's interactive shell: a game filter over the calendar/list.
+ * "All games" opens a day's hub; picking one game deep-links every day
+ * straight into that game - binge a whole run of Chains (or Minis) in a row.
+ */
+export function ArchiveBrowser({ games }: { games: NumberedGame[] }) {
+  const [filter, setFilter] = useState<Filter>("all");
+
+  const hrefFor = (date: string) =>
+    filter === "all"
+      ? `/day/${date}`
+      : LIVE_MODES.find((m) => m.id === filter)?.href(date) ?? `/day/${date}`;
+
+  return (
+    <div>
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => setFilter("all")}
+          className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
+            filter === "all" ? "bg-cta text-background" : "bg-surface text-ink-secondary hover:text-ink"
+          }`}
+        >
+          All games
+        </button>
+        {LIVE_MODES.map((m) => (
+          <button
+            key={m.id}
+            onClick={() => setFilter(m.id)}
+            className="rounded-full px-3.5 py-1.5 transition-all"
+            style={
+              filter === m.id
+                ? { background: m.accent, color: m.contrast }
+                : { background: "rgb(var(--surface))", color: m.accent, opacity: 0.85 }
+            }
+          >
+            <GameWordmark mode={m.id} className="text-sm" />
+          </button>
+        ))}
+        {filter !== "all" && (
+          <span className="text-[11px] font-semibold text-ink-secondary">
+            days open straight into {LIVE_MODES.find((m) => m.id === filter)?.name}
+          </span>
+        )}
+      </div>
+
+      {/* Calendar on desktop, list on mobile */}
+      <div className="hidden sm:block">
+        <ArchiveCalendar games={games} hrefFor={hrefFor} />
+      </div>
+      <div className="sm:hidden">
+        <ArchiveList games={games} hrefFor={hrefFor} />
+      </div>
+    </div>
+  );
+}

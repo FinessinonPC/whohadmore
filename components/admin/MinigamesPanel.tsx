@@ -13,15 +13,15 @@ const MODE_META: { id: MinigameMode; name: string; accent: string; blurb: string
 ];
 
 const PROMPTS: Record<MinigameMode, string> = {
-  duality: `Create ONE round of "Duality" - a daily pairing game. Players see EIGHT short definitions on a board (shuffled). Hidden among them are FOUR PAIRS: each pair is two definitions of the SAME word (two unrelated meanings - like "Place that holds your money" + "The side of a river" = BANK). Players tap two boxes they think go together.
+  duality: `You are a puzzle editor at the level of the NYT Games desk, writing today's "Duality" - a daily pairing game with a devoted audience. Players see EIGHT short definitions, shuffled. Hidden among them are FOUR PAIRS: each pair is two definitions of the SAME word with two unrelated meanings ("Place that holds your money" + "The side of a river" = BANK). Players tap two that go together; matches reveal the word.
 
-Rules that matter:
-1) Each pair's word must have two genuinely DIFFERENT meanings (homonyms/double meanings). Both definitions must be unmistakably correct for the word.
-2) A definition must NEVER contain its word (or an obvious form of it).
-3) Definitions are SHORT (3-6 words), vivid, tile-sized.
-4) Order pairs EASIEST first, HARDEST last (pair 1 = instant, pair 4 = makes you think). Difficulty comes from less-known second meanings.
-5) No definition should plausibly match a different pair's word - avoid overlap.
-6) Keep it light and safe - no politics, religion, tragedy.
+Editorial bar (what makes a great day):
+1) The aha. Every pair should produce a small delight when the word reveals - the second meaning should feel obvious IN HINDSIGHT, never contrived. If you have to squint, cut it.
+2) Fair. Both definitions are unmistakably correct for the word, and NO definition could plausibly describe a different pair's word. One clean answer, always.
+3) Tight writing. Definitions are 3-6 words, concrete, and evocative - written like crossword clues, not dictionary entries. Never include the answer word (or any form of it) in a definition.
+4) A real difficulty curve. Pair 1 lands in two seconds; pair 4 makes a smart player pause. Difficulty comes from the LESS-FAMOUS second meaning, not from obscure words.
+5) Everyday words only - the kind everyone knows in BOTH senses once revealed. Light and safe: no politics, religion, or tragedy.
+6) Before answering, self-check every rule above against each pair.
 
 Return ONLY this JSON, no markdown fences:
 {
@@ -30,15 +30,17 @@ Return ONLY this JSON, no markdown fences:
     // exactly 4 pairs, easiest first
   ]
 }`,
-  word: `Pick ONE five-letter English word for a daily Wordle-style game.
+  word: `You are the editor picking today's answer for a daily five-letter word game (the beloved format). The pick matters: a good answer feels satisfying to land on; a bad one makes players feel cheated.
 
-Rules:
-1) Exactly 5 letters, a COMMON word every adult knows (no obscure words, no proper nouns, no plurals ending in S).
-2) Fun to discover - concrete nouns and vivid words beat filler words.
+Editorial bar:
+1) Exactly 5 letters, a word EVERY adult knows - no obscurities, no proper nouns, no plurals ending in S, no crossword-ese.
+2) Satisfying to discover: vivid, concrete words (STORM, CRISP, MANGO) beat gray filler (OTHER, THEIR). A word with personality.
+3) A touch of challenge is welcome - a double letter or an uncommon-but-fair pattern - but never at the cost of rule 1.
+4) Self-check: five letters exactly, common, singular.
 
 Return ONLY this JSON, no markdown fences:
-{ "answer": "WORDX" }`,
-  mini: `Create ONE 5x5 mini crossword. You MUST use EXACTLY this black-square layout ('#' = black, letters elsewhere):
+{ "answer": "STORM" }`,
+  mini: `You are a crossword constructor for a daily mini with NYT-Mini standards: a clean fill of everyday words and clues with a wink. Create ONE 5x5 mini crossword. You MUST use EXACTLY this black-square layout ('#' = black, letters elsewhere):
 
 Row 1: letters at columns 1-3, '#' at columns 4-5   -> "ABC##"
 Row 2: letters at columns 1-4, '#' at column 5      -> "ABCD#"
@@ -52,8 +54,9 @@ DOWN:   1D row0 col0 len3 · 2D row0 col1 len4 · 3D row0 col2 len5 · 5D row1 c
 
 Hard rules:
 1) EVERY across AND down entry must be a real, common English word (no abbreviations, no proper nouns, no obscure crossword-ese). The 10 words must all be different.
-2) Double-check every DOWN word letter-by-letter against your grid before answering - a single wrong crossing invalidates the puzzle.
-3) Clues: short, fair, NYT-Monday easy. A touch of wit welcome.
+2) Double-check every DOWN word letter-by-letter against your grid before answering - a single wrong crossing invalidates the puzzle. Write the grid out, then verify each column spells its down answer.
+3) Clues read like a good Monday: short, fair, and warm - a small smile beats a groan. Clue the MEANING players know best; misdirection is welcome only if the answer still feels fair.
+4) Prefer lively fill (OCEAN, TANGO, CRISP) over flat glue words when the grid allows.
 
 Return ONLY this JSON, no markdown fences (rows use UPPERCASE letters and '#'):
 {

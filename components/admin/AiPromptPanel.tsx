@@ -14,7 +14,7 @@ interface AiPromptPanelProps {
   date?: string;
 }
 
-const PROMPT = `You are the creative director for a daily higher/lower game. Players see two cards and tap whichever has the higher value of one stat. Invent ONE genuinely ORIGINAL game - the kind that makes someone say "huh, I never thought to compare those."
+const PROMPT = `You are the creative director for a daily higher/lower game with NYT-Games-level editorial standards - every day should feel crafted, not generated. Players see two cards and tap whichever has the higher value of one stat. Invent ONE genuinely ORIGINAL game - the kind that makes someone say "huh, I never thought to compare those."
 
 THREE rules that matter most:
 
