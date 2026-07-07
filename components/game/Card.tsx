@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { CountUp } from "./CountUp";
 import { formatStat } from "@/lib/gameLogic";
-import { initialsFor } from "@/lib/wikimedia";
+import { imageCreditUrl, initialsFor } from "@/lib/wikimedia";
 import type { GameCard } from "@/types";
 
 export type CardStatus = "idle" | "correct" | "wrong";
@@ -33,10 +33,11 @@ const TINT_COLOR: Record<CardStatus, string> = {
 };
 
 /**
- * A game card in the light-panel format: an off-white rounded panel (it stays
- * light in dark mode - that's the look), the picture framed inside it, and
- * the entity name floating at center in a white pill. The stat value joins as
- * a second pill: "?" until this side reveals.
+ * A game card: the photo IS the card - full bleed, edge to edge. The entity
+ * name and stat ride in compact white pills tucked against the bottom edge so
+ * they cover as little of the picture as possible ("?" until this side
+ * reveals). A whisper-quiet credit chip in the top corner links to the
+ * image's source page.
  */
 export function Card({
   card,
@@ -52,75 +53,89 @@ export function Card({
   const hasImage = Boolean(card.image_url) && !imgFailed;
 
   return (
-    <motion.button
-      type="button"
-      onClick={onSelect}
-      disabled={disabled}
-      aria-label={`Choose ${card.entity_name}`}
-      className="group relative flex h-full w-full items-center justify-center overflow-hidden rounded-[26px] border-[3px] bg-[#F1F1F3] text-left shadow-xl will-change-transform disabled:cursor-default"
-      animate={{
-        x: shake ? [0, -10, 10, -8, 8, 0] : 0,
-        borderColor: BORDER_COLOR[status],
-        scale: status === "correct" ? [1, 1.025, 1] : 1,
-      }}
-      transition={{
-        x: { duration: 0.42, ease: "easeInOut" },
-        scale: { duration: 0.45, ease: "easeOut" },
-        borderColor: { duration: 0.2 },
-      }}
-      whileHover={!disabled ? { scale: 1.015 } : undefined}
-      whileTap={!disabled ? { scale: 0.99 } : undefined}
-    >
-      {/* The picture, framed by the panel */}
-      <div className="absolute inset-3 overflow-hidden rounded-[16px] sm:inset-4">
+    <div className="relative h-full w-full">
+      <motion.button
+        type="button"
+        onClick={onSelect}
+        disabled={disabled}
+        aria-label={`Choose ${card.entity_name}`}
+        className="group relative flex h-full w-full items-end justify-center overflow-hidden rounded-[26px] border-[3px] bg-[#F1F1F3] text-left shadow-xl will-change-transform disabled:cursor-default"
+        animate={{
+          x: shake ? [0, -10, 10, -8, 8, 0] : 0,
+          borderColor: BORDER_COLOR[status],
+          scale: status === "correct" ? [1, 1.025, 1] : 1,
+        }}
+        transition={{
+          x: { duration: 0.42, ease: "easeInOut" },
+          scale: { duration: 0.45, ease: "easeOut" },
+          borderColor: { duration: 0.2 },
+        }}
+        whileHover={!disabled ? { scale: 1.015 } : undefined}
+        whileTap={!disabled ? { scale: 0.99 } : undefined}
+      >
+        {/* The photo IS the card */}
         {hasImage ? (
           // eslint-disable-next-line @next/next/no-img-element -- arbitrary remote hosts (manual overrides) can't be statically allow-listed
           <img
             src={card.image_url ?? ""}
             alt={card.entity_name}
-            className="h-full w-full object-cover object-center"
+            className="absolute inset-0 h-full w-full object-cover object-center"
             draggable={false}
             onError={() => setImgFailed(true)}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[#E4E5E9] font-condensed text-7xl font-bold text-[#AFB3BC]">
+          <div className="absolute inset-0 flex items-center justify-center bg-[#E4E5E9] font-condensed text-7xl font-bold text-[#AFB3BC]">
             {initialsFor(card.entity_name)}
           </div>
         )}
-      </div>
 
-      {/* Verdict wash */}
-      <motion.div
-        className="pointer-events-none absolute inset-0 rounded-[23px]"
-        initial={false}
-        animate={{ backgroundColor: TINT_COLOR[status] }}
-        transition={{ duration: 0.25 }}
-      />
+        {/* Verdict wash */}
+        <motion.div
+          className="pointer-events-none absolute inset-0"
+          initial={false}
+          animate={{ backgroundColor: TINT_COLOR[status] }}
+          transition={{ duration: 0.25 }}
+        />
 
-      {/* Name + value, centered like the reference */}
-      <div className="relative z-10 flex max-w-[92%] flex-col items-center gap-2 px-3">
-        <span className="line-clamp-2 rounded-2xl border border-black/10 bg-white px-5 py-2 text-center text-base font-bold leading-snug text-[#101318] shadow-md sm:px-6 sm:py-2.5 sm:text-xl">
-          {card.entity_name}
-        </span>
-        <span className="tabular rounded-xl border border-black/10 bg-white px-4 py-1 text-center font-condensed text-2xl font-semibold text-[#101318] shadow-md sm:text-3xl">
-          {!revealValue ? (
-            "?"
-          ) : (
-            <>
-              {animateValue ? (
-                <CountUp value={card.stat_value} run={revealValue} />
-              ) : (
-                formatStat(card.stat_value)
-              )}
-              {statUnit && (
-                <span className="ml-1.5 text-sm font-bold text-[#5A6068] sm:text-base">
-                  {statUnit}
-                </span>
-              )}
-            </>
-          )}
-        </span>
-      </div>
-    </motion.button>
+        {/* Name + value: compact pills hugging the bottom edge, off the subject */}
+        <div className="relative z-10 mb-3 flex max-w-[94%] flex-col items-center gap-1.5 px-2">
+          <span className="line-clamp-2 rounded-xl border border-black/10 bg-white/95 px-3.5 py-1 text-center text-[13px] font-bold leading-snug text-[#101318] shadow-md sm:px-4 sm:text-sm">
+            {card.entity_name}
+          </span>
+          <span className="tabular rounded-lg border border-black/10 bg-white/95 px-3 py-0.5 text-center font-condensed text-xl font-semibold text-[#101318] shadow-md sm:text-2xl">
+            {!revealValue ? (
+              "?"
+            ) : (
+              <>
+                {animateValue ? (
+                  <CountUp value={card.stat_value} run={revealValue} />
+                ) : (
+                  formatStat(card.stat_value)
+                )}
+                {statUnit && (
+                  <span className="ml-1 text-xs font-bold text-[#5A6068] sm:text-sm">
+                    {statUnit}
+                  </span>
+                )}
+              </>
+            )}
+          </span>
+        </div>
+      </motion.button>
+
+      {/* Subtle image credit - outside the button so tapping it never guesses */}
+      {hasImage && card.image_url && (
+        <a
+          href={imageCreditUrl(card.image_url)}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          aria-label={`Image source for ${card.entity_name}`}
+          className="absolute right-3 top-3 z-20 rounded-full bg-black/30 px-2 py-0.5 text-[9px] font-semibold text-white/60 backdrop-blur-sm transition-all hover:bg-black/50 hover:text-white"
+        >
+          photo
+        </a>
+      )}
+    </div>
   );
 }

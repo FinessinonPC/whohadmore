@@ -158,6 +158,22 @@ export async function searchImagesForEntity(
   }
 }
 
+/**
+ * The attribution page for an image. Wikimedia thumbnails resolve to their
+ * File: description page (author + license live there); anything else links
+ * to the image itself. Used for the subtle per-card photo credit.
+ */
+export function imageCreditUrl(imageUrl: string): string {
+  const m = imageUrl.match(
+    /\/wikipedia\/(commons|en)\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^/]+?)(?:\/|$)/i
+  );
+  if (m) {
+    const host = m[1] === "commons" ? "commons.wikimedia.org" : "en.wikipedia.org";
+    return `https://${host}/wiki/File:${m[2]}`;
+  }
+  return imageUrl;
+}
+
 /** Initials fallback shown when no image is available (e.g. "Magic Johnson" -> "MJ"). */
 export function initialsFor(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
