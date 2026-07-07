@@ -57,35 +57,15 @@ export function WordWordmark({ className = "", alt }: WordmarkProps) {
   );
 }
 
-/** QUADS - the A is four tiles. */
-export function QuadsWordmark({ className = "", alt }: WordmarkProps) {
-  const c = "currentColor";
+/** MINI - the last I is a crossword column, black square included. */
+export function MiniWordmark({ className = "", alt }: WordmarkProps) {
   return (
-    <span className={`${base} ${className}`} aria-label="Quads">
-      <span>QU</span>
-      <svg viewBox="0 0 56 56" className="mx-[0.06em] h-[0.68em] w-auto self-center" aria-hidden>
-        <rect x="2" y="2" width="24" height="24" rx="6" fill={c} />
-        <rect x="30" y="2" width="24" height="24" rx="6" fill={alt ?? c} opacity={alt ? 1 : 0.55} />
-        <rect x="2" y="30" width="24" height="24" rx="6" fill={alt ?? c} opacity={alt ? 1 : 0.55} />
-        <rect x="30" y="30" width="24" height="24" rx="6" fill={c} />
+    <span className={`${base} ${className}`} aria-label="Mini">
+      <span>MIN</span>
+      <svg viewBox="0 0 26 56" className="ml-[0.08em] h-[0.72em] w-auto self-center" aria-hidden>
+        <rect x="2" y="2" width="22" height="24" rx="5" fill="none" stroke={alt ?? "currentColor"} strokeWidth="5" />
+        <rect x="2" y="31" width="22" height="23" rx="5" fill={alt ?? "currentColor"} />
       </svg>
-      <span>DS</span>
-    </span>
-  );
-}
-
-/** EMOJI - the O is a face. */
-export function EmojiWordmark({ className = "", alt }: WordmarkProps) {
-  return (
-    <span className={`${base} ${className}`} aria-label="Emoji">
-      <span>EM</span>
-      <svg viewBox="0 0 56 56" className="mx-[0.04em] h-[0.7em] w-auto self-center" aria-hidden>
-        <circle cx="28" cy="28" r="26" fill={alt ?? "currentColor"} />
-        <circle cx="19" cy="22" r="4.5" fill="currentColor" />
-        <circle cx="37" cy="22" r="4.5" fill="currentColor" />
-        <path d="M15 34 q13 12 26 0" stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" />
-      </svg>
-      <span>JI</span>
     </span>
   );
 }
@@ -94,8 +74,7 @@ const MARKS: Record<ModeId, (p: WordmarkProps) => React.ReactNode> = {
   chain: ChainWordmark,
   duality: DualityWordmark,
   word: WordWordmark,
-  quads: QuadsWordmark,
-  emoji: EmojiWordmark,
+  mini: MiniWordmark,
 };
 
 export function GameWordmark({

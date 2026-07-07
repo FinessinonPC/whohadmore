@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DualityGame } from "@/components/games/DualityGame";
+import { getDualityContent } from "@/lib/minigames";
 import { isValidISODate } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
@@ -30,5 +31,6 @@ export default async function DualityPage({
 }) {
   const { date } = await params;
   if (!isValidISODate(date)) notFound();
-  return <DualityGame date={date} />;
+  const day = await getDualityContent(date);
+  return <DualityGame day={day} date={date} />;
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { WordGame } from "@/components/games/WordGame";
+import { getWordContent } from "@/lib/minigames";
 import { isValidISODate } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
@@ -30,5 +31,6 @@ export default async function WordPage({
 }) {
   const { date } = await params;
   if (!isValidISODate(date)) notFound();
-  return <WordGame date={date} />;
+  const answer = await getWordContent(date);
+  return <WordGame answer={answer} date={date} />;
 }

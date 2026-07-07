@@ -4,7 +4,7 @@
 // them add daily admin work.
 // ============================================================================
 
-export type ModeId = "chain" | "duality" | "word" | "quads" | "emoji";
+export type ModeId = "chain" | "duality" | "word" | "mini";
 
 export interface ModeDef {
   id: ModeId;
@@ -27,12 +27,11 @@ export const WORD_MAX_GUESSES = 6;
 /** Points by number of guesses used (index 0 = solved in 1). Fail = 0. */
 export const WORD_POINTS = [1000, 900, 800, 700, 600, 500];
 
-export const QUADS_GROUPS = 4;
-export const QUADS_POINTS_PER_GROUP = 250;
-export const QUADS_MAX_MISTAKES = 4;
-
-export const EMOJI_ROUNDS = 5;
-export const EMOJI_POINTS_PER_ROUND = 200;
+/** Mini crossword: start at 1000, each failed check costs 100, floor 400.
+ *  Revealing the solution scores 0. */
+export const MINI_MAX_POINTS = 1000;
+export const MINI_CHECK_PENALTY = 100;
+export const MINI_MIN_SCORE = 400;
 
 /** The daily roster - familiar formats, one bold color block each. */
 export const MODES: ModeDef[] = [
@@ -67,24 +66,14 @@ export const MODES: ModeDef[] = [
     href: (date) => `/word/${date}`,
   },
   {
-    id: "quads",
-    name: "Quads",
-    tagline: "Sixteen words hide four groups of four. Find them.",
-    accent: "#A44BFF",
+    id: "mini",
+    name: "Mini",
+    tagline: "A bite-size crossword. Five by five, no mercy.",
+    accent: "#2E6BFF",
     contrast: "#FFFFFF",
-    maxPoints: QUADS_GROUPS * QUADS_POINTS_PER_GROUP,
+    maxPoints: MINI_MAX_POINTS,
     status: "live",
-    href: (date) => `/quads/${date}`,
-  },
-  {
-    id: "emoji",
-    name: "Emoji",
-    tagline: "Five pictures-only puzzles. Decode what they're saying.",
-    accent: "#FF7A00",
-    contrast: "#0B0D10",
-    maxPoints: EMOJI_ROUNDS * EMOJI_POINTS_PER_ROUND,
-    status: "live",
-    href: (date) => `/emoji/${date}`,
+    href: (date) => `/mini/${date}`,
   },
 ];
 

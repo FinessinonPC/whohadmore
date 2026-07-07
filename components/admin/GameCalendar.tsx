@@ -17,6 +17,8 @@ export function GameCalendar() {
   const [year, setYear] = useState(ty);
   const [month, setMonth] = useState(tm - 1); // 0-based
   const [games, setGames] = useState<Record<string, DailyGame>>({});
+  // date -> set of pack games with CUSTOM content that day (else auto pack).
+  const [minis, setMinis] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
 
   // Drag-to-move state.
@@ -29,11 +31,25 @@ export function GameCalendar() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await adminFetch(`/api/admin/games?month=${monthKey}`);
-      const data = (await res.json()) as { games?: DailyGame[] };
+      const [gamesRes, minisRes] = await Promise.all([
+        adminFetch(`/api/admin/games?month=${monthKey}`),
+        adminFetch(`/api/admin/minigame?month=${monthKey}`).catch(() => null),
+      ]);
+      const data = (await gamesRes.json()) as { games?: DailyGame[] };
       const map: Record<string, DailyGame> = {};
       (data.games ?? []).forEach((g) => (map[g.play_date] = g));
       setGames(map);
+
+      const miniMap: Record<string, string[]> = {};
+      if (minisRes) {
+        const md = (await minisRes.json().catch(() => ({}))) as {
+          rows?: { play_date: string; mode: string }[];
+        };
+        for (const row of md.rows ?? []) {
+          (miniMap[row.play_date] ??= []).push(row.mode);
+        }
+      }
+      setMinis(miniMap);
     } finally {
       setLoading(false);
     }
@@ -181,6 +197,24 @@ export function GameCalendar() {
                   {game.topic_label}
                 </span>
               )}
+              {/* Pack-game dots: solid = custom content saved for this day,
+                  faint = running on the auto pack rotation. */}
+              <span className="pointer-events-none mt-auto flex gap-1">
+                {[
+                  { mode: "duality", color: "#06B6D4" },
+                  { mode: "word", color: "#FFC400" },
+                  { mode: "mini", color: "#2E6BFF" },
+                ].map(({ mode, color }) => (
+                  <span
+                    key={mode}
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{
+                      background: color,
+                      opacity: minis[dateStr]?.includes(mode) ? 1 : 0.22,
+                    }}
+                  />
+                ))}
+              </span>
             </button>
           );
         })}

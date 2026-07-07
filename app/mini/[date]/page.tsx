@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { EmojiGame } from "@/components/games/EmojiGame";
+import { MiniGame } from "@/components/games/MiniGame";
+import { getMiniContent } from "@/lib/minigames";
 import { isValidISODate } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
@@ -12,23 +13,24 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { date } = await params;
   if (!isValidISODate(date)) return {};
-  const title = "Emoji";
+  const title = "Mini";
   const description =
-    "Five pictures-only puzzles a day - decode the movie, show, or phrase from emojis. Free on WhoHadMore.";
+    "A bite-size 5x5 crossword every day - fill the grid, beat the check. Free on WhoHadMore.";
   return {
     title,
     description,
-    alternates: { canonical: `/emoji/${date}` },
-    openGraph: { title, description, url: `/emoji/${date}` },
+    alternates: { canonical: `/mini/${date}` },
+    openGraph: { title, description, url: `/mini/${date}` },
   };
 }
 
-export default async function EmojiPage({
+export default async function MiniPage({
   params,
 }: {
   params: Promise<{ date: string }>;
 }) {
   const { date } = await params;
   if (!isValidISODate(date)) notFound();
-  return <EmojiGame date={date} />;
+  const day = await getMiniContent(date);
+  return <MiniGame day={day} date={date} />;
 }

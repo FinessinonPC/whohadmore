@@ -7,7 +7,7 @@ import { CardPair } from "./CardPair";
 import { LivesDisplay } from "./LivesDisplay";
 import { ChainTimeline } from "./ChainTimeline";
 import { HeartLossOverlay, type HeartLossEvent } from "./HeartLossOverlay";
-import { BrandMark } from "@/components/ui/Logo";
+import { BrandLockup } from "@/components/ui/Logo";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 import {
   useGame,
@@ -137,18 +137,12 @@ export function GameBoard({
           {embedded ? (
             <span className="text-sm font-extrabold tracking-tight text-ink">Preview</span>
           ) : onExit ? (
-            <button
-              onClick={onExit}
-              className="inline-flex items-center gap-1.5"
-              aria-label="Back to today's game"
-            >
-              <BrandMark className="h-5 w-5" />
-              <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
+            <button onClick={onExit} aria-label="Back to today's game">
+              <BrandLockup />
             </button>
           ) : (
-            <Link href="/" className="inline-flex items-center gap-1.5" aria-label="Back to today's game">
-              <BrandMark className="h-5 w-5" />
-              <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
+            <Link href="/" aria-label="Back to today's game">
+              <BrandLockup />
             </Link>
           )}
           <LivesDisplay lives={state.lives} />

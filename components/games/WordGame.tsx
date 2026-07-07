@@ -6,7 +6,6 @@ import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
 import { WORD_MAX_GUESSES, WORD_POINTS, modeDef } from "@/lib/modes";
-import { getWordDaily } from "@/lib/contentPacks";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 
 const ACCENT = modeDef("word").accent;
@@ -37,10 +36,10 @@ const KEY_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
 /**
  * Word: the daily five-letter game everyone already knows - six tries,
- * green/yellow feedback, one word per day for every player.
+ * green/yellow feedback, one word per day for every player. The answer
+ * resolves server-side (custom admin day, else the pack).
  */
-export function WordGame({ date }: { date: string }) {
-  const answer = getWordDaily(date);
+export function WordGame({ answer, date }: { answer: string; date: string }) {
 
   const [rows, setRows] = useState<string[]>([]);
   const [current, setCurrent] = useState("");

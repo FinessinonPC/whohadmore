@@ -28,17 +28,15 @@ Two kinds of games share the hub:
   pack updates (or later, per-date DB overrides - see §7).
 
 The roster copies formats people already play daily, per the owner's
-direction (2026-07-06): keep Chain + Duality, everything else must be a
-popular format or a twist on one. Rank/Impostor/Pinpoint/Recall/Split were
-cut (code deleted; their specs live in git history if ever wanted back).
+direction. Duality IS this site's Connections-style game. Quads and Emoji
+were cut on 2026-07-07 (code in git history).
 
 | id | Name | Copies | Accent | Kind | One-liner |
 |----|------|--------|--------|------|-----------|
 | `chain` | Chain | The Higher Lower Game | `#00C853` green | stat | Classic higher-or-lower run (the original game) |
 | `duality` | Duality | the viral "X or Y?" sorting quiz | `#06B6D4` cyan | pack | Two categories, 8 items - sort each to its side, 125/item |
 | `word` | Word | Wordle | `#FFC400` yellow | pack | Daily 5-letter word, 6 tries; 1000..500 pts by guess count |
-| `quads` | Quads | NYT Connections | `#A44BFF` purple | pack | 16 words, 4 hidden groups, 4 mistakes allowed, 250/group |
-| `emoji` | Emoji | emoji-decode quizzes | `#FF7A00` orange | pack | 5 rounds, pick what the emojis say, 200/round |
+| `mini` | Mini | NYT Mini crossword | `#2E6BFF` blue | pack | 5x5 grid; 1000 pts, -100 per failed check (floor 400), reveal = 0 |
 
 Naming scheme: **one strong word per game** (the lessgames "-less" suffix
 equivalent). Taglines carry the SEO phrases ("higher-or-lower") - product
@@ -193,14 +191,20 @@ registry flip, API mode-set + SQL constraint update.
 
 ## 7. Content games - how they work & what's next
 
-**Architecture**: `lib/contentPacks.ts` holds typed day-packs;
-`getDualityDaily(date)` / `getImpostorDaily(date)` pick `hashSeed(mode:date) %
-pack.length`, so every player gets the same round on the same day with no
-backend. **Planned override**: a `daily_minigames` table
-(`play_date, mode, payload jsonb`, unique on date+mode) checked first, pack as
-fallback - lets specific dates get hand-made content (a July 4th Duality),
-authored via an AiPromptPanel extension in the admin. Packs must GROW over
-time (aim: 30+ days per game) so weekly players rarely see repeats.
+**Architecture**: every pack game resolves content server-side via
+`lib/minigames.ts`: a `daily_minigames` row (play_date, mode, payload jsonb;
+migration 0003) overrides the bundled pack for that date, else the pack
+rotation serves (`lib/contentPacks.ts`, hashSeed(mode:date) % pack length).
+Every date is therefore always playable, DB or not.
+
+**Admin AI flow** (components/admin/MinigamesPanel.tsx): on /admin/<date>
+each pack game shows Auto/Custom status with the same copy-prompt ->
+paste-JSON flow as the chain game. Payloads are validated hard in
+`lib/minigameSchemas.ts` (client AND server): Duality needs exactly 8 items
+4/4; Word a single 5-letter answer; Mini is re-verified letter-by-letter
+(grid shape, slot numbering, every crossing) so a hallucinated crossword can
+never reach players. The admin calendar shows three dots per day
+(cyan/yellow/blue - solid = custom, faint = auto pack).
 
 **Content rules**: facts must be unambiguous and verifiable; every Duality
 item belongs to exactly one side; every Impostor round has exactly one clean

@@ -1,5 +1,5 @@
 // ============================================================================
-// Bundled daily content for the pack games (Duality, Word, Quads, Emoji). A
+// Bundled daily content for the pack games (Duality, Word, Mini). A
 // pack day is chosen deterministically from the date, so everyone plays the
 // same round on the same day with ZERO daily admin work. Later, rows in a
 // `daily_minigames` table can override the pack for a given date (see
@@ -180,110 +180,6 @@ export const WORD_ANSWERS: string[] = [
   "NOBLE", "ORBIT", "PRIZE", "QUIET", "ROAST", "SHINE", "TITAN", "VIVID",
 ];
 
-// --- Quads: sixteen words, four hidden groups of four ------------------------
-
-export interface QuadsGroup {
-  name: string;
-  words: string[]; // exactly 4
-}
-
-export interface QuadsDay {
-  groups: QuadsGroup[]; // exactly 4, ordered easy -> tricky
-}
-
-export const QUADS_PACK: QuadsDay[] = [
-  {
-    groups: [
-      { name: "Coffee orders", words: ["LATTE", "MOCHA", "ESPRESSO", "CAPPUCCINO"] },
-      { name: "Italian cities", words: ["ROME", "MILAN", "NAPLES", "TURIN"] },
-      { name: "Pasta shapes", words: ["PENNE", "FUSILLI", "RIGATONI", "ORZO"] },
-      { name: "Fashion houses", words: ["PRADA", "GUCCI", "ARMANI", "VERSACE"] },
-    ],
-  },
-  {
-    groups: [
-      { name: "Things with keys", words: ["PIANO", "KEYBOARD", "MAP", "LOCK"] },
-      { name: "Board games", words: ["RISK", "CLUE", "SORRY", "TROUBLE"] },
-      { name: "Inside Out emotions", words: ["JOY", "FEAR", "ANGER", "DISGUST"] },
-      { name: "___WORD", words: ["CROSS", "PASS", "SWEAR", "BUZZ"] },
-    ],
-  },
-  {
-    groups: [
-      { name: "NBA teams", words: ["HEAT", "MAGIC", "THUNDER", "SPURS"] },
-      { name: "Wet weather", words: ["FOG", "HAIL", "SLEET", "DRIZZLE"] },
-      { name: "Music genres", words: ["FUNK", "SOUL", "BLUES", "HOUSE"] },
-      { name: "Ballroom dances", words: ["SALSA", "SWING", "TANGO", "WALTZ"] },
-    ],
-  },
-];
-
-// --- Emoji: decode the pictures ----------------------------------------------
-
-export interface EmojiRound {
-  emoji: string;
-  options: string[]; // 4 choices
-  answer: number; // index into options
-}
-
-export interface EmojiDay {
-  theme: string;
-  rounds: EmojiRound[]; // 5
-}
-
-export const EMOJI_PACK: EmojiDay[] = [
-  {
-    theme: "Movies",
-    rounds: [
-      { emoji: "🦁👑", options: ["Madagascar", "The Lion King", "Zootopia", "The Jungle Book"], answer: 1 },
-      { emoji: "🚢🧊💔", options: ["Titanic", "Life of Pi", "Jaws", "The Perfect Storm"], answer: 0 },
-      { emoji: "🕷️🧑🗽", options: ["Ant-Man", "Venom", "Spider-Man", "Kick-Ass"], answer: 2 },
-      { emoji: "🦖🏝️🧬", options: ["King Kong", "Godzilla", "The Lost World", "Jurassic Park"], answer: 3 },
-      { emoji: "👽📞🚲", options: ["E.T.", "Alien", "Arrival", "Men in Black"], answer: 0 },
-    ],
-  },
-  {
-    theme: "Movies II",
-    rounds: [
-      { emoji: "🧙💍🌋", options: ["Harry Potter", "The Lord of the Rings", "Willow", "Eragon"], answer: 1 },
-      { emoji: "🐠🔍🌊", options: ["Moana", "The Little Mermaid", "Finding Nemo", "Shark Tale"], answer: 2 },
-      { emoji: "🎈🏠👴", options: ["Up", "Home Alone", "Monster House", "The House"], answer: 0 },
-      { emoji: "❄️👭👑", options: ["Ice Age", "Snow White", "Elsa & Anna", "Frozen"], answer: 3 },
-      { emoji: "🦇🃏🌆", options: ["Batman Begins", "The Dark Knight", "Joker", "Gotham"], answer: 1 },
-    ],
-  },
-  {
-    theme: "TV shows",
-    rounds: [
-      { emoji: "🐉👑⚔️", options: ["Vikings", "The Witcher", "Game of Thrones", "Merlin"], answer: 2 },
-      { emoji: "🧪👨‍🏫💵", options: ["Breaking Bad", "Dexter", "Ozark", "Better Call Saul"], answer: 0 },
-      { emoji: "📎🏢📷", options: ["Parks and Recreation", "30 Rock", "Suits", "The Office"], answer: 3 },
-      { emoji: "🦑🎮🔴", options: ["Squid Game", "Alice in Borderland", "The Circle", "Black Mirror"], answer: 0 },
-      { emoji: "👑👸🇬🇧", options: ["Downton Abbey", "The Crown", "Bridgerton", "Victoria"], answer: 1 },
-    ],
-  },
-  {
-    theme: "Say the phrase",
-    rounds: [
-      { emoji: "🌧️🐱🐶", options: ["Raining cats and dogs", "Wet dog smell", "Pet the rain", "Storm chasers"], answer: 0 },
-      { emoji: "🍰🍴", options: ["Sweet tooth", "Piece of cake", "Have your cake", "Cake walk"], answer: 1 },
-      { emoji: "🐘🚪🛋️", options: ["Elephant memory", "White elephant", "The elephant in the room", "Elephant walk"], answer: 2 },
-      { emoji: "🐦🐦🪨", options: ["Bird brain", "Early bird", "Free as a bird", "Two birds, one stone"], answer: 3 },
-      { emoji: "🧊💔", options: ["Ice cold heart", "Break the ice", "Cold shoulder", "Frozen stiff"], answer: 1 },
-    ],
-  },
-  {
-    theme: "Songs",
-    rounds: [
-      { emoji: "💃🌧️", options: ["Umbrella", "Dancing in the Rain", "Singin' in the Rain", "Purple Rain"], answer: 2 },
-      { emoji: "🚀🧑‍🚀🎸", options: ["Rocket Man", "Space Oddity", "Starman", "Man on the Moon"], answer: 0 },
-      { emoji: "👑👸💛", options: ["Royals", "Queen Bee", "Crown of Gold", "Kings & Queens"], answer: 0 },
-      { emoji: "🌉🔥", options: ["London Bridge", "Burning Down the House", "We Didn't Start the Fire", "Burning Bridges"], answer: 3 },
-      { emoji: "🖤💀🎹", options: ["Paint It Black", "Back in Black", "Black Keys", "Bohemian Rhapsody"], answer: 0 },
-    ],
-  },
-];
-
 // --- Selection ---------------------------------------------------------------
 
 /** Deterministic pick: same day -> same content for every player. */
@@ -295,10 +191,80 @@ export function getWordDaily(date: string): string {
   return WORD_ANSWERS[hashSeed(`word:${date}`) % WORD_ANSWERS.length];
 }
 
-export function getQuadsDaily(date: string): QuadsDay {
-  return QUADS_PACK[hashSeed(`quads:${date}`) % QUADS_PACK.length];
+// --- Mini: a 5x5 crossword ----------------------------------------------------
+// Grids are machine-verified (every across AND down entry is a real word from
+// the fill dictionary; generated by backtracking, clues written by hand).
+// '#' = black square. Numbering follows standard crossword rules.
+
+export interface MiniClue {
+  num: number;
+  row: number;
+  col: number;
+  len: number;
+  clue: string;
+  answer: string;
 }
 
-export function getEmojiDaily(date: string): EmojiDay {
-  return EMOJI_PACK[hashSeed(`emoji:${date}`) % EMOJI_PACK.length];
+export interface MiniDay {
+  rows: string[]; // 5 strings of 5 chars, '#' for black
+  across: MiniClue[];
+  down: MiniClue[];
+}
+
+export const MINI_PACK: MiniDay[] = [
+  {
+    rows: ["SEA##", "ACRE#", "WHEAT", "#ONCE", "##AHA"],
+    across: [
+      { num: 1, row: 0, col: 0, len: 3, clue: "Where waves crash", answer: "SEA" },
+      { num: 4, row: 1, col: 0, len: 4, clue: "Unit of farmland", answer: "ACRE" },
+      { num: 6, row: 2, col: 0, len: 5, clue: "Grain in most bread", answer: "WHEAT" },
+      { num: 8, row: 3, col: 1, len: 4, clue: "A single time", answer: "ONCE" },
+      { num: 9, row: 4, col: 2, len: 3, clue: "Cry of discovery", answer: "AHA" },
+    ],
+    down: [
+      { num: 1, row: 0, col: 0, len: 3, clue: "Carpenter's cutter", answer: "SAW" },
+      { num: 2, row: 0, col: 1, len: 4, clue: "Canyon comeback", answer: "ECHO" },
+      { num: 3, row: 0, col: 2, len: 5, clue: "Where the home team plays", answer: "ARENA" },
+      { num: 5, row: 1, col: 3, len: 4, clue: "Apiece", answer: "EACH" },
+      { num: 7, row: 2, col: 4, len: 3, clue: "Brit's afternoon brew", answer: "TEA" },
+    ],
+  },
+  {
+    rows: ["ART##", "SOAP#", "POLAR", "#TOGA", "##NET"],
+    across: [
+      { num: 1, row: 0, col: 0, len: 3, clue: "Gallery hangings", answer: "ART" },
+      { num: 4, row: 1, col: 0, len: 4, clue: "Bathtub bar", answer: "SOAP" },
+      { num: 6, row: 2, col: 0, len: 5, clue: "Like the Arctic, or a famous bear", answer: "POLAR" },
+      { num: 8, row: 3, col: 1, len: 4, clue: "Ancient Roman wrap", answer: "TOGA" },
+      { num: 9, row: 4, col: 2, len: 3, clue: "It hangs from a basketball rim", answer: "NET" },
+    ],
+    down: [
+      { num: 1, row: 0, col: 0, len: 3, clue: "Cleopatra's snake", answer: "ASP" },
+      { num: 2, row: 0, col: 1, len: 4, clue: "Cheer (for)", answer: "ROOT" },
+      { num: 3, row: 0, col: 2, len: 5, clue: "Eagle's claw", answer: "TALON" },
+      { num: 5, row: 1, col: 3, len: 4, clue: "One of about 300 in a novel", answer: "PAGE" },
+      { num: 7, row: 2, col: 4, len: 3, clue: "Sewer scurrier", answer: "RAT" },
+    ],
+  },
+  {
+    rows: ["PET##", "OURS#", "PRIOR", "#OBOE", "##END"],
+    across: [
+      { num: 1, row: 0, col: 0, len: 3, clue: "Dog or cat, e.g.", answer: "PET" },
+      { num: 4, row: 1, col: 0, len: 4, clue: "Belonging to us", answer: "OURS" },
+      { num: 6, row: 2, col: 0, len: 5, clue: "Earlier in time", answer: "PRIOR" },
+      { num: 8, row: 3, col: 1, len: 4, clue: "Reed in the orchestra", answer: "OBOE" },
+      { num: 9, row: 4, col: 2, len: 3, clue: "Credits signal", answer: "END" },
+    ],
+    down: [
+      { num: 1, row: 0, col: 0, len: 3, clue: "Soda, in the Midwest", answer: "POP" },
+      { num: 2, row: 0, col: 1, len: 4, clue: "Currency in Paris", answer: "EURO" },
+      { num: 3, row: 0, col: 2, len: 5, clue: "Close-knit group", answer: "TRIBE" },
+      { num: 5, row: 1, col: 3, len: 4, clue: "Before long", answer: "SOON" },
+      { num: 7, row: 2, col: 4, len: 3, clue: "Stop-sign shade", answer: "RED" },
+    ],
+  },
+];
+
+export function getMiniDaily(date: string): MiniDay {
+  return MINI_PACK[hashSeed(`mini:${date}`) % MINI_PACK.length];
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { BrandMark } from "@/components/ui/Logo";
+import { BrandLockup } from "@/components/ui/Logo";
 
 export const dynamic = "force-static";
 
@@ -65,9 +65,8 @@ export default function AboutPage() {
   return (
     <main className="mx-auto w-full max-w-2xl px-5 py-10">
       <header className="mb-10 flex items-center justify-between">
-        <Link href="/" className="inline-flex items-center gap-1.5">
-          <BrandMark className="h-5 w-5" />
-          <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
+        <Link href="/">
+          <BrandLockup />
         </Link>
         <Link href="/" className="rounded-full bg-cta px-4 py-1.5 text-xs font-semibold text-background">
           Play

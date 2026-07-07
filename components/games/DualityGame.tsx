@@ -6,17 +6,17 @@ import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
 import { DUALITY_POINTS_PER_ITEM, modeDef } from "@/lib/modes";
-import { getDualityDaily } from "@/lib/contentPacks";
+import type { DualityDay } from "@/lib/contentPacks";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 
 const ACCENT = modeDef("duality").accent;
 
 /**
  * Duality: two categories, eight things - sort each one to its side.
- * 125 points per correct sort, max 1000. Content comes from the daily pack.
+ * 125 points per correct sort, max 1000. Content resolves server-side
+ * (custom admin day, else the pack) and arrives as a prop.
  */
-export function DualityGame({ date }: { date: string }) {
-  const day = getDualityDaily(date);
+export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
   const items = day.items;
 
   const [index, setIndex] = useState(0);

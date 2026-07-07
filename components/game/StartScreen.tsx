@@ -88,7 +88,7 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
           })}
         </div>
 
-        <h1 className="mt-7 text-balance text-[2.5rem] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-[3.25rem]">
+        <h1 className="mt-7 text-balance font-condensed text-[2.9rem] font-semibold uppercase leading-[1.02] tracking-wide text-ink sm:text-[3.6rem]">
           {game.topic_label}
         </h1>
 

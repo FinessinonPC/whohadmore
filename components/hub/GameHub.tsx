@@ -32,8 +32,6 @@ function altFor(mode: ModeDef): string | undefined {
       return "#FFFFFF"; // DUAL dark / ITY white on cyan
     case "word":
       return "#FFFFFF"; // white tile with dark ring on yellow
-    case "emoji":
-      return "#FFFFFF"; // white face, dark features, on orange
     default:
       return undefined; // currentColor
   }

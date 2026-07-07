@@ -27,7 +27,7 @@ export default function AdminPage() {
 
         <GameCalendar />
 
-        <div className="mt-6 flex items-center justify-center gap-3 text-xs text-ink-secondary">
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-ink-secondary">
           <span className="flex items-center gap-1.5">
             <span className="h-3 w-3 rounded border border-correct/45 bg-correct/10" /> Published
           </span>
@@ -36,6 +36,15 @@ export default function AdminPage() {
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-3 w-3 rounded border border-border bg-surface/60" /> Empty
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#06B6D4]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#FFC400]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#2E6BFF]" />
+            Duality / Word / Mini custom
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#06B6D4] opacity-25" /> auto pack
           </span>
         </div>
       </main>

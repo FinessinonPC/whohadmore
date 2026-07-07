@@ -10,8 +10,7 @@ export const dynamic = "force-dynamic";
 const MODE_MAX: Record<string, number> = {
   duality: 1000,
   word: 1000,
-  quads: 1000,
-  emoji: 1000,
+  mini: 1000,
 };
 
 // POST /api/modes/complete - record a finished extra-mode game (rank/pinpoint).
