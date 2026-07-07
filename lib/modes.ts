@@ -22,8 +22,10 @@ export interface ModeDef {
   /** The verb that makes this game different from the others. */
   verb: string;
   tagline: string;
-  /** Fixed accent used for the tile icon, ring, and score chip. */
+  /** The game's brand color - used as the solid card background on the hub. */
   accent: string;
+  /** Ink that passes contrast ON TOP of `accent` (dark for light accents). */
+  contrast: string;
   maxPoints: number;
   status: "live" | "soon";
   href: (date: string) => string;
@@ -51,6 +53,7 @@ export const MODES: ModeDef[] = [
     verb: "Compare",
     tagline: "The classic higher-or-lower run. How far can you go?",
     accent: "#00C853",
+    contrast: "#0B0D10",
     maxPoints: 0, // open-ended (XP formula); shown as its own score
     status: "live",
     href: (date) => `/play/${date}`,
@@ -61,6 +64,7 @@ export const MODES: ModeDef[] = [
     verb: "Sort",
     tagline: "Two worlds, eight things. Sort every one to its side.",
     accent: "#06B6D4",
+    contrast: "#0B0D10",
     maxPoints: DUALITY_ITEMS * DUALITY_POINTS_PER_ITEM,
     status: "live",
     href: (date) => `/duality/${date}`,
@@ -71,6 +75,7 @@ export const MODES: ModeDef[] = [
     verb: "Order",
     tagline: "Five cards. Put them in order, top to bottom.",
     accent: "#2E6BFF",
+    contrast: "#FFFFFF",
     maxPoints: RANK_SLOTS * RANK_POINTS_PER_SLOT,
     status: "live",
     href: (date) => `/rank/${date}`,
@@ -81,6 +86,7 @@ export const MODES: ModeDef[] = [
     verb: "Spot",
     tagline: "Three belong together. One is lying. Find it.",
     accent: "#FF4D8D",
+    contrast: "#FFFFFF",
     maxPoints: IMPOSTOR_ROUNDS * IMPOSTOR_POINTS_PER_ROUND,
     status: "live",
     href: (date) => `/impostor/${date}`,
@@ -91,6 +97,7 @@ export const MODES: ModeDef[] = [
     verb: "Estimate",
     tagline: "Slide to the exact number. Closer scores more.",
     accent: "#FFB300",
+    contrast: "#0B0D10",
     maxPoints: PINPOINT_ROUNDS * PINPOINT_POINTS_PER_ROUND,
     status: "live",
     href: (date) => `/pinpoint/${date}`,
@@ -101,6 +108,7 @@ export const MODES: ModeDef[] = [
     verb: "Remember",
     tagline: "Study the board, then match every number from memory.",
     accent: "#A44BFF",
+    contrast: "#FFFFFF",
     maxPoints: RECALL_CARDS * RECALL_POINTS_PER_MATCH,
     status: "soon",
     href: (date) => `/recall/${date}`,
@@ -111,6 +119,7 @@ export const MODES: ModeDef[] = [
     verb: "Judge",
     tagline: "Over or under the line? Five snap calls.",
     accent: "#FF7A00",
+    contrast: "#0B0D10",
     maxPoints: SPLIT_ROUNDS * SPLIT_POINTS_PER_ROUND,
     status: "soon",
     href: (date) => `/split/${date}`,

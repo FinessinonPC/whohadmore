@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BrandMark } from "./Logo";
+import { BrandLockup } from "./Logo";
 import { AccountButton } from "./AccountButton";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -10,9 +10,8 @@ import { ThemeToggle } from "./ThemeToggle";
 export function TopNav() {
   return (
     <header className="flex shrink-0 items-center justify-between">
-      <Link href="/" className="inline-flex items-center gap-1.5" aria-label="Home">
-        <BrandMark className="h-5 w-5" />
-        <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
+      <Link href="/" aria-label="Home">
+        <BrandLockup />
       </Link>
       <div className="flex items-center gap-3">
         <Link

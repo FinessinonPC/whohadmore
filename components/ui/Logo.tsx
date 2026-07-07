@@ -1,5 +1,5 @@
-// Clean, hand-built brand mark - a green triangle up over a red triangle down,
-// the higher/lower motif. No external assets; scales crisply at any size.
+// Flat brand glyph - a green triangle stacked over a red one, no container.
+// Reads as "higher/lower" at any size without looking like an app icon.
 
 interface MarkProps {
   className?: string;
@@ -17,20 +17,20 @@ export function BrandMark({ className = "", size }: MarkProps) {
       role="img"
       aria-label="WhoHadMore"
     >
-      <rect width="64" height="64" rx="16" fill="#111111" />
-      {/* higher = green triangle up, lower = red triangle down */}
-      <polygon points="32,12 18,30 46,30" fill="#00C853" />
-      <polygon points="18,34 46,34 32,52" fill="#FF3B30" />
+      <polygon points="32,4 4,32 60,32" fill="#00C853" />
+      <polygon points="8,40 56,40 32,62" fill="#FF3B30" />
     </svg>
   );
 }
 
-/** Icon + wordmark lockup used in page headers. */
+/** Glyph + lowercase wordmark used in page headers. */
 export function BrandLockup({ className = "" }: { className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-2 ${className}`}>
-      <BrandMark className="h-5 w-5" />
-      <span className="text-sm font-extrabold tracking-tight text-ink">WhoHadMore</span>
+    <span className={`inline-flex items-center gap-1.5 ${className}`}>
+      <BrandMark className="h-[18px] w-[18px]" />
+      <span className="text-[15px] font-extrabold lowercase tracking-tight text-ink">
+        whohadmore
+      </span>
     </span>
   );
 }

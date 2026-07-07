@@ -141,20 +141,20 @@ export function DualityGame({ date }: { date: string }) {
             </AnimatePresence>
           </div>
 
-          {/* the two worlds */}
+          {/* the two worlds - two solid blocks, no borders */}
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => answer("L")}
               disabled={!!verdict}
-              className="rounded-2xl border-2 px-4 py-5 font-condensed text-xl font-semibold uppercase tracking-wide text-ink transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:pointer-events-none"
-              style={{ borderColor: ACCENT, background: `${ACCENT}14` }}
+              className="rounded-2xl px-4 py-6 font-condensed text-xl font-semibold uppercase tracking-wide transition-all hover:-translate-y-0.5 active:scale-[0.97] disabled:pointer-events-none"
+              style={{ background: ACCENT, color: "#0B0D10" }}
             >
               {day.left}
             </button>
             <button
               onClick={() => answer("R")}
               disabled={!!verdict}
-              className="rounded-2xl border-2 border-border bg-surface px-4 py-5 font-condensed text-xl font-semibold uppercase tracking-wide text-ink transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:pointer-events-none"
+              className="rounded-2xl bg-cta px-4 py-6 font-condensed text-xl font-semibold uppercase tracking-wide text-background transition-all hover:-translate-y-0.5 active:scale-[0.97] disabled:pointer-events-none"
             >
               {day.right}
             </button>
