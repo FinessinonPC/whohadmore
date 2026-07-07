@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PlayExperience } from "@/components/game/PlayExperience";
+import { ChainGate } from "@/components/games/ChainGate";
 import { GameSeoFooter } from "@/components/seo/GameSeoFooter";
 import { getFullGame, getGameNumber } from "@/lib/games";
 import { puzzleDescription, puzzleTitle } from "@/lib/seo";
@@ -49,12 +50,14 @@ export default async function PlayDatePage({
   // Same experience as /play - isDaily just controls the midnight roll-over.
   return (
     <>
-      <PlayExperience
-        initialGame={game}
-        date={date}
-        gameNumber={gameNumber}
-        isDaily={date === todayISO()}
-      />
+      <ChainGate date={date} isDaily={date === todayISO()}>
+        <PlayExperience
+          initialGame={game}
+          date={date}
+          gameNumber={gameNumber}
+          isDaily={date === todayISO()}
+        />
+      </ChainGate>
       {game && <GameSeoFooter game={game} date={date} />}
     </>
   );

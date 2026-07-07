@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { TopNav } from "@/components/ui/TopNav";
+import { GameStats } from "@/components/profile/GameStats";
 import { SignUpFlow } from "@/components/auth/SignUpFlow";
 import { useProfile } from "@/hooks/useProfile";
 import { usePlayedResults } from "@/hooks/usePlayedResults";
@@ -23,7 +24,7 @@ export function ProfileView() {
       <TopNav />
 
       <h1 className="mt-8 text-4xl font-extrabold tracking-tight text-ink">Profile</h1>
-      <p className="mt-1 text-[15px] text-ink-secondary">Your level, streak, and lifetime stats.</p>
+      <p className="mt-1 text-[15px] text-ink-secondary">Your level, streak, and lifetime stats across every game.</p>
 
       <section className="mt-6 rounded-[28px] bg-surface p-6">
         {hasName ? (
@@ -83,6 +84,7 @@ export function ProfileView() {
             longestStreak={profile?.longest_streak ?? 0}
             totalScore={profile?.total_score ?? 0}
           />
+          <GameStats />
           <Achievements earned={profile?.achievements ?? []} />
         </>
       )}

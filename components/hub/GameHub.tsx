@@ -9,6 +9,10 @@ import { formatDisplayDate } from "@/lib/date";
 import { getLocalResult, getProgress } from "@/lib/playStore";
 import { getModeResult } from "@/lib/modeStore";
 import { LIVE_MODES, MODES, type ModeDef } from "@/lib/modes";
+import { useArchiveGate } from "@/hooks/useArchiveGate";
+import { ArchiveLock } from "@/components/games/ArchiveLock";
+import { DayBoard } from "@/components/hub/DayBoard";
+import { todayISO } from "@/lib/date";
 import { isJuly4th } from "@/lib/festive";
 import { Fireworks } from "@/components/game/Fireworks";
 import type { FullGame } from "@/types";
@@ -66,6 +70,8 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
 
   const playedCount = LIVE_MODES.filter((m) => tiles[m.id]?.played).length;
   const total = LIVE_MODES.reduce((a, m) => a + (tiles[m.id]?.score ?? 0), 0);
+  const isToday = date === todayISO();
+  const { locked, checking } = useArchiveGate(date);
 
   if (!game || game.cards.length < 2) {
     return (
@@ -95,10 +101,10 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
         <div className="mt-7 flex items-end justify-between px-1">
           <div>
             <p className="small-caps text-[11px] text-ink-secondary">
-              {formatDisplayDate(date)} · No. {gameNumber}
+              {isToday ? formatDisplayDate(date) : `Archive · ${formatDisplayDate(date)}`} · No. {gameNumber}
             </p>
             <p className="mt-1 font-condensed text-2xl font-semibold uppercase leading-none tracking-wide text-ink">
-              Today&apos;s games
+              {isToday ? "Today's games" : "That day's games"}
             </p>
           </div>
           <div className="pb-0.5 text-right">
@@ -111,6 +117,12 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
           </div>
         </div>
 
+        {checking && !isToday ? (
+          <div className="min-h-[40vh]" aria-hidden />
+        ) : locked ? (
+          <ArchiveLock date={date} />
+        ) : (
+        <>
         {/* The games - each one a solid block, the wordmark is the logo */}
         <div className="mt-4 flex flex-col gap-3">
           {MODES.map((mode, i) => {
@@ -156,7 +168,7 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
                 >
                   {mode.id === "chain" && (
                     <p className="small-caps mb-1 text-[11px] font-bold opacity-70">
-                      Today · {game.topic_label}
+                      {isToday ? "Today · " : ""}{game.topic_label}
                     </p>
                   )}
                   <GameWordmark mode={mode.id} className="text-[2.6rem] sm:text-5xl" alt={altFor(mode)} />
@@ -192,6 +204,8 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
           })}
         </div>
 
+        {!isToday && <DayBoard date={date} />}
+
         {/* Quiet footer */}
         <div className="mt-7 flex items-center justify-center gap-5 text-xs font-semibold text-ink-secondary">
           <Link href="/leaderboard" className="transition-colors hover:text-ink">
@@ -206,6 +220,8 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
             About
           </Link>
         </div>
+        </>
+        )}
       </div>
     </main>
   );

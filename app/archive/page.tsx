@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Archive",
   description:
-    "Browse and replay every past WhoHadMore puzzle by date - a new daily comparison game across sports, pop culture, food, geography and science.",
+    "Browse every past day of WhoHadMore - four daily games per day, each with its own leaderboard. Sign in free to replay any day.",
   alternates: { canonical: "/archive" },
 };
 
@@ -38,10 +38,11 @@ export default async function ArchivePage() {
       <TopNav />
 
       <div className="mb-6 mt-8">
-        <h1 className="text-3xl font-extrabold tracking-tight text-ink">WhoHadMore Archive</h1>
+        <h1 className="font-condensed text-4xl font-semibold uppercase tracking-wide text-ink">Archive</h1>
         <p className="mt-1 text-sm text-ink-secondary">
-          Every past WhoHadMore puzzle, free to replay - {games.length} daily higher-or-lower
-          games and counting. Pick any day below and guess which is higher.
+          {games.length} {games.length === 1 ? "day" : "days"} and counting - four games each,
+          with that day&apos;s leaderboard. Pick a day to open its games (sign in free to play
+          past days).
         </p>
       </div>
 

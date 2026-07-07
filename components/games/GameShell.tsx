@@ -7,6 +7,8 @@ import { GameWordmark } from "@/components/ui/GameWordmarks";
 import { getLocalResult } from "@/lib/playStore";
 import { getModeResult } from "@/lib/modeStore";
 import { LIVE_MODES, modeDef, type ModeId } from "@/lib/modes";
+import { useArchiveGate } from "@/hooks/useArchiveGate";
+import { ArchiveLock } from "./ArchiveLock";
 import { isJuly4th } from "@/lib/festive";
 import { Fireworks } from "@/components/game/Fireworks";
 
@@ -25,6 +27,7 @@ export function GameShell({
   children: React.ReactNode;
 }) {
   const def = modeDef(mode);
+  const { locked, checking } = useArchiveGate(date);
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-5 pb-10 pt-5">
       {isJuly4th(date) && <Fireworks />}
@@ -36,7 +39,15 @@ export function GameShell({
           <GameWordmark mode={mode} className="text-xl" />
         </span>
       </header>
-      <div className="relative z-[46] mt-6 flex flex-1 flex-col">{children}</div>
+      <div className="relative z-[46] mt-6 flex flex-1 flex-col">
+        {checking ? (
+          <div className="min-h-[40vh]" aria-hidden />
+        ) : locked ? (
+          <ArchiveLock date={date} />
+        ) : (
+          children
+        )}
+      </div>
     </main>
   );
 }

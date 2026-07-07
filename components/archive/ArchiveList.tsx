@@ -4,12 +4,13 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Badge, categoryLabel } from "@/components/ui/Badge";
 import { getLocalResult } from "@/lib/playStore";
+import { getModeResult } from "@/lib/modeStore";
 import { usePlayedResults } from "@/hooks/usePlayedResults";
 import { formatShortDate } from "@/lib/date";
 import type { DailyGame } from "@/types";
 
 type NumberedGame = DailyGame & { game_number: number };
-type PlayedResult = { reached: number; rounds: number; lives: number };
+type PlayedResult = { reached: number; rounds: number; lives: number; total?: number };
 
 function tierClass(reached: number, rounds: number): string {
   if (rounds <= 0) return "border-border bg-surface text-ink-secondary";
@@ -43,7 +44,18 @@ export function ArchiveList({ games }: { games: NumberedGame[] }) {
     const map: Record<string, PlayedResult> = {};
     for (const g of games) {
       const r = getLocalResult(g.play_date);
-      if (r) map[g.play_date] = { reached: r.reached, rounds: r.rounds, lives: r.lives };
+      const modes = (["duality", "word", "mini"] as const).reduce(
+        (a, m) => a + (getModeResult(m, g.play_date)?.score ?? 0),
+        0
+      );
+      if (r || modes > 0) {
+        map[g.play_date] = {
+          reached: r?.reached ?? 0,
+          rounds: r?.rounds ?? 0,
+          lives: r?.lives ?? 0,
+          total: (r?.xpEarned ?? 0) + modes,
+        };
+      }
     }
     setLocal(map);
   }, [games]);
@@ -68,7 +80,7 @@ export function ArchiveList({ games }: { games: NumberedGame[] }) {
         return (
           <li key={game.id}>
             <Link
-              href={`/play/${game.play_date}`}
+              href={`/day/${game.play_date}`}
               className="flex items-center gap-3 py-3.5 transition-colors hover:bg-surface"
             >
               <div className="min-w-0 flex-1">
@@ -82,12 +94,14 @@ export function ArchiveList({ games }: { games: NumberedGame[] }) {
                 <div className="flex shrink-0 items-center gap-2">
                   <Hearts lives={result.lives} />
                   <span
-                    className={`rounded-full border px-2.5 py-1 text-xs font-bold tabular ${tierClass(
+                    className={`rounded-full border px-2.5 py-1 font-condensed text-sm font-semibold tabular ${tierClass(
                       result.reached,
                       result.rounds
                     )}`}
                   >
-                    {result.reached}/{result.rounds}
+                    {result.total && result.total > 0
+                      ? `${result.total.toLocaleString()} pts`
+                      : `${result.reached}/${result.rounds}`}
                   </span>
                 </div>
               ) : (

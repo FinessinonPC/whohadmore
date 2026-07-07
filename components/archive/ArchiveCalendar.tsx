@@ -137,7 +137,7 @@ export function ArchiveCalendar({ games }: ArchiveCalendarProps) {
           return (
             <Link
               key={dateStr}
-              href={`/play/${dateStr}`}
+              href={`/day/${dateStr}`}
               title={game.topic_label}
               className={`group flex min-h-[84px] flex-col gap-1 rounded-xl border p-2 transition-colors sm:min-h-[112px] ${state} ${
                 isToday ? "ring-2 ring-ink/30" : ""
