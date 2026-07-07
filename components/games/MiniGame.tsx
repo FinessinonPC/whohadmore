@@ -43,6 +43,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
   });
   const [dir, setDir] = useState<Dir>("A");
   const [wrong, setWrong] = useState<Set<string>>(new Set());
+  const [right, setRight] = useState<Set<string>>(new Set());
   const [fails, setFails] = useState(0);
   const [done, setDone] = useState<null | { score: number; revealed: boolean }>(null);
   const [already, setAlready] = useState<{ score: number; max: number } | null>(null);
@@ -84,18 +85,22 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
     setActive({ r: next.slot.row, c: next.slot.col });
   };
 
-  const full = entries.every((row, r) => row.every((ch, c) => !open(r, c) || ch !== ""));
+  const clearMarks = (r: number, c: number) => {
+    const strip = (prev: Set<string>) => {
+      const n = new Set(prev);
+      n.delete(`${r},${c}`);
+      return n;
+    };
+    setWrong(strip);
+    setRight(strip);
+  };
 
   const type = useCallback(
     (key: string) => {
       if (done || already) return;
       const { r, c } = active;
       if (key === "BACK") {
-        setWrong((w) => {
-          const n = new Set(w);
-          n.delete(`${r},${c}`);
-          return n;
-        });
+        clearMarks(r, c);
         if (entries[r][c]) {
           setEntries((e) => e.map((row, ri) => row.map((ch, ci) => (ri === r && ci === c ? "" : ch))));
         } else {
@@ -103,6 +108,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
           const pc = dir === "A" ? c - 1 : c;
           if (open(pr, pc)) {
             setActive({ r: pr, c: pc });
+            clearMarks(pr, pc);
             setEntries((e) => e.map((row, ri) => row.map((ch, ci) => (ri === pr && ci === pc ? "" : ch))));
           }
         }
@@ -110,16 +116,38 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
       }
       if (!/^[A-Z]$/.test(key)) return;
       setEntries((e) => e.map((row, ri) => row.map((ch, ci) => (ri === r && ci === c ? key : ch))));
-      setWrong((w) => {
-        const n = new Set(w);
-        n.delete(`${r},${c}`);
-        return n;
-      });
+      clearMarks(r, c);
       const nr = dir === "A" ? r : r + 1;
       const nc = dir === "A" ? c + 1 : c;
       if (open(nr, nc)) setActive({ r: nr, c: nc });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [active, dir, done, already, entries, open]
+  );
+
+  /** Arrow keys walk the grid: moving along the current direction steps to
+   *  the next open cell (skipping blacks); pressing across the grain switches
+   *  direction first - so ArrowDown flips to the Down clue, NYT-style. */
+  const arrow = useCallback(
+    (dr: number, dc: number) => {
+      if (done || already) return;
+      const axis: Dir = dr !== 0 ? "D" : "A";
+      if (dir !== axis) {
+        setDir(axis);
+        return;
+      }
+      let r = active.r + dr;
+      let c = active.c + dc;
+      while (r >= 0 && r < 5 && c >= 0 && c < 5) {
+        if (open(r, c)) {
+          setActive({ r, c });
+          return;
+        }
+        r += dr;
+        c += dc;
+      }
+    },
+    [active, dir, done, already, open]
   );
 
   useEffect(() => {
@@ -128,11 +156,23 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
       if (e.key === "Backspace") {
         e.preventDefault();
         type("BACK");
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        arrow(-1, 0);
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        arrow(1, 0);
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        arrow(0, -1);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        arrow(0, 1);
       } else if (/^[a-zA-Z]$/.test(e.key)) type(e.key.toUpperCase());
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [type]);
+  }, [type, arrow]);
 
   const finish = (score: number, revealed: boolean) => {
     setDone({ score, revealed });
@@ -150,18 +190,31 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
     }).catch(() => {});
   };
 
+  const anyFilled = entries.some((row, r) => row.some((ch, c) => open(r, c) && ch !== ""));
+
   const check = () => {
-    if (!full || done) return;
+    if (!anyFilled || done) return;
     const bad = new Set<string>();
+    const good = new Set<string>();
+    let complete = true;
     for (let r = 0; r < 5; r++)
-      for (let c = 0; c < 5; c++)
-        if (open(r, c) && entries[r][c] !== rows[r][c]) bad.add(`${r},${c}`);
-    if (bad.size === 0) {
+      for (let c = 0; c < 5; c++) {
+        if (!open(r, c)) continue;
+        const ch = entries[r][c];
+        if (!ch) {
+          complete = false;
+          continue;
+        }
+        if (ch === rows[r][c]) good.add(`${r},${c}`);
+        else bad.add(`${r},${c}`);
+      }
+    if (complete && bad.size === 0) {
       feedbackCorrect();
       finish(Math.max(MINI_MAX_POINTS - fails * MINI_CHECK_PENALTY, MINI_MIN_SCORE), false);
     } else {
       feedbackWrong();
       setWrong(bad);
+      setRight(good);
       setFails((f) => f + 1);
     }
   };
@@ -223,9 +276,11 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                       ? "#FFFFFF"
                       : wrong.has(k)
                         ? "#FF3B30"
-                        : done && !done.revealed
+                        : right.has(k)
                           ? "#00C853"
-                          : "rgb(var(--ink))",
+                          : done && !done.revealed
+                            ? "#00C853"
+                            : "rgb(var(--ink))",
                   }}
                 >
                   {num && (
@@ -324,8 +379,12 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                 >
                   Reveal
                 </button>
-                <Button size="lg" className="w-full" onClick={check} disabled={!full}>
-                  {full ? (fails > 0 ? "Check again" : "Check puzzle") : "Fill the grid to check"}
+                <Button size="lg" className="w-full" onClick={check} disabled={!anyFilled}>
+                  {!anyFilled
+                    ? "Type letters to check"
+                    : fails > 0
+                      ? "Check letters again"
+                      : "Check letters"}
                 </Button>
               </div>
             </div>

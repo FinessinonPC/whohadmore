@@ -55,6 +55,14 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
   const done = won || rows.length >= WORD_MAX_GUESSES;
   const score = won ? WORD_POINTS[rows.length - 1] : 0;
 
+  // Hold the result + CTA until the last row finishes its flip reveal.
+  const [revealDone, setRevealDone] = useState(false);
+  useEffect(() => {
+    if (!done) return;
+    const t = window.setTimeout(() => setRevealDone(true), 5 * 260 + 480);
+    return () => window.clearTimeout(t);
+  }, [done]);
+
   // Best state per key for the keyboard coloring.
   const keyState: Record<string, Mark> = {};
   for (const row of rows) {
@@ -159,15 +167,29 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
             const submitted = rows[r];
             const activeRow = r === rows.length && !done;
             const marks = submitted ? evaluate(submitted, answer) : null;
+            // Only the freshest guess flips; older rows sit revealed. The key
+            // swap on submit remounts the row so the animation starts clean.
+            const animateRow = Boolean(submitted) && r === rows.length - 1;
             return (
-              <div key={r} className="grid grid-cols-5 gap-1.5">
+              <div key={`${r}-${submitted ? "s" : "e"}`} className="grid grid-cols-5 gap-1.5">
                 {Array.from({ length: 5 }).map((_, c) => {
-                  const ch = submitted ? submitted[c] : activeRow ? current[c] : undefined;
+                  if (submitted && marks) {
+                    return (
+                      <FlipTile
+                        key={c}
+                        ch={submitted[c]}
+                        delayMs={c * 260}
+                        animate={animateRow}
+                        revealedStyle={tileStyle(marks[c])}
+                      />
+                    );
+                  }
+                  const ch = activeRow ? current[c] : undefined;
                   return (
                     <div
                       key={c}
                       className="flex aspect-square items-center justify-center rounded-lg border-2 border-border font-condensed text-2xl font-semibold uppercase text-ink"
-                      style={marks ? tileStyle(marks[c]) : ch ? { borderColor: "rgb(var(--ink-2))" } : {}}
+                      style={ch ? { borderColor: "rgb(var(--ink-2))" } : {}}
                     >
                       {ch ?? ""}
                     </div>
@@ -178,9 +200,9 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
           })}
         </motion.div>
 
-        {/* result line */}
+        {/* result line - waits for the last row's flip to land */}
         <div className="mt-4 flex h-16 flex-col items-center justify-center text-center">
-          {done ? (
+          {revealDone ? (
             <>
               <p className="font-condensed text-3xl font-semibold uppercase tracking-wide text-ink">
                 {won ? `+${score}` : answer}
@@ -189,7 +211,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
                 {won ? `Got it in ${rows.length}` : "Out of tries - tomorrow's word awaits"}
               </p>
             </>
-          ) : (
+          ) : done ? null : (
             <p className="text-xs font-semibold text-ink-secondary">
               Guess the five-letter word · {WORD_MAX_GUESSES - rows.length} tries left
             </p>
@@ -198,7 +220,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
 
         {/* keyboard / next */}
         <div className="mt-auto pb-1">
-          {done ? (
+          {revealDone ? (
             <NextGameCTA date={date} current="word" />
           ) : (
             <div className="mx-auto flex w-full max-w-[430px] flex-col gap-1.5">
@@ -249,5 +271,44 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
         </div>
       </div>
     </GameShell>
+  );
+}
+
+/**
+ * A submitted tile that flips like the original: rotates to edge-on, swaps to
+ * its verdict color at the midpoint, and rotates back - staggered per column.
+ */
+function FlipTile({
+  ch,
+  delayMs,
+  animate,
+  revealedStyle,
+}: {
+  ch: string;
+  delayMs: number;
+  animate: boolean;
+  revealedStyle: React.CSSProperties;
+}) {
+  const [shown, setShown] = useState(!animate);
+  useEffect(() => {
+    if (!animate) return;
+    const t = window.setTimeout(() => setShown(true), delayMs + 260);
+    return () => window.clearTimeout(t);
+  }, [animate, delayMs]);
+
+  return (
+    <motion.div
+      initial={false}
+      animate={animate ? { rotateX: [0, 90, 0] } : { rotateX: 0 }}
+      transition={
+        animate
+          ? { duration: 0.52, delay: delayMs / 1000, times: [0, 0.5, 1], ease: "easeInOut" }
+          : undefined
+      }
+      className="flex aspect-square items-center justify-center rounded-lg border-2 border-border font-condensed text-2xl font-semibold uppercase text-ink"
+      style={shown ? revealedStyle : {}}
+    >
+      {ch}
+    </motion.div>
   );
 }

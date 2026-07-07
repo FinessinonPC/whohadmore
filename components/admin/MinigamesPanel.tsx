@@ -116,7 +116,7 @@ export function MinigamesPanel({ date }: { date: string }) {
       setCustom(data.custom ?? {});
       setNotice(
         data.error === "query_failed"
-          ? "daily_minigames table not found - run supabase/migrations/0003_daily_minigames.sql, then custom days will save."
+          ? "daily_minigames table not found - run supabase/migrations/0005_daily_minigames.sql, then custom days will save."
           : null
       );
     } catch {

@@ -75,7 +75,7 @@ export async function POST(req: Request) {
     );
   if (error) {
     const hint = error.message.includes("daily_minigames")
-      ? " (has supabase/migrations/0003_daily_minigames.sql been run?)"
+      ? " (has supabase/migrations/0005_daily_minigames.sql been run?)"
       : "";
     return NextResponse.json({ error: error.message + hint }, { status: 500 });
   }

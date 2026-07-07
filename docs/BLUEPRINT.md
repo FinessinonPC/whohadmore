@@ -118,7 +118,7 @@ accent-tinted square. New game = new icon following these exact rules.
 ### Data & persistence
 - Local: `lib/modeStore.ts` → key `whohadmore:<mode>:<date>` =
   `{score, maxScore, detail[], completedAt}`.
-- Server: `game_mode_results` table (`supabase/migrations/0002_...sql`,
+- Server: `game_mode_results` table (`supabase/migrations/0004_...sql`,
   **run in Supabase SQL editor before deploying any of this**). Unique on
   `(play_date, session_id, mode)`; API upserts with `ignoreDuplicates`.
 - Daily leaderboard (`/api/leaderboard/daily`) folds `SUM(mode scores)` into
@@ -193,7 +193,7 @@ registry flip, API mode-set + SQL constraint update.
 
 **Architecture**: every pack game resolves content server-side via
 `lib/minigames.ts`: a `daily_minigames` row (play_date, mode, payload jsonb;
-migration 0003) overrides the bundled pack for that date, else the pack
+migration 0005) overrides the bundled pack for that date, else the pack
 rotation serves (`lib/contentPacks.ts`, hashSeed(mode:date) % pack length).
 Every date is therefore always playable, DB or not.
 
@@ -245,7 +245,7 @@ impostor and a satisfying one-line connection. Fun beats difficulty; notes
 
 ## 9. Deploy checklist (when the user says go)
 
-1. Run `supabase/migrations/0002_game_mode_results.sql` in Supabase.
+1. Run `supabase/migrations/0004_game_mode_results.sql` in Supabase.
 2. Merge branch → `main` (Vercel deploys).
 3. Smoke test: play all live games on prod, confirm hub total + daily
    leaderboard combines, `Unknown####` naming for anon mode-only players.

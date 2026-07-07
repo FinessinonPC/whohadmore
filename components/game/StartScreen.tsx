@@ -9,6 +9,8 @@ import { STARTING_LIVES, maxScore } from "@/lib/gameLogic";
 import { formatDisplayDate, isToday } from "@/lib/date";
 import { isJuly4th } from "@/lib/festive";
 import { Fireworks } from "./Fireworks";
+import { GameWordmark } from "@/components/ui/GameWordmarks";
+import { modeDef } from "@/lib/modes";
 import type { FullGame, GameCard } from "@/types";
 
 interface StartScreenProps {
@@ -50,7 +52,10 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       >
-        <p className="small-caps text-xs text-ink-secondary">
+        <span style={{ color: modeDef("chain").accent }}>
+          <GameWordmark mode="chain" className="text-2xl" />
+        </span>
+        <p className="small-caps mt-2 text-xs text-ink-secondary">
           {formatDisplayDate(date)}
           {!isToday(date) ? " · Archive" : ""} · Game No. {gameNumber}
         </p>
@@ -62,7 +67,7 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
             return (
               <motion.div
                 key={card.id}
-                className="absolute h-32 w-24 overflow-hidden rounded-lg border-2 border-white bg-ink shadow-xl sm:h-48 sm:w-36"
+                className="absolute h-32 w-24 overflow-hidden rounded-xl bg-surface shadow-xl ring-1 ring-border sm:h-48 sm:w-36"
                 style={{ zIndex: hero.length - Math.abs(offset) }}
                 initial={{ opacity: 0, y: 24, rotate: offset * 4, scale: 0.9 }}
                 animate={{
@@ -78,7 +83,7 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={card.image_url} alt="" className="h-full w-full object-cover" draggable={false} />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center font-condensed text-2xl font-bold text-white/80">
+                  <div className="flex h-full w-full items-center justify-center font-condensed text-2xl font-bold text-ink-secondary">
                     {initialsFor(card.entity_name)}
                   </div>
                 )}

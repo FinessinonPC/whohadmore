@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { TopNav } from "@/components/ui/TopNav";
 import { useProfile } from "@/hooks/useProfile";
@@ -33,9 +34,11 @@ export function LeaderboardView() {
     <main className="mx-auto w-full max-w-xl px-4 pb-16 pt-5 sm:max-w-2xl">
       <TopNav />
 
-      <h1 className="mt-8 text-4xl font-extrabold tracking-tight text-ink">Leaderboard</h1>
-      <p className="mt-1 text-[15px] text-ink-secondary">
-        Ranked by correct answers, hearts kept, and speed.
+      <h1 className="mt-8 font-condensed text-4xl font-semibold uppercase tracking-wide text-ink">
+        Leaderboard
+      </h1>
+      <p className="mt-1.5 text-sm text-ink-secondary">
+        Every game counts - Chain, Duality, Word and Mini roll into one daily score.
       </p>
 
       {/* Daily / All-time toggle */}
@@ -80,7 +83,7 @@ export function LeaderboardView() {
                       {r.timeSeconds != null && <>{" · "}{formatClock(r.timeSeconds)}</>}
                     </p>
                   </div>
-                  <span className="tabular text-base font-extrabold text-ink">
+                  <span className="tabular font-condensed text-xl font-semibold text-ink">
                     {r.score.toLocaleString()}
                   </span>
                 </div>
@@ -110,7 +113,7 @@ export function LeaderboardView() {
                   <span className="rounded-full bg-background px-2 py-0.5 text-[11px] font-bold text-ink-secondary">
                     Lv {r.level}
                   </span>
-                  <span className="tabular text-base font-extrabold text-ink">
+                  <span className="tabular font-condensed text-xl font-semibold text-ink">
                     {r.score.toLocaleString()}
                   </span>
                 </div>
@@ -154,6 +157,9 @@ function EmptyBoard({ title, sub }: { title: string; sub: string }) {
     <div className="rounded-3xl bg-surface px-6 py-10 text-center">
       <p className="text-sm font-semibold text-ink">{title}</p>
       <p className="mt-1 text-sm text-ink-secondary">{sub}</p>
+      <Link href="/" className="mt-4 inline-block rounded-full bg-cta px-5 py-2 text-xs font-bold text-background">
+        Play today&apos;s games
+      </Link>
     </div>
   );
 }
@@ -163,7 +169,7 @@ function RankBadge({ rank }: { rank: number }) {
   if (medal) {
     return (
       <span
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-extrabold text-white"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-condensed text-sm font-semibold text-[#0B0D10]"
         style={{ backgroundColor: medal }}
       >
         {rank}
@@ -171,7 +177,7 @@ function RankBadge({ rank }: { rank: number }) {
     );
   }
   return (
-    <span className="flex h-7 w-7 shrink-0 items-center justify-center text-sm font-extrabold text-ink-secondary">
+    <span className="flex h-7 w-7 shrink-0 items-center justify-center font-condensed text-base font-semibold text-ink-secondary">
       {rank}
     </span>
   );

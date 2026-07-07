@@ -3,7 +3,7 @@
 -- and mode it overrides the bundled pack; otherwise the pack rotation serves
 -- as the always-works fallback, so days without custom content still play.
 --
--- Run this in the Supabase SQL editor (after 0002).
+-- Run this in the Supabase SQL editor (after 0004).
 
 create table if not exists public.daily_minigames (
   id uuid primary key default gen_random_uuid(),
