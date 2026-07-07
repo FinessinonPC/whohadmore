@@ -38,6 +38,12 @@ were cut on 2026-07-07 (code in git history).
 | `word` | Word | Wordle | `#FFC400` yellow | pack | Daily 5-letter word, 6 tries; 1000..500 pts by guess count |
 | `mini` | Mini | NYT Mini crossword | `#2E6BFF` blue | pack | 5x5 grid; 1000 pts, -100 per failed check (floor 400), reveal = 0 |
 
+**Weekday themes (Chain)**: every weekday has a flavor, derived from the
+date in `lib/weekly.ts` (Movie Monday, Trending Tuesday, World Wednesday,
+Celebrity Thursday, Foodie Friday, Scoreboard Saturday, Surprise Sunday).
+Shown on the hub chain tile + start screen; baked into the admin AI prompt.
+No schema - rename freely in one file.
+
 Naming scheme: **one strong word per game** (the lessgames "-less" suffix
 equivalent). Taglines carry the SEO phrases ("higher-or-lower") - product
 names stay short. Word accepts any 5-letter guess today; adding a dictionary

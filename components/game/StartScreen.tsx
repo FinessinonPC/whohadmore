@@ -11,6 +11,7 @@ import { isJuly4th } from "@/lib/festive";
 import { Fireworks } from "./Fireworks";
 import { GameWordmark } from "@/components/ui/GameWordmarks";
 import { modeDef } from "@/lib/modes";
+import { themeFor } from "@/lib/weekly";
 import type { FullGame, GameCard } from "@/types";
 
 interface StartScreenProps {
@@ -55,7 +56,10 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
         <span style={{ color: modeDef("chain").accent }}>
           <GameWordmark mode="chain" className="text-2xl" />
         </span>
-        <p className="small-caps mt-2 text-xs text-ink-secondary">
+        <p className="small-caps mt-2 text-[11px] font-bold" style={{ color: modeDef("chain").accent }}>
+          {themeFor(date).name}
+        </p>
+        <p className="small-caps mt-1.5 text-xs text-ink-secondary">
           {formatDisplayDate(date)}
           {!isToday(date) ? " · Archive" : ""} · Game No. {gameNumber}
         </p>

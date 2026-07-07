@@ -440,7 +440,7 @@ export function DayEditor({ date }: DayEditorProps) {
         }}
       />
 
-      <AiPromptPanel open={aiOpen} onClose={() => setAiOpen(false)} onLoad={loadAiGame} />
+      <AiPromptPanel open={aiOpen} onClose={() => setAiOpen(false)} onLoad={loadAiGame} date={date} />
 
       {previewOpen && (
         <PreviewPlayer

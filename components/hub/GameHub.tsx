@@ -13,6 +13,7 @@ import { useArchiveGate } from "@/hooks/useArchiveGate";
 import { ArchiveLock } from "@/components/games/ArchiveLock";
 import { DayBoard } from "@/components/hub/DayBoard";
 import { todayISO } from "@/lib/date";
+import { themeFor } from "@/lib/weekly";
 import { isJuly4th } from "@/lib/festive";
 import { Fireworks } from "@/components/game/Fireworks";
 import type { FullGame } from "@/types";
@@ -167,8 +168,8 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
                   style={{ background: mode.accent, color: mode.contrast }}
                 >
                   {mode.id === "chain" && (
-                    <p className="small-caps mb-1 text-[11px] font-bold opacity-70">
-                      {isToday ? "Today · " : ""}{game.topic_label}
+                    <p className="small-caps mb-1 truncate text-[11px] font-bold opacity-70">
+                      {themeFor(date).name} · {game.topic_label}
                     </p>
                   )}
                   <GameWordmark mode={mode.id} className="text-[2.6rem] sm:text-5xl" alt={altFor(mode)} />

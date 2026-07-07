@@ -4,11 +4,14 @@ import { useState } from "react";
 import { Sheet } from "@/components/ui/Sheet";
 import { Button } from "@/components/ui/Button";
 import { TOPIC_CATEGORIES, type AiGameJson, type TopicCategory } from "@/types";
+import { themeFor } from "@/lib/weekly";
 
 interface AiPromptPanelProps {
   open: boolean;
   onClose: () => void;
   onLoad: (game: AiGameJson) => void;
+  /** The day being edited - bakes that weekday's theme into the prompt. */
+  date?: string;
 }
 
 const PROMPT = `You are the creative director for a daily higher/lower game. Players see two cards and tap whichever has the higher value of one stat. Invent ONE genuinely ORIGINAL game - the kind that makes someone say "huh, I never thought to compare those."
@@ -109,14 +112,18 @@ function parseAiJson(raw: string): AiGameJson | null {
   return null;
 }
 
-export function AiPromptPanel({ open, onClose, onLoad }: AiPromptPanelProps) {
+export function AiPromptPanel({ open, onClose, onLoad, date }: AiPromptPanelProps) {
+  const theme = date ? themeFor(date) : null;
+  const prompt = theme
+    ? `THEME FOR THIS DAY - ${theme.name.toUpperCase()}: ${theme.hint}\nThe game MUST fit this theme (rule 1's novelty applies WITHIN the theme).\n\n${PROMPT}`
+    : PROMPT;
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   async function copyPrompt() {
     try {
-      await navigator.clipboard.writeText(PROMPT);
+      await navigator.clipboard.writeText(prompt);
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
@@ -148,8 +155,13 @@ export function AiPromptPanel({ open, onClose, onLoad }: AiPromptPanelProps) {
         Copy this into your favorite model, then paste its JSON back here.
       </p>
 
+      {theme && (
+        <p className="mt-2 inline-block rounded-full bg-correct/10 px-3 py-1 text-xs font-bold text-correct">
+          {theme.name}
+        </p>
+      )}
       <pre className="mt-4 max-h-44 overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-surface p-3 text-[11px] leading-relaxed text-ink-secondary">
-        {PROMPT}
+        {prompt}
       </pre>
 
       <label className="mt-5 block small-caps text-[10px] text-ink-secondary">
