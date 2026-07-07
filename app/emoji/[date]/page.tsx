@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ImpostorGame } from "@/components/games/ImpostorGame";
+import { EmojiGame } from "@/components/games/EmojiGame";
 import { isValidISODate } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
@@ -12,23 +12,23 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { date } = await params;
   if (!isValidISODate(date)) return {};
-  const title = "Impostor";
+  const title = "Emoji";
   const description =
-    "Four things - three share a secret connection, one is lying. Spot the impostor in this quick daily game on WhoHadMore.";
+    "Five pictures-only puzzles a day - decode the movie, show, or phrase from emojis. Free on WhoHadMore.";
   return {
     title,
     description,
-    alternates: { canonical: `/impostor/${date}` },
-    openGraph: { title, description, url: `/impostor/${date}` },
+    alternates: { canonical: `/emoji/${date}` },
+    openGraph: { title, description, url: `/emoji/${date}` },
   };
 }
 
-export default async function ImpostorPage({
+export default async function EmojiPage({
   params,
 }: {
   params: Promise<{ date: string }>;
 }) {
   const { date } = await params;
   if (!isValidISODate(date)) notFound();
-  return <ImpostorGame date={date} />;
+  return <EmojiGame date={date} />;
 }

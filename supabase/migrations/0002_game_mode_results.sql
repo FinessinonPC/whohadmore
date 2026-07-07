@@ -1,5 +1,5 @@
--- Extra daily game modes (Rank Five, Pinpoint). One result per player per
--- mode per day; the daily leaderboard sums these with the chain game score.
+-- Extra daily game modes (Duality, Word, Quads, Emoji). One result per player
+-- per mode per day; the daily leaderboard sums these with the chain score.
 --
 -- Run this in the Supabase SQL editor. Until it exists, mode submissions
 -- quietly no-op and the leaderboard shows chain-only scores.
@@ -8,7 +8,7 @@ create table if not exists public.game_mode_results (
   id uuid primary key default gen_random_uuid(),
   play_date date not null,
   session_id text not null,
-  mode text not null check (mode in ('rank', 'pinpoint', 'duality', 'impostor', 'recall', 'split')),
+  mode text not null check (mode in ('duality', 'word', 'quads', 'emoji')),
   score integer not null default 0 check (score >= 0 and score <= 2000),
   created_at timestamptz not null default now(),
   unique (play_date, session_id, mode)

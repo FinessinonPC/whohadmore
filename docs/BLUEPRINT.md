@@ -23,23 +23,27 @@ own identity: **every game is powered by one daily topic and its numbers.**
 
 Two kinds of games share the hub:
 - **Stat games** derive from the daily card set (zero extra content).
-- **Content games** run on bundled daily packs (`lib/contentPacks.ts`),
+- **Pack games** run on bundled daily packs (`lib/contentPacks.ts`),
   rotated deterministically by date - zero daily admin, refreshed by shipping
   pack updates (or later, per-date DB overrides - see §7).
 
-| id | Name | Verb | Accent | Kind | Status | One-liner |
-|----|------|------|--------|------|--------|-----------|
-| `chain` | Chain | Compare | `#00C853` green | stat | live | Classic higher-or-lower run (the original game) |
-| `duality` | Duality | Sort | `#06B6D4` cyan | content | live | Two categories, 8 items - sort each to its side, 125/item |
-| `rank` | Rank | Order | `#2E6BFF` blue | stat | live | Order 5 cards top to bottom, 200/slot |
-| `impostor` | Impostor | Spot | `#FF4D8D` pink | content | live | 4 things, 3 connected, 1 lying - tap it, 200/round |
-| `pinpoint` | Pinpoint | Estimate | `#FFB300` amber | stat | live | Slider-guess the exact value, ≤250/round by closeness |
-| `recall` | Recall | Remember | `#A44BFF` violet | stat | **soon - spec §5** | Memorize the board, match numbers to cards |
-| `split` | Split | Judge | `#FF7A00` orange | stat | **soon - spec §6** | Over/under snap calls, 5 rounds |
+The roster copies formats people already play daily, per the owner's
+direction (2026-07-06): keep Chain + Duality, everything else must be a
+popular format or a twist on one. Rank/Impostor/Pinpoint/Recall/Split were
+cut (code deleted; their specs live in git history if ever wanted back).
+
+| id | Name | Copies | Accent | Kind | One-liner |
+|----|------|--------|--------|------|-----------|
+| `chain` | Chain | The Higher Lower Game | `#00C853` green | stat | Classic higher-or-lower run (the original game) |
+| `duality` | Duality | the viral "X or Y?" sorting quiz | `#06B6D4` cyan | pack | Two categories, 8 items - sort each to its side, 125/item |
+| `word` | Word | Wordle | `#FFC400` yellow | pack | Daily 5-letter word, 6 tries; 1000..500 pts by guess count |
+| `quads` | Quads | NYT Connections | `#A44BFF` purple | pack | 16 words, 4 hidden groups, 4 mistakes allowed, 250/group |
+| `emoji` | Emoji | emoji-decode quizzes | `#FF7A00` orange | pack | 5 rounds, pick what the emojis say, 200/round |
 
 Naming scheme: **one strong word per game** (the lessgames "-less" suffix
 equivalent). Taglines carry the SEO phrases ("higher-or-lower") - product
-names stay short.
+names stay short. Word accepts any 5-letter guess today; adding a dictionary
+check is a known TODO.
 
 ---
 

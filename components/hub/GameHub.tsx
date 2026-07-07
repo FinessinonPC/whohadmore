@@ -30,12 +30,10 @@ function altFor(mode: ModeDef): string | undefined {
   switch (mode.id) {
     case "duality":
       return "#FFFFFF"; // DUAL dark / ITY white on cyan
-    case "impostor":
-      return "#0B0D10"; // the odd O goes dark on pink
-    case "pinpoint":
-      return "#FFFFFF"; // target dot pops white on amber
-    case "split":
-      return "#FFFFFF";
+    case "word":
+      return "#FFFFFF"; // white tile with dark ring on yellow
+    case "emoji":
+      return "#FFFFFF"; // white face, dark features, on orange
     default:
       return undefined; // currentColor
   }

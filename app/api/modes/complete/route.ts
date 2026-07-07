@@ -8,12 +8,10 @@ export const dynamic = "force-dynamic";
 // Per-mode score ceilings (see docs/BLUEPRINT.md §3 - every quick game caps
 // around 1000 so no mode dominates the combined total).
 const MODE_MAX: Record<string, number> = {
-  rank: 1000,
-  pinpoint: 1000,
   duality: 1000,
-  impostor: 1000,
-  recall: 1000,
-  split: 1000,
+  word: 1000,
+  quads: 1000,
+  emoji: 1000,
 };
 
 // POST /api/modes/complete - record a finished extra-mode game (rank/pinpoint).

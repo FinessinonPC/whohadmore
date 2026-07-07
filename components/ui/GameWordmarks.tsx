@@ -43,79 +43,49 @@ export function DualityWordmark({ className = "", alt }: WordmarkProps) {
   );
 }
 
-/** RANK - the letters climb the podium. */
-export function RankWordmark({ className = "" }: WordmarkProps) {
-  const steps = [
-    { ch: "R", y: "0.12em" },
-    { ch: "A", y: "0.04em" },
-    { ch: "N", y: "-0.04em" },
-    { ch: "K", y: "-0.12em" },
-  ];
+/** WORD - the O is a letter tile. */
+export function WordWordmark({ className = "", alt }: WordmarkProps) {
   return (
-    <span className={`${base} ${className}`} aria-label="Rank">
-      {steps.map((s, i) => (
-        <span key={i} className="inline-block" style={{ transform: `translateY(${s.y})` }}>
-          {s.ch}
-        </span>
-      ))}
-    </span>
-  );
-}
-
-/** IMPOSTOR - one letter doesn't belong. */
-export function ImpostorWordmark({ className = "", alt }: WordmarkProps) {
-  return (
-    <span className={`${base} ${className}`} aria-label="Impostor">
-      <span>IMPOST</span>
-      <span
-        className="inline-block"
-        style={{ transform: "rotate(10deg) translateY(-0.03em)", color: alt ?? "currentColor" }}
-      >
-        O
-      </span>
-      <span>R</span>
-    </span>
-  );
-}
-
-/** PINPOINT - the first O is the target. */
-export function PinpointWordmark({ className = "", alt }: WordmarkProps) {
-  return (
-    <span className={`${base} ${className}`} aria-label="Pinpoint">
-      <span>PINP</span>
-      <svg viewBox="0 0 56 56" className="mx-[0.03em] h-[0.66em] w-auto self-center" aria-hidden>
-        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="9" />
-        <circle cx="28" cy="28" r="9" fill={alt ?? "currentColor"} />
+    <span className={`${base} ${className}`} aria-label="Word">
+      <span>W</span>
+      <svg viewBox="0 0 56 56" className="mx-[0.05em] h-[0.72em] w-auto self-center" aria-hidden>
+        <rect x="3" y="3" width="50" height="50" rx="10" fill={alt ?? "currentColor"} />
+        <circle cx="28" cy="28" r="11" fill="none" stroke={alt ? "currentColor" : "#0B0D10"} strokeWidth="7" />
       </svg>
-      <span>INT</span>
+      <span>RD</span>
     </span>
   );
 }
 
-/** RECALL - the tail of the word fades like a memory. */
-export function RecallWordmark({ className = "" }: WordmarkProps) {
-  const fade = [1, 1, 1, 0.85, 0.65, 0.4];
+/** QUADS - the A is four tiles. */
+export function QuadsWordmark({ className = "", alt }: WordmarkProps) {
+  const c = "currentColor";
   return (
-    <span className={`${base} ${className}`} aria-label="Recall">
-      {"RECALL".split("").map((ch, i) => (
-        <span key={i} style={{ opacity: fade[i] }}>
-          {ch}
-        </span>
-      ))}
-    </span>
-  );
-}
-
-/** SPLIT - the I is the line everything divides over. */
-export function SplitWordmark({ className = "", alt }: WordmarkProps) {
-  return (
-    <span className={`${base} ${className}`} aria-label="Split">
-      <span>SPL</span>
-      <svg viewBox="0 0 30 56" className="mx-[0.05em] h-[0.72em] w-auto self-center" aria-hidden>
-        <rect x="10" y="0" width="10" height="24" rx="3" fill="currentColor" />
-        <rect x="10" y="32" width="10" height="24" rx="3" fill={alt ?? "currentColor"} />
+    <span className={`${base} ${className}`} aria-label="Quads">
+      <span>QU</span>
+      <svg viewBox="0 0 56 56" className="mx-[0.06em] h-[0.68em] w-auto self-center" aria-hidden>
+        <rect x="2" y="2" width="24" height="24" rx="6" fill={c} />
+        <rect x="30" y="2" width="24" height="24" rx="6" fill={alt ?? c} opacity={alt ? 1 : 0.55} />
+        <rect x="2" y="30" width="24" height="24" rx="6" fill={alt ?? c} opacity={alt ? 1 : 0.55} />
+        <rect x="30" y="30" width="24" height="24" rx="6" fill={c} />
       </svg>
-      <span>T</span>
+      <span>DS</span>
+    </span>
+  );
+}
+
+/** EMOJI - the O is a face. */
+export function EmojiWordmark({ className = "", alt }: WordmarkProps) {
+  return (
+    <span className={`${base} ${className}`} aria-label="Emoji">
+      <span>EM</span>
+      <svg viewBox="0 0 56 56" className="mx-[0.04em] h-[0.7em] w-auto self-center" aria-hidden>
+        <circle cx="28" cy="28" r="26" fill={alt ?? "currentColor"} />
+        <circle cx="19" cy="22" r="4.5" fill="currentColor" />
+        <circle cx="37" cy="22" r="4.5" fill="currentColor" />
+        <path d="M15 34 q13 12 26 0" stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" />
+      </svg>
+      <span>JI</span>
     </span>
   );
 }
@@ -123,11 +93,9 @@ export function SplitWordmark({ className = "", alt }: WordmarkProps) {
 const MARKS: Record<ModeId, (p: WordmarkProps) => React.ReactNode> = {
   chain: ChainWordmark,
   duality: DualityWordmark,
-  rank: RankWordmark,
-  impostor: ImpostorWordmark,
-  pinpoint: PinpointWordmark,
-  recall: RecallWordmark,
-  split: SplitWordmark,
+  word: WordWordmark,
+  quads: QuadsWordmark,
+  emoji: EmojiWordmark,
 };
 
 export function GameWordmark({

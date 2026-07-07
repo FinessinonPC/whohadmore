@@ -1,7 +1,7 @@
 // ============================================================================
-// Bundled daily content for the non-stat games (Duality, Impostor). A pack day
-// is chosen deterministically from the date, so everyone plays the same round
-// on the same day with ZERO daily admin work. Later, rows in a
+// Bundled daily content for the pack games (Duality, Word, Quads, Emoji). A
+// pack day is chosen deterministically from the date, so everyone plays the
+// same round on the same day with ZERO daily admin work. Later, rows in a
 // `daily_minigames` table can override the pack for a given date (see
 // docs/BLUEPRINT.md) - the packs stay as the always-works fallback.
 // ============================================================================
@@ -165,73 +165,140 @@ export const DUALITY_PACK: DualityDay[] = [
   },
 ];
 
-// --- Impostor: four things, three share a connection, one doesn't -----------
+// --- Word: one five-letter answer per day (the format you know) -------------
 
-export interface ImpostorRound {
-  options: string[]; // exactly 4
-  impostor: number; // index into options
-  connection: string; // what the other three share
+export const WORD_ANSWERS: string[] = [
+  "CRANE", "SPORT", "MONEY", "HEART", "GLOBE", "PIZZA", "TIGER", "OCEAN",
+  "MUSIC", "STORM", "BRAVE", "LIGHT", "DREAM", "TRACK", "FLAME", "CROWN",
+  "PLANT", "SMILE", "RIVER", "CANDY", "SHARK", "PIANO", "GRAPE", "CLOUD",
+  "STONE", "MAGIC", "TRAIN", "HONEY", "WHALE", "BREAD", "QUEEN", "LEMON",
+  "SPACE", "BEACH", "NIGHT", "WATCH", "HOUSE", "SNAKE", "DANCE", "GHOST",
+  "MOUNT", "TOAST", "FROST", "SOLAR", "ROBIN", "APPLE", "CHESS", "PEARL",
+  "WORLD", "SCORE", "SOUND", "PAINT", "ARENA", "VOICE", "SUGAR", "EAGLE",
+  "TRUTH", "OLIVE", "COACH", "MEDAL", "RANCH", "SPICE", "MAPLE", "TORCH",
+  "BLAZE", "CORAL", "DERBY", "FIELD", "GIANT", "JUICE", "KNIFE", "LUNAR",
+  "NOBLE", "ORBIT", "PRIZE", "QUIET", "ROAST", "SHINE", "TITAN", "VIVID",
+];
+
+// --- Quads: sixteen words, four hidden groups of four ------------------------
+
+export interface QuadsGroup {
+  name: string;
+  words: string[]; // exactly 4
 }
 
-export interface ImpostorDay {
-  rounds: ImpostorRound[]; // 5
+export interface QuadsDay {
+  groups: QuadsGroup[]; // exactly 4, ordered easy -> tricky
 }
 
-export const IMPOSTOR_PACK: ImpostorDay[] = [
+export const QUADS_PACK: QuadsDay[] = [
   {
-    rounds: [
-      { options: ["Mercury", "Venus", "Titan", "Neptune"], impostor: 2, connection: "Planets - Titan is a moon of Saturn" },
-      { options: ["Nile", "Amazon", "Sahara", "Danube"], impostor: 2, connection: "Rivers - the Sahara is a desert" },
-      { options: ["Python", "Ruby", "Cobra", "Java"], impostor: 2, connection: "Programming languages" },
-      { options: ["Leonardo", "Michelangelo", "Galileo", "Donatello"], impostor: 2, connection: "Teenage Mutant Ninja Turtles" },
-      { options: ["Salmon", "Tuna", "Dolphin", "Trout"], impostor: 2, connection: "Fish - a dolphin is a mammal" },
+    groups: [
+      { name: "Coffee orders", words: ["LATTE", "MOCHA", "ESPRESSO", "CAPPUCCINO"] },
+      { name: "Italian cities", words: ["ROME", "MILAN", "NAPLES", "TURIN"] },
+      { name: "Pasta shapes", words: ["PENNE", "FUSILLI", "RIGATONI", "ORZO"] },
+      { name: "Fashion houses", words: ["PRADA", "GUCCI", "ARMANI", "VERSACE"] },
     ],
   },
   {
-    rounds: [
-      { options: ["Everest", "K2", "Vesuvius", "Kilimanjaro"], impostor: 2, connection: "Famously tall peaks - Vesuvius is a short volcano" },
-      { options: ["Picasso", "Monet", "Mozart", "Dalí"], impostor: 2, connection: "Painters - Mozart composed" },
-      { options: ["Oxygen", "Nitrogen", "Quartz", "Helium"], impostor: 2, connection: "Chemical elements - quartz is a mineral" },
-      { options: ["Google", "Amazon", "Nike", "Tesla"], impostor: 2, connection: "Tech companies" },
-      { options: ["Madrid", "Rome", "Sydney", "Berlin"], impostor: 2, connection: "Capital cities - Australia's is Canberra" },
+    groups: [
+      { name: "Things with keys", words: ["PIANO", "KEYBOARD", "MAP", "LOCK"] },
+      { name: "Board games", words: ["RISK", "CLUE", "SORRY", "TROUBLE"] },
+      { name: "Inside Out emotions", words: ["JOY", "FEAR", "ANGER", "DISGUST"] },
+      { name: "___WORD", words: ["CROSS", "PASS", "SWEAR", "BUZZ"] },
     ],
   },
   {
+    groups: [
+      { name: "NBA teams", words: ["HEAT", "MAGIC", "THUNDER", "SPURS"] },
+      { name: "Wet weather", words: ["FOG", "HAIL", "SLEET", "DRIZZLE"] },
+      { name: "Music genres", words: ["FUNK", "SOUL", "BLUES", "HOUSE"] },
+      { name: "Ballroom dances", words: ["SALSA", "SWING", "TANGO", "WALTZ"] },
+    ],
+  },
+];
+
+// --- Emoji: decode the pictures ----------------------------------------------
+
+export interface EmojiRound {
+  emoji: string;
+  options: string[]; // 4 choices
+  answer: number; // index into options
+}
+
+export interface EmojiDay {
+  theme: string;
+  rounds: EmojiRound[]; // 5
+}
+
+export const EMOJI_PACK: EmojiDay[] = [
+  {
+    theme: "Movies",
     rounds: [
-      { options: ["Sushi", "Tempura", "Kimchi", "Ramen"], impostor: 2, connection: "Japanese dishes - kimchi is Korean" },
-      { options: ["Violin", "Cello", "Trumpet", "Viola"], impostor: 2, connection: "String instruments" },
-      { options: ["Zeus", "Apollo", "Mars", "Ares"], impostor: 2, connection: "Greek gods - Mars is Roman" },
-      { options: ["Copper", "Iron", "Bronze", "Gold"], impostor: 2, connection: "Elements - bronze is an alloy" },
-      { options: ["Chess", "Checkers", "Poker", "Go"], impostor: 2, connection: "Board games - poker is cards" },
+      { emoji: "🦁👑", options: ["Madagascar", "The Lion King", "Zootopia", "The Jungle Book"], answer: 1 },
+      { emoji: "🚢🧊💔", options: ["Titanic", "Life of Pi", "Jaws", "The Perfect Storm"], answer: 0 },
+      { emoji: "🕷️🧑🗽", options: ["Ant-Man", "Venom", "Spider-Man", "Kick-Ass"], answer: 2 },
+      { emoji: "🦖🏝️🧬", options: ["King Kong", "Godzilla", "The Lost World", "Jurassic Park"], answer: 3 },
+      { emoji: "👽📞🚲", options: ["E.T.", "Alien", "Arrival", "Men in Black"], answer: 0 },
     ],
   },
   {
+    theme: "Movies II",
     rounds: [
-      { options: ["Eagle", "Owl", "Bat", "Falcon"], impostor: 2, connection: "Birds - a bat is a mammal" },
-      { options: ["Diamond", "Ruby", "Pearl", "Emerald"], impostor: 2, connection: "Mineral gems - pearls come from oysters" },
-      { options: ["Thames", "Seine", "Alps", "Tiber"], impostor: 2, connection: "European rivers - the Alps are mountains" },
-      { options: ["Mercury", "Gold", "Steel", "Iron"], impostor: 2, connection: "Elements - steel is an alloy" },
-      { options: ["Merlot", "Chardonnay", "Porter", "Riesling"], impostor: 2, connection: "Wines - a porter is a beer" },
+      { emoji: "🧙💍🌋", options: ["Harry Potter", "The Lord of the Rings", "Willow", "Eragon"], answer: 1 },
+      { emoji: "🐠🔍🌊", options: ["Moana", "The Little Mermaid", "Finding Nemo", "Shark Tale"], answer: 2 },
+      { emoji: "🎈🏠👴", options: ["Up", "Home Alone", "Monster House", "The House"], answer: 0 },
+      { emoji: "❄️👭👑", options: ["Ice Age", "Snow White", "Elsa & Anna", "Frozen"], answer: 3 },
+      { emoji: "🦇🃏🌆", options: ["Batman Begins", "The Dark Knight", "Joker", "Gotham"], answer: 1 },
     ],
   },
   {
+    theme: "TV shows",
     rounds: [
-      { options: ["Portuguese", "Spanish", "German", "Italian"], impostor: 2, connection: "Romance languages" },
-      { options: ["Saturn", "Jupiter", "Pluto", "Uranus"], impostor: 2, connection: "Planets - Pluto was demoted in 2006" },
-      { options: ["Cappuccino", "Espresso", "Chai", "Latte"], impostor: 2, connection: "Coffee drinks - chai is tea" },
-      { options: ["Femur", "Tibia", "Bicep", "Fibula"], impostor: 2, connection: "Bones - the bicep is a muscle" },
-      { options: ["Monopoly", "Scrabble", "Uno", "Clue"], impostor: 2, connection: "Board games - Uno is a card game" },
+      { emoji: "🐉👑⚔️", options: ["Vikings", "The Witcher", "Game of Thrones", "Merlin"], answer: 2 },
+      { emoji: "🧪👨‍🏫💵", options: ["Breaking Bad", "Dexter", "Ozark", "Better Call Saul"], answer: 0 },
+      { emoji: "📎🏢📷", options: ["Parks and Recreation", "30 Rock", "Suits", "The Office"], answer: 3 },
+      { emoji: "🦑🎮🔴", options: ["Squid Game", "Alice in Borderland", "The Circle", "Black Mirror"], answer: 0 },
+      { emoji: "👑👸🇬🇧", options: ["Downton Abbey", "The Crown", "Bridgerton", "Victoria"], answer: 1 },
+    ],
+  },
+  {
+    theme: "Say the phrase",
+    rounds: [
+      { emoji: "🌧️🐱🐶", options: ["Raining cats and dogs", "Wet dog smell", "Pet the rain", "Storm chasers"], answer: 0 },
+      { emoji: "🍰🍴", options: ["Sweet tooth", "Piece of cake", "Have your cake", "Cake walk"], answer: 1 },
+      { emoji: "🐘🚪🛋️", options: ["Elephant memory", "White elephant", "The elephant in the room", "Elephant walk"], answer: 2 },
+      { emoji: "🐦🐦🪨", options: ["Bird brain", "Early bird", "Free as a bird", "Two birds, one stone"], answer: 3 },
+      { emoji: "🧊💔", options: ["Ice cold heart", "Break the ice", "Cold shoulder", "Frozen stiff"], answer: 1 },
+    ],
+  },
+  {
+    theme: "Songs",
+    rounds: [
+      { emoji: "💃🌧️", options: ["Umbrella", "Dancing in the Rain", "Singin' in the Rain", "Purple Rain"], answer: 2 },
+      { emoji: "🚀🧑‍🚀🎸", options: ["Rocket Man", "Space Oddity", "Starman", "Man on the Moon"], answer: 0 },
+      { emoji: "👑👸💛", options: ["Royals", "Queen Bee", "Crown of Gold", "Kings & Queens"], answer: 0 },
+      { emoji: "🌉🔥", options: ["London Bridge", "Burning Down the House", "We Didn't Start the Fire", "Burning Bridges"], answer: 3 },
+      { emoji: "🖤💀🎹", options: ["Paint It Black", "Back in Black", "Black Keys", "Bohemian Rhapsody"], answer: 0 },
     ],
   },
 ];
 
 // --- Selection ---------------------------------------------------------------
 
-/** Deterministic pick: same day → same content for every player. */
+/** Deterministic pick: same day -> same content for every player. */
 export function getDualityDaily(date: string): DualityDay {
   return DUALITY_PACK[hashSeed(`duality:${date}`) % DUALITY_PACK.length];
 }
 
-export function getImpostorDaily(date: string): ImpostorDay {
-  return IMPOSTOR_PACK[hashSeed(`impostor:${date}`) % IMPOSTOR_PACK.length];
+export function getWordDaily(date: string): string {
+  return WORD_ANSWERS[hashSeed(`word:${date}`) % WORD_ANSWERS.length];
+}
+
+export function getQuadsDaily(date: string): QuadsDay {
+  return QUADS_PACK[hashSeed(`quads:${date}`) % QUADS_PACK.length];
+}
+
+export function getEmojiDaily(date: string): EmojiDay {
+  return EMOJI_PACK[hashSeed(`emoji:${date}`) % EMOJI_PACK.length];
 }
