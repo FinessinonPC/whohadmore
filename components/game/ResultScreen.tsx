@@ -10,6 +10,7 @@ import { Confetti } from "./Confetti";
 import { ChainTimeline } from "./ChainTimeline";
 import { LivesDisplay } from "./LivesDisplay";
 import { DayStandings } from "./DayStandings";
+import { FormatFeedback } from "./FormatFeedback";
 import { useProfile } from "@/hooks/useProfile";
 import { getSessionId } from "@/lib/playStore";
 import { achievementById, dailyScore, heartsFor } from "@/lib/leaderboard";
@@ -251,6 +252,9 @@ export function ResultScreen({
           <DayStandings date={date} me={{ reached, hearts: heartsFor(lives), timeSeconds, score }} />
         )}
 
+        {/* One-time nudge on the new multi-game format, after a finished game */}
+        {mode === "play" && <FormatFeedback />}
+
         {/* Actions */}
         {mode === "preview" ? (
           <div className="mt-7 flex w-full flex-col gap-2.5">
@@ -265,12 +269,14 @@ export function ResultScreen({
           <div className="mt-7 flex w-full flex-col gap-3">
             <ClaimBlock />
 
-            {/* Push to the archive */}
-            <Link href="/archive" className="contents">
+            {/* Back to the day's hub - the other three games are one tap away */}
+            <Link href={daily ? "/" : `/day/${date}`} className="contents">
               <button className="flex w-full items-center justify-between rounded-2xl bg-cta px-5 py-4 text-left text-background transition-colors hover:opacity-90">
                 <span>
-                  <span className="block text-[15px] font-bold">Play more games</span>
-                  <span className="block text-xs text-white/70">Jump into the archive - every past game is playable</span>
+                  <span className="block text-[15px] font-bold">
+                    {daily ? "Play the rest of today" : "Play the rest of this day"}
+                  </span>
+                  <span className="block text-xs opacity-70">Duality, Word and Mini are waiting</span>
                 </span>
                 <span className="text-xl">→</span>
               </button>

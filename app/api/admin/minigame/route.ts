@@ -4,6 +4,7 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import { isValidISODate } from "@/lib/date";
 import { validateMinigame, type MinigameMode } from "@/lib/minigameSchemas";
+import { getDualityContent, getMiniContent, getWordContent } from "@/lib/minigames";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,17 @@ export async function GET(req: Request) {
         .returns<{ mode: MinigameMode; payload: unknown }[]>();
       const custom: Record<string, unknown> = {};
       for (const row of data ?? []) custom[row.mode] = row.payload;
-      return NextResponse.json({ custom, configured: true });
+      // What the player actually gets that day (custom if saved, else pack).
+      const [duality, word, mini] = await Promise.all([
+        getDualityContent(date),
+        getWordContent(date),
+        getMiniContent(date),
+      ]);
+      return NextResponse.json({
+        custom,
+        effective: { duality, word: { answer: word }, mini },
+        configured: true,
+      });
     }
     if (month && /^\d{4}-\d{2}$/.test(month)) {
       const { data } = await supabase

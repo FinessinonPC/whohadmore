@@ -169,7 +169,7 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
                 >
                   {mode.id === "chain" && (
                     <p className="small-caps mb-1 truncate text-[11px] font-bold opacity-70">
-                      {themeFor(date).name} · {game.topic_label}
+                      {themeFor(date).name}
                     </p>
                   )}
                   <GameWordmark mode={mode.id} className="text-[2.6rem] sm:text-5xl" alt={altFor(mode)} />

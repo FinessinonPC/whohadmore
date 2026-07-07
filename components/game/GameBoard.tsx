@@ -64,10 +64,11 @@ export function GameBoard({
 }: GameBoardProps) {
   // Random-but-stable card order: unique per player (session) and per day, yet
   // reproducible so a resumed game keeps the same order.
+  // Cap the run at 11 cards = 10 decisions, whatever the admin published.
   const cards = useMemo(
     () =>
       avoidAdjacentTies(
-        seededShuffle(game.cards, mulberry32(hashSeed(`${getSessionId()}:${date}`)))
+        seededShuffle(game.cards, mulberry32(hashSeed(`${getSessionId()}:${date}`))).slice(0, 11)
       ),
     [game, date]
   );

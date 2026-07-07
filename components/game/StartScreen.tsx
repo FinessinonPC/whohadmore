@@ -31,7 +31,7 @@ function pickSpread(cards: GameCard[], n: number): GameCard[] {
 }
 
 export function StartScreen({ game, date, gameNumber, resuming = false, onStart }: StartScreenProps) {
-  const rounds = maxScore(game.cards.length);
+  const rounds = maxScore(Math.min(game.cards.length, 11));
   const hero = pickSpread(game.cards, 5);
   const center = (hero.length - 1) / 2;
 

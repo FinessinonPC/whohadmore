@@ -1,16 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Sheet } from "@/components/ui/Sheet";
 import { Button } from "@/components/ui/Button";
 import { adminFetch } from "@/lib/adminClient";
-import { validateMinigame, type MinigameMode } from "@/lib/minigameSchemas";
+import { GameWordmark } from "@/components/ui/GameWordmarks";
+import {
+  deriveMiniSlots,
+  validateMinigame,
+  type MinigameMode,
+} from "@/lib/minigameSchemas";
+import type { DualityDay, MiniDay } from "@/lib/contentPacks";
 
-const MODE_META: { id: MinigameMode; name: string; accent: string; blurb: string }[] = [
-  { id: "duality", name: "Duality", accent: "#06B6D4", blurb: "Two categories, 8 items to sort" },
-  { id: "word", name: "Word", accent: "#FFC400", blurb: "The daily five-letter answer" },
-  { id: "mini", name: "Mini", accent: "#2E6BFF", blurb: "5x5 crossword grid + clues" },
+const MODE_META: { id: MinigameMode; accent: string; blurb: string }[] = [
+  { id: "duality", accent: "#06B6D4", blurb: "8 definitions, 4 hidden pairs" },
+  { id: "word", accent: "#FFC400", blurb: "The daily five-letter answer" },
+  { id: "mini", accent: "#2E6BFF", blurb: "5x5 crossword grid + clues" },
 ];
+
+// The fixed corner-cut layout every Mini uses (matches packs + the AI prompt).
+const MINI_TEMPLATE = ["AAA##", "AAAA#", "AAAAA", "#AAAA", "##AAA"];
 
 const PROMPTS: Record<MinigameMode, string> = {
   duality: `You are a puzzle editor at the level of the NYT Games desk, writing today's "Duality" - a daily pairing game with a devoted audience. Players see EIGHT short definitions, shuffled. Hidden among them are FOUR PAIRS: each pair is two definitions of the SAME word with two unrelated meanings ("Place that holds your money" + "The side of a river" = BANK). Players tap two that go together; matches reveal the word.
@@ -97,29 +106,52 @@ function extractJson(raw: string): unknown | null {
   return null;
 }
 
+interface Effective {
+  duality?: DualityDay;
+  word?: { answer: string };
+  mini?: MiniDay;
+}
+
 /**
- * Admin panel for the three pack games on a given date. Each game shows
- * whether the day runs on CUSTOM content or the AUTO pack rotation, with the
- * same copy-prompt / paste-JSON AI flow as the chain game. Pasted content is
- * validated hard (Mini grids are re-verified letter by letter) before saving.
+ * Admin control for the three quick games on a date. Every game shows its
+ * ACTUAL content for the day (custom or auto pack), can be previewed on the
+ * real page, and edited two ways: a structured form (no JSON in sight) or
+ * the copy-prompt/paste-JSON AI flow. Everything validates hard before save.
  */
 export function MinigamesPanel({ date }: { date: string }) {
   const [custom, setCustom] = useState<Record<string, unknown>>({});
+  const [effective, setEffective] = useState<Effective>({});
   const [notice, setNotice] = useState<string | null>(null);
   const [sheetMode, setSheetMode] = useState<MinigameMode | null>(null);
-  const [text, setText] = useState("");
+  const [tab, setTab] = useState<"form" | "ai">("form");
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [aiText, setAiText] = useState("");
+
+  // Form state
+  const [pairs, setPairs] = useState<{ word: string; a: string; b: string }[]>([]);
+  const [answer, setAnswer] = useState("");
+  const [grid, setGrid] = useState<string[][]>(() =>
+    Array.from({ length: 5 }, () => Array(5).fill(""))
+  );
+  const [clues, setClues] = useState<Record<string, string>>({});
+
+  const miniSlots = useMemo(() => deriveMiniSlots(MINI_TEMPLATE), []);
 
   const load = useCallback(async () => {
     try {
       const res = await adminFetch(`/api/admin/minigame?date=${date}`);
-      const data = (await res.json()) as { custom?: Record<string, unknown>; error?: string; detail?: string };
+      const data = (await res.json()) as {
+        custom?: Record<string, unknown>;
+        effective?: Effective;
+        error?: string;
+      };
       setCustom(data.custom ?? {});
+      setEffective(data.effective ?? {});
       setNotice(
         data.error === "query_failed"
-          ? "daily_minigames table not found - run supabase/migrations/0005_daily_minigames.sql, then custom days will save."
+          ? "daily_minigames table not found - run supabase/migrations/0005_daily_minigames.sql to save custom days."
           : null
       );
     } catch {
@@ -131,25 +163,74 @@ export function MinigamesPanel({ date }: { date: string }) {
     void load();
   }, [load]);
 
-  async function copyPrompt() {
-    if (!sheetMode) return;
-    try {
-      await navigator.clipboard.writeText(PROMPTS[sheetMode]);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    } catch {
-      /* prompt is visible to copy manually */
+  /** Prefill the form from the day's effective content. */
+  function openEditor(mode: MinigameMode) {
+    setSheetMode(mode);
+    setTab("form");
+    setError(null);
+    setAiText("");
+    if (mode === "duality") {
+      const d = effective.duality;
+      setPairs(
+        d?.pairs.map((p) => ({ word: p.word, a: p.defs[0], b: p.defs[1] })) ??
+          Array.from({ length: 4 }, () => ({ word: "", a: "", b: "" }))
+      );
+    } else if (mode === "word") {
+      setAnswer(effective.word?.answer ?? "");
+    } else {
+      const m = effective.mini;
+      const matchesTemplate =
+        m &&
+        m.rows.every((row, r) =>
+          row.split("").every((ch, c) => (ch === "#") === (MINI_TEMPLATE[r][c] === "#"))
+        );
+      setGrid(
+        Array.from({ length: 5 }, (_, r) =>
+          Array.from({ length: 5 }, (_, c) =>
+            MINI_TEMPLATE[r][c] === "#" ? "#" : matchesTemplate ? m!.rows[r][c] : ""
+          )
+        )
+      );
+      const cl: Record<string, string> = {};
+      if (matchesTemplate && m) {
+        for (const s of m.across) cl[`${s.num}A`] = s.clue;
+        for (const s of m.down) cl[`${s.num}D`] = s.clue;
+      }
+      setClues(cl);
     }
   }
 
+  /** Build the payload from whichever tab is active, validate, save. */
   async function save() {
     if (!sheetMode) return;
-    const raw = extractJson(text);
-    if (!raw) {
-      setError("Couldn't parse that. Paste the raw JSON the model returned.");
-      return;
+    let payload: unknown;
+    if (tab === "ai") {
+      payload = extractJson(aiText);
+      if (!payload) {
+        setError("Couldn't parse that. Paste the raw JSON the model returned.");
+        return;
+      }
+    } else if (sheetMode === "duality") {
+      payload = { pairs: pairs.map((p) => ({ word: p.word, defs: [p.a, p.b] })) };
+    } else if (sheetMode === "word") {
+      payload = { answer };
+    } else {
+      const rows = grid.map((row) => row.map((ch) => (ch === "" ? "?" : ch)).join(""));
+      payload = {
+        rows,
+        across: miniSlots.across.map((s) => ({
+          ...s,
+          clue: clues[`${s.num}A`] ?? "",
+          answer: Array.from({ length: s.len }, (_, i) => grid[s.row][s.col + i]).join(""),
+        })),
+        down: miniSlots.down.map((s) => ({
+          ...s,
+          clue: clues[`${s.num}D`] ?? "",
+          answer: Array.from({ length: s.len }, (_, i) => grid[s.row + i][s.col]).join(""),
+        })),
+      };
     }
-    const v = validateMinigame(sheetMode, raw);
+    const v = validateMinigame(sheetMode, payload);
     if (!v.ok) {
       setError(v.error);
       return;
@@ -165,8 +246,6 @@ export function MinigamesPanel({ date }: { date: string }) {
         setError(data.error ?? "Save failed.");
         return;
       }
-      setText("");
-      setError(null);
       setSheetMode(null);
       await load();
     } finally {
@@ -183,10 +262,32 @@ export function MinigamesPanel({ date }: { date: string }) {
     await load();
   }
 
+  async function copyPrompt() {
+    if (!sheetMode) return;
+    try {
+      await navigator.clipboard.writeText(PROMPTS[sheetMode]);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* prompt is visible to copy manually */
+    }
+  }
+
+  /** One-line summary of the day's effective content per game. */
+  function summary(mode: MinigameMode): string {
+    if (mode === "duality")
+      return effective.duality?.pairs.map((p) => p.word).join(" · ") ?? "…";
+    if (mode === "word") return effective.word?.answer ?? "…";
+    const m = effective.mini;
+    return m ? `${m.across[0]?.answer ?? ""} … ${m.down[m.down.length - 1]?.answer ?? ""} (${m.across.length + m.down.length} clues)` : "…";
+  }
+
+  const previewHref = (mode: MinigameMode) => `/${mode}/${date}`;
+
   return (
-    <section className="mt-8 rounded-2xl border border-border bg-surface/50 p-5">
+    <section className="rounded-2xl border border-border bg-surface/50 p-5" id="quick-games">
       <div className="flex items-baseline justify-between">
-        <h2 className="text-lg font-extrabold text-ink">The other daily games</h2>
+        <h2 className="text-lg font-extrabold text-ink">The quick games</h2>
         <span className="text-[11px] font-semibold text-ink-secondary">
           Auto = pack rotation · Custom = this day only
         </span>
@@ -201,89 +302,203 @@ export function MinigamesPanel({ date }: { date: string }) {
         {MODE_META.map((m) => {
           const isCustom = Boolean(custom[m.id]);
           return (
-            <div
-              key={m.id}
-              className="flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3"
-            >
-              <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: m.accent }} />
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-extrabold text-ink">{m.name}</span>
-                <span className="block truncate text-xs text-ink-secondary">{m.blurb}</span>
-              </span>
-              <span
-                className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
-                  isCustom
-                    ? "border-correct/40 bg-correct/10 text-correct"
-                    : "border-border bg-surface text-ink-secondary"
-                }`}
-              >
-                {isCustom ? "Custom" : "Auto"}
-              </span>
-              {isCustom && (
-                <button
-                  onClick={() => void clear(m.id)}
-                  className="shrink-0 text-xs font-semibold text-ink-secondary hover:text-wrong"
+            <div key={m.id} className="rounded-xl border border-border bg-background px-4 py-3">
+              <div className="flex items-center gap-3">
+                <span className="w-20 shrink-0" style={{ color: m.accent }}>
+                  <GameWordmark mode={m.id} className="text-lg" />
+                </span>
+                <span
+                  className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                    isCustom
+                      ? "border-correct/40 bg-correct/10 text-correct"
+                      : "border-border bg-surface text-ink-secondary"
+                  }`}
                 >
-                  Remove
-                </button>
-              )}
-              <Button
-                size="sm"
-                variant="secondary"
-                className="shrink-0"
-                onClick={() => {
-                  setSheetMode(m.id);
-                  setText("");
-                  setError(null);
-                }}
-              >
-                {isCustom ? "Replace" : "Generate with AI"}
-              </Button>
+                  {isCustom ? "Custom" : "Auto"}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-right text-xs font-semibold text-ink-secondary">
+                  {summary(m.id)}
+                </span>
+              </div>
+              <div className="mt-2.5 flex items-center gap-2">
+                <Button size="sm" variant="secondary" onClick={() => openEditor(m.id)}>
+                  View &amp; edit
+                </Button>
+                <a
+                  href={previewHref(m.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-2xl bg-surface px-3 py-2 text-sm font-bold text-ink transition-colors hover:bg-border/40"
+                >
+                  Preview ↗
+                </a>
+                {isCustom && (
+                  <button
+                    onClick={() => void clear(m.id)}
+                    className="ml-auto text-xs font-semibold text-ink-secondary hover:text-wrong"
+                  >
+                    Revert to auto
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
+      <p className="mt-3 text-[11px] text-ink-secondary">
+        Preview opens the page players see. Edits apply after saving.
+      </p>
 
       <Sheet open={sheetMode !== null} onClose={() => setSheetMode(null)}>
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-extrabold text-ink">
-            {sheetMode && MODE_META.find((m) => m.id === sheetMode)?.name} · {date}
-          </h2>
-          <Button variant="ghost" size="sm" onClick={copyPrompt}>
-            {copied ? "Copied" : "Copy prompt"}
-          </Button>
-        </div>
-        <p className="mt-1 text-sm text-ink-secondary">
-          Copy this into your favorite model, then paste its JSON back here. Everything is
-          validated hard before saving{sheetMode === "mini" ? " - bad crossings are rejected with the exact reason" : ""}.
-        </p>
-
         {sheetMode && (
-          <pre className="mt-4 max-h-44 overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-surface p-3 text-[11px] leading-relaxed text-ink-secondary">
-            {PROMPTS[sheetMode]}
-          </pre>
+          <>
+            <div className="flex items-center justify-between">
+              <span style={{ color: MODE_META.find((m) => m.id === sheetMode)?.accent }}>
+                <GameWordmark mode={sheetMode} className="text-2xl" />
+              </span>
+              <div className="inline-flex rounded-full bg-surface p-1">
+                {(["form", "ai"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTab(t)}
+                    className={`rounded-full px-3.5 py-1 text-xs font-bold transition-colors ${
+                      tab === t ? "bg-background text-ink shadow-sm" : "text-ink-secondary"
+                    }`}
+                  >
+                    {t === "form" ? "Edit" : "AI"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {tab === "form" ? (
+              <div className="mt-4">
+                {sheetMode === "duality" && (
+                  <div className="flex flex-col gap-3">
+                    {pairs.map((p, i) => (
+                      <div key={i} className="rounded-xl border border-border bg-surface p-3">
+                        <div className="flex items-center gap-2">
+                          <span className="small-caps text-[10px] font-bold text-ink-secondary">
+                            Pair {i + 1} {i === 0 ? "(easiest)" : i === 3 ? "(hardest)" : ""}
+                          </span>
+                          <input
+                            value={p.word}
+                            onChange={(e) =>
+                              setPairs((ps) => ps.map((x, xi) => (xi === i ? { ...x, word: e.target.value.toUpperCase() } : x)))
+                            }
+                            placeholder="WORD"
+                            className="editor-input !h-8 !w-32 font-condensed uppercase"
+                          />
+                        </div>
+                        <input
+                          value={p.a}
+                          onChange={(e) => setPairs((ps) => ps.map((x, xi) => (xi === i ? { ...x, a: e.target.value } : x)))}
+                          placeholder="First meaning (3-6 words)"
+                          className="editor-input mt-2"
+                        />
+                        <input
+                          value={p.b}
+                          onChange={(e) => setPairs((ps) => ps.map((x, xi) => (xi === i ? { ...x, b: e.target.value } : x)))}
+                          placeholder="Second meaning (3-6 words)"
+                          className="editor-input mt-2"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {sheetMode === "word" && (
+                  <div>
+                    <label className="small-caps block text-[10px] text-ink-secondary">
+                      Today&apos;s five-letter answer
+                    </label>
+                    <input
+                      value={answer}
+                      onChange={(e) => setAnswer(e.target.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 5))}
+                      placeholder="STORM"
+                      className="editor-input mt-1 font-condensed text-2xl uppercase tracking-[0.3em]"
+                    />
+                  </div>
+                )}
+
+                {sheetMode === "mini" && (
+                  <div>
+                    <div className="mx-auto grid w-full max-w-[240px] grid-cols-5 gap-1">
+                      {grid.map((row, r) =>
+                        row.map((ch, c) =>
+                          MINI_TEMPLATE[r][c] === "#" ? (
+                            <div key={`${r},${c}`} className="aspect-square rounded bg-black" />
+                          ) : (
+                            <input
+                              key={`${r},${c}`}
+                              value={ch}
+                              onChange={(e) => {
+                                const v = e.target.value.toUpperCase().replace(/[^A-Z]/g, "").slice(-1);
+                                setGrid((g) => g.map((rw, ri) => rw.map((cc, ci) => (ri === r && ci === c ? v : cc))));
+                              }}
+                              maxLength={2}
+                              className="aspect-square rounded border border-border bg-surface text-center font-condensed text-lg font-semibold uppercase text-ink outline-none focus:border-ink"
+                            />
+                          )
+                        )
+                      )}
+                    </div>
+                    <div className="mt-4 grid gap-1.5">
+                      {[...miniSlots.across.map((s) => ({ ...s, dir: "A" })), ...miniSlots.down.map((s) => ({ ...s, dir: "D" }))].map(
+                        (s) => (
+                          <div key={`${s.num}${s.dir}`} className="flex items-center gap-2">
+                            <span className="w-8 shrink-0 font-condensed text-sm font-semibold text-ink-secondary">
+                              {s.num}
+                              {s.dir}
+                            </span>
+                            <input
+                              value={clues[`${s.num}${s.dir}`] ?? ""}
+                              onChange={(e) => setClues((c) => ({ ...c, [`${s.num}${s.dir}`]: e.target.value }))}
+                              placeholder={`Clue for ${Array.from({ length: s.len }, (_, i) =>
+                                s.dir === "A" ? grid[s.row][s.col + i] || "·" : grid[s.row + i][s.col] || "·"
+                              ).join("")}`}
+                              className="editor-input !h-9"
+                            />
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mt-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-ink-secondary">Copy the prompt, paste the model&apos;s JSON.</p>
+                  <Button variant="ghost" size="sm" onClick={() => void copyPrompt()}>
+                    {copied ? "Copied" : "Copy prompt"}
+                  </Button>
+                </div>
+                <pre className="mt-3 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-surface p-3 text-[11px] leading-relaxed text-ink-secondary">
+                  {PROMPTS[sheetMode]}
+                </pre>
+                <textarea
+                  value={aiText}
+                  onChange={(e) => setAiText(e.target.value)}
+                  rows={5}
+                  placeholder="{ … }"
+                  className="mt-3 w-full resize-y rounded-xl border border-border bg-surface p-3 font-mono text-xs outline-none focus:border-ink"
+                />
+              </div>
+            )}
+
+            {error && <p className="mt-2 text-xs font-semibold text-wrong">{error}</p>}
+
+            <div className="mt-5 grid grid-cols-2 gap-2.5">
+              <Button variant="ghost" onClick={() => setSheetMode(null)}>
+                Cancel
+              </Button>
+              <Button onClick={() => void save()} disabled={busy || (tab === "ai" && !aiText.trim())}>
+                {busy ? "Saving…" : "Validate & Save"}
+              </Button>
+            </div>
+          </>
         )}
-
-        <label className="mt-5 block small-caps text-[10px] text-ink-secondary">
-          Paste AI response here
-        </label>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={6}
-          placeholder='{ … }'
-          className="mt-1 w-full resize-y rounded-xl border border-border bg-surface p-3 font-mono text-xs outline-none focus:border-ink"
-        />
-        {error && <p className="mt-1 text-xs font-semibold text-wrong">{error}</p>}
-
-        <div className="mt-5 grid grid-cols-2 gap-2.5">
-          <Button variant="ghost" onClick={() => setSheetMode(null)}>
-            Cancel
-          </Button>
-          <Button onClick={() => void save()} disabled={!text.trim() || busy}>
-            {busy ? "Saving…" : "Validate & Save"}
-          </Button>
-        </div>
       </Sheet>
     </section>
   );

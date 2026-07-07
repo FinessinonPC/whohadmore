@@ -41,7 +41,7 @@ science (animal top speeds, gestation lengths, planet day-lengths, boiling point
 fun culture trivia (episode counts of shows, runtime of films, words in a song).
 
 Build it well:
-- 16 entities, real and verifiable, ACCURATE values, all the SAME unit/scale.
+- EXACTLY 11 entities, real and verifiable, ACCURATE values, all the SAME unit/scale.
 - Order the cards RANDOMLY (not sorted by value).
 - Use exact Wikipedia article titles as entity_name so images auto-populate.
 
@@ -54,7 +54,7 @@ Return ONLY this JSON - no explanation, no markdown fences:
   "description": "string",        // 1-2 sentence SEO blurb: what this puzzle compares and why it's surprising. Natural and search-friendly, no hype.
   "cards": [
     { "entity_name": "string", "stat_value": number }
-    // 16 total
+    // 11 total
   ]
 }`;
 
