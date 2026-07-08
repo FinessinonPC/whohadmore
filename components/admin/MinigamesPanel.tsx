@@ -10,6 +10,7 @@ import {
   validateMinigame,
   type MinigameMode,
 } from "@/lib/minigameSchemas";
+import { MINI_SKELETONS, findMatchingSkeleton, type MiniSkeleton } from "@/lib/miniSkeletons";
 import type { DualityDay, MiniDay } from "@/lib/contentPacks";
 
 const MODE_META: { id: MinigameMode; accent: string; blurb: string }[] = [
@@ -18,10 +19,7 @@ const MODE_META: { id: MinigameMode; accent: string; blurb: string }[] = [
   { id: "mini", accent: "#2E6BFF", blurb: "5x5 crossword grid + clues" },
 ];
 
-// The fixed corner-cut layout every Mini uses (matches packs + the AI prompt).
-const MINI_TEMPLATE = ["AAA##", "AAAA#", "AAAAA", "#AAAA", "##AAA"];
-
-const PROMPTS: Record<MinigameMode, string> = {
+const PROMPTS: Record<"duality" | "word", string> = {
   duality: `You are a puzzle editor at the level of the NYT Games desk, writing today's "Duality" - a daily pairing game with a devoted audience. Players see EIGHT short definitions, shuffled. Hidden among them are FOUR PAIRS: each pair is two definitions of the SAME word with two unrelated meanings ("Place that holds your money" + "The side of a river" = BANK). Players tap two that go together; matches reveal the word.
 
 Editorial bar (what makes a great day):
@@ -49,43 +47,56 @@ Editorial bar:
 
 Return ONLY this JSON, no markdown fences:
 { "answer": "STORM" }`,
-  mini: `You are a crossword constructor for a daily mini with NYT-Mini standards: a clean fill of everyday words and clues with a wink. Create ONE 5x5 mini crossword. You MUST use EXACTLY this black-square layout ('#' = black, letters elsewhere):
+};
 
-Row 1: letters at columns 1-3, '#' at columns 4-5   -> "ABC##"
-Row 2: letters at columns 1-4, '#' at column 5      -> "ABCD#"
-Row 3: letters at all 5 columns                     -> "ABCDE"
-Row 4: '#' at column 1, letters at columns 2-5      -> "#ABCD"
-Row 5: '#' at columns 1-2, letters at columns 3-5   -> "##ABC"
+/**
+ * The Mini prompt is generated from whichever skeleton is selected, instead of
+ * hardcoded - so the grid diagram, the slot coordinates, and the JSON schema
+ * the AI sees always agree with each other (and with the manual grid editor)
+ * by construction. Fixing the black-square layout is the actual unlock: the
+ * AI only ever has to fill words into a pre-solved shape, never invent one.
+ */
+function miniPromptFor(skeleton: MiniSkeleton): string {
+  const { across, down } = deriveMiniSlots(skeleton.rows);
+  const acrossList = across.map((s) => `${s.num}A row${s.row} col${s.col} len${s.len}`).join(" · ");
+  const downList = down.map((s) => `${s.num}D row${s.row} col${s.col} len${s.len}`).join(" · ");
+  const jsonSlot = (s: { num: number; row: number; col: number; len: number }) =>
+    `    { "num": ${s.num}, "row": ${s.row}, "col": ${s.col}, "len": ${s.len}, "clue": "...", "answer": "..." }`;
 
-The slots are FIXED (0-indexed row/col):
-ACROSS: 1A row0 col0 len3 · 4A row1 col0 len4 · 6A row2 col0 len5 · 8A row3 col1 len4 · 9A row4 col2 len3
-DOWN:   1D row0 col0 len3 · 2D row0 col1 len4 · 3D row0 col2 len5 · 5D row1 col3 len4 · 7D row2 col4 len3
+  return `You are a crossword constructor building ONE 5x5 mini crossword with NYT-Mini standards: a clean fill of everyday words and clues with a wink. The grid layout below is ALREADY DECIDED - do not change it, do not invent black-square placement. Your only job is choosing words that fit the fixed slots and writing clues for them.
 
-Hard rules:
-1) EVERY across AND down entry must be a real, common English word (no abbreviations, no proper nouns, no obscure crossword-ese). The 10 words must all be different.
-2) Double-check every DOWN word letter-by-letter against your grid before answering - a single wrong crossing invalidates the puzzle. Write the grid out, then verify each column spells its down answer.
-3) Clues read like a good Monday: short, fair, and warm - a small smile beats a groan. Clue the MEANING players know best; misdirection is welcome only if the answer still feels fair.
-4) Prefer lively fill (OCEAN, TANGO, CRISP) over flat glue words when the grid allows.
+GRID (# = black square, letters go everywhere else):
+${skeleton.rows.join("\n")}
+
+FIXED SLOTS (0-indexed row/col - use these exact numbers/positions):
+ACROSS: ${acrossList}
+DOWN:   ${downList}
+
+METHOD - follow these steps in order, don't skip ahead to clue-writing:
+1. Choose the ACROSS words first (real, common, everyday English words - no abbreviations, no proper nouns, no crossword-ese). Write them out.
+2. For each DOWN slot, list the letters your across words already lock in at every intersecting cell. Do this for every down slot before picking any down word.
+3. Find a word for every DOWN slot that satisfies ALL of its locked letters simultaneously. If no common word fits a slot's constraints, go back to step 1 and swap ONE across word - don't restart from scratch, just change the word causing the conflict.
+4. Write out the finished grid as 5 literal rows of text.
+5. VERIFY: read each down answer straight off the grid you just wrote (top-to-bottom in its column) and compare it letter-by-letter to what you intended. If even one letter is off, fix the grid now, before answering - a single wrong crossing invalidates the whole puzzle.
+6. Only now write the clues: short, fair, and warm - a small smile beats a groan. Clue the meaning players know best. Never let a clue contain the answer word itself. The 10 words must all be different.
 
 Return ONLY this JSON, no markdown fences (rows use UPPERCASE letters and '#'):
 {
   "rows": ["...", "...", "...", "...", "..."],
   "across": [
-    { "num": 1, "row": 0, "col": 0, "len": 3, "clue": "...", "answer": "..." },
-    { "num": 4, "row": 1, "col": 0, "len": 4, "clue": "...", "answer": "..." },
-    { "num": 6, "row": 2, "col": 0, "len": 5, "clue": "...", "answer": "..." },
-    { "num": 8, "row": 3, "col": 1, "len": 4, "clue": "...", "answer": "..." },
-    { "num": 9, "row": 4, "col": 2, "len": 3, "clue": "...", "answer": "..." }
+${across.map(jsonSlot).join(",\n")}
   ],
   "down": [
-    { "num": 1, "row": 0, "col": 0, "len": 3, "clue": "...", "answer": "..." },
-    { "num": 2, "row": 0, "col": 1, "len": 4, "clue": "...", "answer": "..." },
-    { "num": 3, "row": 0, "col": 2, "len": 5, "clue": "...", "answer": "..." },
-    { "num": 5, "row": 1, "col": 3, "len": 4, "clue": "...", "answer": "..." },
-    { "num": 7, "row": 2, "col": 4, "len": 3, "clue": "...", "answer": "..." }
+${down.map(jsonSlot).join(",\n")}
   ]
-}`,
-};
+}`;
+}
+
+/** duality/word have one fixed prompt; mini's depends on the chosen skeleton. */
+function promptFor(mode: MinigameMode, skeleton: MiniSkeleton): string {
+  if (mode === "mini") return miniPromptFor(skeleton);
+  return PROMPTS[mode];
+}
 
 /** Tolerant JSON extraction (same spirit as the chain game's AI panel). */
 function extractJson(raw: string): unknown | null {
@@ -132,12 +143,24 @@ export function MinigamesPanel({ date }: { date: string }) {
   // Form state
   const [pairs, setPairs] = useState<{ word: string; a: string; b: string }[]>([]);
   const [answer, setAnswer] = useState("");
+  const [skeletonId, setSkeletonId] = useState(MINI_SKELETONS[0].id);
+  const skeleton = useMemo(
+    () => MINI_SKELETONS.find((s) => s.id === skeletonId) ?? MINI_SKELETONS[0],
+    [skeletonId]
+  );
   const [grid, setGrid] = useState<string[][]>(() =>
     Array.from({ length: 5 }, () => Array(5).fill(""))
   );
   const [clues, setClues] = useState<Record<string, string>>({});
 
-  const miniSlots = useMemo(() => deriveMiniSlots(MINI_TEMPLATE), []);
+  const miniSlots = useMemo(() => deriveMiniSlots(skeleton.rows), [skeleton]);
+
+  /** Blank grid for a skeleton: black squares pre-filled, everything else empty. */
+  function blankGrid(sk: MiniSkeleton): string[][] {
+    return Array.from({ length: 5 }, (_, r) =>
+      Array.from({ length: 5 }, (_, c) => (sk.rows[r][c] === "#" ? "#" : ""))
+    );
+  }
 
   const load = useCallback(async () => {
     try {
@@ -179,25 +202,34 @@ export function MinigamesPanel({ date }: { date: string }) {
       setAnswer(effective.word?.answer ?? "");
     } else {
       const m = effective.mini;
-      const matchesTemplate =
-        m &&
-        m.rows.every((row, r) =>
-          row.split("").every((ch, c) => (ch === "#") === (MINI_TEMPLATE[r][c] === "#"))
-        );
+      // Detect which skeleton the day's actual content uses (by black-square
+      // shape) so editing an existing custom Mini opens on the right layout,
+      // pre-filled. New/unrecognized shapes default to the first skeleton.
+      const matched = m ? findMatchingSkeleton(m.rows) : undefined;
+      const useSkeleton = matched ?? MINI_SKELETONS[0];
+      setSkeletonId(useSkeleton.id);
       setGrid(
         Array.from({ length: 5 }, (_, r) =>
           Array.from({ length: 5 }, (_, c) =>
-            MINI_TEMPLATE[r][c] === "#" ? "#" : matchesTemplate ? m!.rows[r][c] : ""
+            useSkeleton.rows[r][c] === "#" ? "#" : matched && m ? m.rows[r][c] : ""
           )
         )
       );
       const cl: Record<string, string> = {};
-      if (matchesTemplate && m) {
+      if (matched && m) {
         for (const s of m.across) cl[`${s.num}A`] = s.clue;
         for (const s of m.down) cl[`${s.num}D`] = s.clue;
       }
       setClues(cl);
     }
+  }
+
+  /** Switch grid shape mid-edit: reset to a blank grid for the new skeleton. */
+  function changeSkeleton(sk: MiniSkeleton) {
+    if (sk.id === skeletonId) return;
+    setSkeletonId(sk.id);
+    setGrid(blankGrid(sk));
+    setClues({});
   }
 
   /** Build the payload from whichever tab is active, validate, save. */
@@ -265,7 +297,7 @@ export function MinigamesPanel({ date }: { date: string }) {
   async function copyPrompt() {
     if (!sheetMode) return;
     try {
-      await navigator.clipboard.writeText(PROMPTS[sheetMode]);
+      await navigator.clipboard.writeText(promptFor(sheetMode, skeleton));
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
@@ -372,6 +404,25 @@ export function MinigamesPanel({ date }: { date: string }) {
               </div>
             </div>
 
+            {sheetMode === "mini" && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {MINI_SKELETONS.map((sk) => (
+                  <button
+                    key={sk.id}
+                    onClick={() => changeSkeleton(sk)}
+                    className={`rounded-xl border px-3 py-2 text-left transition-colors ${
+                      skeletonId === sk.id
+                        ? "border-ink bg-background"
+                        : "border-border bg-surface hover:border-ink/30"
+                    }`}
+                  >
+                    <span className="block text-xs font-bold text-ink">{sk.label}</span>
+                    <span className="block text-[10px] text-ink-secondary">{sk.hint}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             {tab === "form" ? (
               <div className="mt-4">
                 {sheetMode === "duality" && (
@@ -427,7 +478,7 @@ export function MinigamesPanel({ date }: { date: string }) {
                     <div className="mx-auto grid w-full max-w-[240px] grid-cols-5 gap-1">
                       {grid.map((row, r) =>
                         row.map((ch, c) =>
-                          MINI_TEMPLATE[r][c] === "#" ? (
+                          skeleton.rows[r][c] === "#" ? (
                             <div key={`${r},${c}`} className="aspect-square rounded bg-black" />
                           ) : (
                             <input
@@ -476,7 +527,7 @@ export function MinigamesPanel({ date }: { date: string }) {
                   </Button>
                 </div>
                 <pre className="mt-3 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-surface p-3 text-[11px] leading-relaxed text-ink-secondary">
-                  {PROMPTS[sheetMode]}
+                  {promptFor(sheetMode, skeleton)}
                 </pre>
                 <textarea
                   value={aiText}
