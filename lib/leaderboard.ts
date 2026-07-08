@@ -187,7 +187,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: "all_rounder", label: "The Full Sweep", description: "Play all four games in one day.", icon: "🃏" },
   { id: "duality_perfect", label: "Mind Reader", description: "Solve Duality without a single mistake.", icon: "🧠" },
   { id: "word_ace", label: "Third Try's a Charm", description: "Solve Word in three guesses or fewer.", icon: "✍️" },
-  { id: "mini_clean", label: "Ink Only", description: "Solve the Mini clean on your first check.", icon: "🖋️" },
+  { id: "mini_clean", label: "Ink Only", description: "Solve the Mini without using Check.", icon: "🖋️" },
 ];
 
 const ACHIEVEMENT_BY_ID = new Map(ACHIEVEMENTS.map((a) => [a.id, a]));
