@@ -56,19 +56,22 @@ export const WORD_MAX_GUESSES = 6;
 /** Points by number of guesses used (index 0 = solved in 1). Fail = 0. */
 export const WORD_POINTS = [1000, 900, 800, 700, 600, 500];
 
-/** Mini crossword (0–1000): time is the main driver. A solve base + a big speed
- *  bonus (only a fast solve reaches 1000), minus a penalty per Check. Reveal = 0.
- *  e.g. a clean 40s solve ≈ 800; a clean 70s solve ≈ 600. */
+/** Mini crossword (0–1000): a solve base + a speed bonus, minus a penalty per
+ *  Check. Full speed bonus for a solve within par (45s), tapering off after
+ *  that. Reveal = 0. e.g. a clean solve ≤45s = 1000; ~90s ≈ 900; very slow = 800. */
 export const MINI_MAX_POINTS = 1000;
 export const MINI_CHECK_PENALTY = 100;
 export const MINI_MIN_SCORE = 300; // floor for a solve
-const MINI_SOLVE_BASE = 400;
-const MINI_SPEED_BONUS = 600;
-const MINI_FAST_SECONDS = 10; // <= this => full speed bonus
-const MINI_SLOW_SECONDS = 100; // >= this => no speed bonus
+const MINI_SOLVE_BASE = 800;
+const MINI_SPEED_BONUS = 200;
+const MINI_PAR_SECONDS = 45;
 
 export function miniScore(checks: number, timeSeconds = 0): number {
-  const speed = Math.round(MINI_SPEED_BONUS * timeFactor(timeSeconds, MINI_FAST_SECONDS, MINI_SLOW_SECONDS));
+  const factor =
+    !Number.isFinite(timeSeconds) || timeSeconds <= 0
+      ? 1
+      : Math.min(1, MINI_PAR_SECONDS / timeSeconds);
+  const speed = Math.round(MINI_SPEED_BONUS * factor);
   return Math.max(
     MINI_MIN_SCORE,
     Math.min(MINI_MAX_POINTS, MINI_SOLVE_BASE - checks * MINI_CHECK_PENALTY + speed)

@@ -291,12 +291,12 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
   }
 
   return (
-    <GameShell mode="mini" date={date}>
-      <div className="flex flex-1 flex-col md:flex-row md:items-start md:justify-center md:gap-8">
+    <GameShell mode="mini" date={date} wide>
+      <div className="flex flex-1 flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-10">
         {/* LEFT: timer, grid, and play controls */}
-        <div className="flex w-full flex-1 flex-col md:max-w-[380px]">
+        <div className="flex w-full flex-1 flex-col lg:max-w-[460px]">
         {/* live timer - solving faster scores more */}
-        <div className="mx-auto mb-2 flex w-full max-w-[300px] items-center justify-between">
+        <div className="mx-auto mb-2 flex w-full max-w-[300px] items-center justify-between lg:max-w-[460px]">
           <span className="small-caps text-[11px] text-ink-secondary">Speed counts</span>
           <span
             className="font-condensed text-lg font-semibold tabular text-ink"
@@ -307,7 +307,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
         </div>
 
         {/* grid */}
-        <div className="mx-auto grid w-full max-w-[300px] grid-cols-5 gap-1">
+        <div className="mx-auto grid w-full max-w-[300px] grid-cols-5 gap-1 lg:max-w-[460px] lg:gap-2">
           {rows.map((row, r) =>
             row.split("").map((solutionCh, c) => {
               if (solutionCh === "#")
@@ -327,7 +327,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                       if (!slotFor(r, c, dir)) setDir((d) => (d === "A" ? "D" : "A"));
                     }
                   }}
-                  className="relative flex aspect-square items-center justify-center rounded-md font-condensed text-xl font-semibold uppercase transition-colors"
+                  className="relative flex aspect-square items-center justify-center rounded-md font-condensed text-xl font-semibold uppercase transition-colors lg:rounded-lg lg:text-4xl"
                   style={{
                     background: isActive ? ACCENT : inWord ? `${ACCENT}33` : "rgb(var(--surface))",
                     color: isActive
@@ -343,7 +343,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                 >
                   {num && (
                     <span
-                      className="absolute left-0.5 top-0 text-[8px] font-bold opacity-60"
+                      className="absolute left-0.5 top-0 text-[8px] font-bold opacity-60 lg:left-1 lg:text-[11px]"
                       style={{ color: isActive ? "#FFFFFF" : "rgb(var(--ink-2))" }}
                     >
                       {num}
@@ -380,7 +380,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
             </p>
           </div>
         ) : (
-          <div className="mx-auto mt-4 flex w-full max-w-[340px] items-stretch gap-1.5 md:hidden">
+          <div className="mx-auto mt-4 flex w-full max-w-[340px] items-stretch gap-1.5 lg:hidden">
             <button
               onClick={() => gotoSlot(-1)}
               aria-label="Previous clue"
@@ -417,8 +417,8 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
             <NextGameCTA date={date} current="mini" />
           ) : (
             <div className="mx-auto flex w-full max-w-[430px] flex-col gap-1.5">
-              {/* On-screen keyboard - mobile only; desktop types on the real keyboard */}
-              <div className="flex flex-col gap-1.5 md:hidden">
+              {/* On-screen keyboard - touch only; desktop types on the real keyboard */}
+              <div className="flex flex-col gap-1.5 lg:hidden">
                 {KEY_ROWS.map((row, i) => (
                   <div key={i} className="flex justify-center gap-1.5">
                     {row.split("").map((k) => (
@@ -462,13 +462,13 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
         </div>
         </div>
 
-        {/* RIGHT: the full clue list on desktop, active clue highlighted. Mobile
-            keeps the single clue bar above, so this is desktop-only. */}
+        {/* RIGHT: the full clue list on desktop, active clue highlighted. Touch
+            devices keep the single clue bar above, so this is desktop-only. */}
         {!done && (
-          <div className="hidden md:block md:w-72 md:shrink-0 md:pt-9">
+          <div className="hidden lg:block lg:w-80 lg:shrink-0 lg:pt-10">
             {(["A", "D"] as Dir[]).map((d) => (
-              <div key={d} className="mb-5">
-                <p className="small-caps mb-2 text-[11px] font-bold text-ink-secondary">
+              <div key={d} className="mb-6">
+                <p className="small-caps mb-2 text-xs font-bold text-ink-secondary">
                   {d === "A" ? "Across" : "Down"}
                 </p>
                 <ul className="flex flex-col gap-0.5">
@@ -481,7 +481,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                             setActive({ r: slot.row, c: slot.col });
                             setDir(d);
                           }}
-                          className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-[13px] leading-snug transition-colors hover:bg-surface"
+                          className="flex w-full items-start gap-2.5 rounded-lg px-3 py-2 text-left text-[15px] leading-snug transition-colors hover:bg-surface"
                           style={isActive ? { background: `${ACCENT}22` } : undefined}
                         >
                           <span className="font-condensed font-bold" style={{ color: ACCENT }}>

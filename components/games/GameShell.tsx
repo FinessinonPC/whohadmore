@@ -22,10 +22,13 @@ import { Fireworks } from "@/components/game/Fireworks";
 export function GameShell({
   mode,
   date,
+  wide = false,
   children,
 }: {
   mode: ModeId;
   date: string;
+  /** Let the game use more width on desktop (e.g. the Mini's grid + clue list). */
+  wide?: boolean;
   children: React.ReactNode;
 }) {
   const def = modeDef(mode);
@@ -36,7 +39,11 @@ export function GameShell({
   const locked = preview ? false : gate.locked;
   const checking = preview ? false : gate.checking;
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-5 pb-10 pt-5">
+    <main
+      className={`mx-auto flex min-h-dvh w-full flex-col px-5 pb-10 pt-5 ${
+        wide ? "max-w-game lg:max-w-[880px]" : "max-w-game"
+      }`}
+    >
       {isJuly4th(date) && <Fireworks />}
       <header className="relative z-[46] flex items-center justify-between">
         <Link href="/" aria-label="Back to today's games">
