@@ -1,36 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { getLocalResult } from "@/lib/playStore";
-import { getModeResult } from "@/lib/modeStore";
-import { chainDailyScore } from "@/lib/leaderboard";
 import { LIVE_MODES } from "@/lib/modes";
 import { formatDisplayDate } from "@/lib/date";
+import { useArchiveScores } from "@/hooks/useArchiveScores";
 
-interface Line {
-  name: string;
-  score: number;
-  played: boolean;
-}
-
-/** Today's per-game scores from local state (all games score 0–1000). */
-function dayLines(date: string): Line[] {
-  return LIVE_MODES.map((m) => {
-    if (m.id === "chain") {
-      const r = getLocalResult(date);
-      return { name: m.name, score: r ? chainDailyScore(r.reached, r.rounds) : 0, played: Boolean(r) };
-    }
-    const res = getModeResult(m.id, date);
-    return { name: m.name, score: res?.score ?? 0, played: Boolean(res) };
+/**
+ * A shareable, spoiler-free scorecard that links back to the site. Scores come
+ * from the same device+server merge the hub uses, so a signed-in player's total
+ * is correct even when this device's localStorage is empty.
+ */
+function shareText(date: string, scoreFor: ReturnType<typeof useArchiveScores>): string {
+  const lines = LIVE_MODES.map((m) => {
+    const s = scoreFor(date, m.id);
+    return { name: m.name, score: s.points, played: s.played };
   });
-}
-
-/** A shareable, spoiler-free scorecard that links back to the site. */
-export function buildShareText(date: string): string {
-  const lines = dayLines(date);
   const total = lines.reduce((a, l) => a + l.score, 0);
   const max = LIVE_MODES.length * 1000;
-  const origin = typeof window !== "undefined" ? window.location.origin.replace(/^https?:\/\//, "") : "whohadmore.com";
+  const origin =
+    typeof window !== "undefined"
+      ? window.location.origin.replace(/^https?:\/\//, "")
+      : "whohadmore.com";
   const games = lines
     .filter((l) => l.played)
     .map((l) => `${l.name} ${l.score.toLocaleString()}`)
@@ -51,9 +41,10 @@ export function buildShareText(date: string): string {
  */
 export function ShareResults({ date, className }: { date: string; className?: string }) {
   const [copied, setCopied] = useState(false);
+  const scoreFor = useArchiveScores([{ play_date: date }]);
 
   async function share() {
-    const text = buildShareText(date);
+    const text = shareText(date, scoreFor);
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
         await navigator.share({ title: "WhoHadMore", text });
