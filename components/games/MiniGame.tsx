@@ -50,8 +50,13 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
   const [done, setDone] = useState<null | { score: number; revealed: boolean; seconds: number }>(null);
   const [already, setAlready] = useState<{ score: number; max: number } | null>(null);
   const [, tick] = useState(0); // drives the live clock re-render
-  const startRef = useRef<number | null>(null); // clock starts on the first letter
+  const startRef = useRef<number | null>(null); // clock starts on game entry
   const secondsNow = () => (startRef.current ? (Date.now() - startRef.current) / 1000 : 0);
+
+  // The clock starts the moment the player lands on the puzzle.
+  useEffect(() => {
+    if (startRef.current === null) startRef.current = Date.now();
+  }, []);
 
   // Tick the visible clock once a second while the puzzle is live.
   useEffect(() => {
@@ -131,7 +136,6 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
         return;
       }
       if (!/^[A-Z]$/.test(key)) return;
-      if (startRef.current === null) startRef.current = Date.now();
       setEntries((e) => e.map((row, ri) => row.map((ch, ci) => (ri === r && ci === c ? key : ch))));
       clearMarks(r, c);
       const nr = dir === "A" ? r : r + 1;
@@ -288,7 +292,9 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
 
   return (
     <GameShell mode="mini" date={date}>
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col md:flex-row md:items-start md:justify-center md:gap-8">
+        {/* LEFT: timer, grid, and play controls */}
+        <div className="flex w-full flex-1 flex-col md:max-w-[380px]">
         {/* live timer - solving faster scores more */}
         <div className="mx-auto mb-2 flex w-full max-w-[300px] items-center justify-between">
           <span className="small-caps text-[11px] text-ink-secondary">Speed counts</span>
@@ -374,7 +380,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
             </p>
           </div>
         ) : (
-          <div className="mx-auto mt-4 flex w-full max-w-[340px] items-stretch gap-1.5">
+          <div className="mx-auto mt-4 flex w-full max-w-[340px] items-stretch gap-1.5 md:hidden">
             <button
               onClick={() => gotoSlot(-1)}
               aria-label="Previous clue"
@@ -411,28 +417,31 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
             <NextGameCTA date={date} current="mini" />
           ) : (
             <div className="mx-auto flex w-full max-w-[430px] flex-col gap-1.5">
-              {KEY_ROWS.map((row, i) => (
-                <div key={i} className="flex justify-center gap-1.5">
-                  {row.split("").map((k) => (
-                    <button
-                      key={k}
-                      onClick={() => type(k)}
-                      className="flex h-11 flex-1 items-center justify-center rounded-lg bg-surface text-sm font-extrabold text-ink active:scale-95"
-                    >
-                      {k}
-                    </button>
-                  ))}
-                  {i === 2 && (
-                    <button
-                      onClick={() => type("BACK")}
-                      aria-label="Delete"
-                      className="flex h-11 flex-[1.6] items-center justify-center rounded-lg bg-surface text-base font-extrabold text-ink active:scale-95"
-                    >
-                      ⌫
-                    </button>
-                  )}
-                </div>
-              ))}
+              {/* On-screen keyboard - mobile only; desktop types on the real keyboard */}
+              <div className="flex flex-col gap-1.5 md:hidden">
+                {KEY_ROWS.map((row, i) => (
+                  <div key={i} className="flex justify-center gap-1.5">
+                    {row.split("").map((k) => (
+                      <button
+                        key={k}
+                        onClick={() => type(k)}
+                        className="flex h-11 flex-1 items-center justify-center rounded-lg bg-surface text-sm font-extrabold text-ink active:scale-95"
+                      >
+                        {k}
+                      </button>
+                    ))}
+                    {i === 2 && (
+                      <button
+                        onClick={() => type("BACK")}
+                        aria-label="Delete"
+                        className="flex h-11 flex-[1.6] items-center justify-center rounded-lg bg-surface text-base font-extrabold text-ink active:scale-95"
+                      >
+                        ⌫
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
               <div className="mt-1.5 flex items-center gap-2">
                 <button
                   onClick={reveal}
@@ -451,6 +460,45 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
             </div>
           )}
         </div>
+        </div>
+
+        {/* RIGHT: the full clue list on desktop, active clue highlighted. Mobile
+            keeps the single clue bar above, so this is desktop-only. */}
+        {!done && (
+          <div className="hidden md:block md:w-72 md:shrink-0 md:pt-9">
+            {(["A", "D"] as Dir[]).map((d) => (
+              <div key={d} className="mb-5">
+                <p className="small-caps mb-2 text-[11px] font-bold text-ink-secondary">
+                  {d === "A" ? "Across" : "Down"}
+                </p>
+                <ul className="flex flex-col gap-0.5">
+                  {(d === "A" ? day.across : day.down).map((slot) => {
+                    const isActive = dir === d && activeSlot?.num === slot.num;
+                    return (
+                      <li key={`${d}${slot.num}`}>
+                        <button
+                          onClick={() => {
+                            setActive({ r: slot.row, c: slot.col });
+                            setDir(d);
+                          }}
+                          className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-[13px] leading-snug transition-colors hover:bg-surface"
+                          style={isActive ? { background: `${ACCENT}22` } : undefined}
+                        >
+                          <span className="font-condensed font-bold" style={{ color: ACCENT }}>
+                            {slot.num}
+                          </span>
+                          <span className={isActive ? "font-semibold text-ink" : "text-ink-secondary"}>
+                            {slot.clue}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </GameShell>
   );

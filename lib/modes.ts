@@ -20,30 +20,34 @@ export interface ModeDef {
   href: (date: string) => string;
 }
 
-// A speed component so timed games vary more than a handful of fixed tiers.
-// 1.0 at or under par, decaying toward 0 the longer you take - so a fast solve
-// edges out a slow one on the same board (and no timer => full credit).
-export function timeFactor(timeSeconds: number, parSeconds: number): number {
+// A speed component so timed games vary meaningfully. 1.0 only for a genuinely
+// fast solve (<= fastSeconds), decaying linearly to 0 at slowSeconds - so there
+// is no "free zone" where any comfortable time still maxes the bonus. No timer
+// (0) => full credit.
+export function timeFactor(timeSeconds: number, fastSeconds: number, slowSeconds: number): number {
   if (!Number.isFinite(timeSeconds) || timeSeconds <= 0) return 1;
-  return Math.max(0, Math.min(1, parSeconds / timeSeconds));
+  if (timeSeconds <= fastSeconds) return 1;
+  if (timeSeconds >= slowSeconds) return 0;
+  return (slowSeconds - timeSeconds) / (slowSeconds - fastSeconds);
 }
 
 export const DUALITY_PAIRS = 4;
 /** Three tries: three wrong lock-ins ends the game. */
 export const DUALITY_MAX_MISTAKES = 3;
 export const DUALITY_MAX_SCORE = 1000;
-const DUALITY_PAIR_POINTS = 200; // 4 pairs = 800 base, leaving room for speed
-const DUALITY_SPEED_BONUS = 200; // up to, awarded only on a full solve
+const DUALITY_PAIR_POINTS = 175; // 4 pairs = 700 base, leaving room for speed
+const DUALITY_SPEED_BONUS = 300; // up to, awarded only on a full solve
 const DUALITY_MISTAKE_PENALTY = 150; // per wrong lock-in
-const DUALITY_PAR_SECONDS = 25;
+const DUALITY_FAST_SECONDS = 8; // <= this => full speed bonus
+const DUALITY_SLOW_SECONDS = 60; // >= this => no speed bonus
 
 /** Duality score (0–1000): pairs found + a speed bonus on a solve, minus a
- *  penalty per wrong lock-in. Fast + clean = 1000; a slow clean solve = 800. */
+ *  penalty per wrong lock-in. Only a fast, clean solve reaches 1000. */
 export function dualityScore(found: number, mistakes: number, timeSeconds = 0): number {
   const base = found * DUALITY_PAIR_POINTS;
   const solved = found >= DUALITY_PAIRS;
   const speed = solved
-    ? Math.round(DUALITY_SPEED_BONUS * timeFactor(timeSeconds, DUALITY_PAR_SECONDS))
+    ? Math.round(DUALITY_SPEED_BONUS * timeFactor(timeSeconds, DUALITY_FAST_SECONDS, DUALITY_SLOW_SECONDS))
     : 0;
   return Math.max(0, Math.min(DUALITY_MAX_SCORE, base - mistakes * DUALITY_MISTAKE_PENALTY + speed));
 }
@@ -52,17 +56,19 @@ export const WORD_MAX_GUESSES = 6;
 /** Points by number of guesses used (index 0 = solved in 1). Fail = 0. */
 export const WORD_POINTS = [1000, 900, 800, 700, 600, 500];
 
-/** Mini crossword (0–1000): a solve base + a speed bonus, minus a penalty per
- *  Check used. Fast + no checks = 1000; a slow clean solve = 800. Reveal = 0. */
+/** Mini crossword (0–1000): time is the main driver. A solve base + a big speed
+ *  bonus (only a fast solve reaches 1000), minus a penalty per Check. Reveal = 0.
+ *  e.g. a clean 40s solve ≈ 800; a clean 70s solve ≈ 600. */
 export const MINI_MAX_POINTS = 1000;
 export const MINI_CHECK_PENALTY = 100;
 export const MINI_MIN_SCORE = 300; // floor for a solve
-const MINI_SOLVE_BASE = 800;
-const MINI_SPEED_BONUS = 200;
-const MINI_PAR_SECONDS = 45;
+const MINI_SOLVE_BASE = 400;
+const MINI_SPEED_BONUS = 600;
+const MINI_FAST_SECONDS = 10; // <= this => full speed bonus
+const MINI_SLOW_SECONDS = 100; // >= this => no speed bonus
 
 export function miniScore(checks: number, timeSeconds = 0): number {
-  const speed = Math.round(MINI_SPEED_BONUS * timeFactor(timeSeconds, MINI_PAR_SECONDS));
+  const speed = Math.round(MINI_SPEED_BONUS * timeFactor(timeSeconds, MINI_FAST_SECONDS, MINI_SLOW_SECONDS));
   return Math.max(
     MINI_MIN_SCORE,
     Math.min(MINI_MAX_POINTS, MINI_SOLVE_BASE - checks * MINI_CHECK_PENALTY + speed)
