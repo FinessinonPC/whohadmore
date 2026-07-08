@@ -7,6 +7,7 @@ import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
 import { isAdminPreview } from "@/lib/adminClient";
+import { useModeGuard } from "@/hooks/useModeGuard";
 import { DUALITY_MAX_MISTAKES, DUALITY_MAX_SCORE, DUALITY_PAIRS, dualityScore, modeDef } from "@/lib/modes";
 import { hashSeed, mulberry32, seededShuffle } from "@/lib/seed";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
@@ -42,14 +43,8 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
   const [tried, setTried] = useState<Set<string>>(new Set()); // wrong combos already used
   const [shake, setShake] = useState<string[]>([]); // texts currently shaking (wrong)
   const [elapsed, setElapsed] = useState(0); // seconds, frozen at finish
-  const [already, setAlready] = useState<{ score: number; max: number } | null>(null);
   const startRef = useRef<number | null>(null); // clock starts on first pick
-
-  useEffect(() => {
-    if (isAdminPreview()) return; // previews always play fresh, never recorded
-    const prev = getModeResult("duality", date);
-    if (prev) setAlready({ score: prev.score, max: prev.maxScore });
-  }, [date]);
+  const { already, checking } = useModeGuard("duality", date, DUALITY_MAX_SCORE);
 
   const failed = mistakes >= DUALITY_MAX_MISTAKES;
   const solved = found.length === day.pairs.length;
@@ -120,6 +115,14 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
       }),
     }).catch(() => {});
   }, [done, score, max, date, found.length, mistakes, solved]);
+
+  if (checking) {
+    return (
+      <GameShell mode="duality" date={date}>
+        <div className="min-h-[40vh]" aria-hidden />
+      </GameShell>
+    );
+  }
 
   if (already) {
     return (

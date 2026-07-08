@@ -6,8 +6,9 @@ import { useEffect, useState } from "react";
 import { TopNav } from "@/components/ui/TopNav";
 import { GameWordmark } from "@/components/ui/GameWordmarks";
 import { formatDisplayDate } from "@/lib/date";
-import { getLocalResult, getProgress } from "@/lib/playStore";
+import { getLocalResult, getProgress, getSessionId } from "@/lib/playStore";
 import { getModeResult } from "@/lib/modeStore";
+import { usePlayedResults } from "@/hooks/usePlayedResults";
 import { chainDailyScore } from "@/lib/leaderboard";
 import { LIVE_MODES, MODES, type ModeDef } from "@/lib/modes";
 import { useArchiveGate } from "@/hooks/useArchiveGate";
@@ -51,26 +52,43 @@ function altFor(mode: ModeDef): string | undefined {
  */
 export function GameHub({ game, date, gameNumber }: GameHubProps) {
   const [tiles, setTiles] = useState<Record<string, TileState>>({});
+  // Server truth (account / session), so scores persist across sign-out/in and
+  // devices - not just this device's localStorage.
+  const serverChain = usePlayedResults();
+  const [serverModes, setServerModes] = useState<Record<string, Record<string, number>>>({});
+
+  useEffect(() => {
+    fetch(`/api/modes/results?session=${getSessionId()}`)
+      .then((r) => r.json())
+      .then((d: { results?: Record<string, Record<string, number>> }) => setServerModes(d.results ?? {}))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const next: Record<string, TileState> = {};
+    const chainServer = serverChain[date];
+    const modeServer = serverModes[date] ?? {};
     for (const m of LIVE_MODES) {
       if (m.id === "chain") {
-        const chain = getLocalResult(date);
+        const chain = getLocalResult(date) ?? chainServer ?? null;
         const prog = getProgress(date);
-        const pts = chain ? chainDailyScore(chain.reached, chain.rounds) : 0;
-        next.chain = chain
-          ? { played: true, label: `${pts}`, score: pts }
-          : { played: false, label: prog && prog.roundsPlayed > 0 ? "Resume" : "Play", score: 0 };
+        if (chain) {
+          const pts = chainDailyScore(chain.reached, chain.rounds);
+          next.chain = { played: true, label: `${pts}`, score: pts };
+        } else {
+          next.chain = { played: false, label: prog && prog.roundsPlayed > 0 ? "Resume" : "Play", score: 0 };
+        }
       } else {
-        const r = getModeResult(m.id, date);
-        next[m.id] = r
-          ? { played: true, label: `${r.score}`, score: r.score }
-          : { played: false, label: "Play", score: 0 };
+        const local = getModeResult(m.id, date);
+        const score = local ? local.score : modeServer[m.id];
+        next[m.id] =
+          typeof score === "number"
+            ? { played: true, label: `${score}`, score }
+            : { played: false, label: "Play", score: 0 };
       }
     }
     setTiles(next);
-  }, [date]);
+  }, [date, serverChain, serverModes]);
 
   const playedCount = LIVE_MODES.filter((m) => tiles[m.id]?.played).length;
   const total = LIVE_MODES.reduce((a, m) => a + (tiles[m.id]?.score ?? 0), 0);

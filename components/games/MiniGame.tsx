@@ -6,6 +6,7 @@ import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
 import { isAdminPreview } from "@/lib/adminClient";
+import { useModeGuard } from "@/hooks/useModeGuard";
 import { MINI_MAX_POINTS, miniScore, modeDef } from "@/lib/modes";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 import type { MiniClue, MiniDay } from "@/lib/contentPacks";
@@ -48,10 +49,10 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
   const [checks, setChecks] = useState(0); // times Check was used - the crutch
   const [wrongNudge, setWrongNudge] = useState(false); // full grid, but not all right
   const [done, setDone] = useState<null | { score: number; revealed: boolean; seconds: number }>(null);
-  const [already, setAlready] = useState<{ score: number; max: number } | null>(null);
   const [, tick] = useState(0); // drives the live clock re-render
   const startRef = useRef<number | null>(null); // clock starts on game entry
   const secondsNow = () => (startRef.current ? (Date.now() - startRef.current) / 1000 : 0);
+  const { already, checking } = useModeGuard("mini", date, MINI_MAX_POINTS);
 
   // The clock starts the moment the player lands on the puzzle.
   useEffect(() => {
@@ -67,12 +68,6 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
 
   const shownSeconds = done ? done.seconds : Math.floor(secondsNow());
   const clock = `${Math.floor(shownSeconds / 60)}:${String(Math.floor(shownSeconds) % 60).padStart(2, "0")}`;
-
-  useEffect(() => {
-    if (isAdminPreview()) return; // previews always play fresh, never recorded
-    const prev = getModeResult("mini", date);
-    if (prev) setAlready({ score: prev.score, max: prev.maxScore });
-  }, [date]);
 
   const slotFor = useCallback(
     (r: number, c: number, d: Dir): MiniClue | undefined =>
@@ -271,6 +266,14 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
     feedbackWrong();
     finish(0, true, secondsNow());
   };
+
+  if (checking && !done) {
+    return (
+      <GameShell mode="mini" date={date}>
+        <div className="min-h-[40vh]" aria-hidden />
+      </GameShell>
+    );
+  }
 
   if (already && !done) {
     return (

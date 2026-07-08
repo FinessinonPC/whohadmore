@@ -6,6 +6,7 @@ import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
 import { isAdminPreview } from "@/lib/adminClient";
+import { useModeGuard } from "@/hooks/useModeGuard";
 import { WORD_MAX_GUESSES, WORD_POINTS, modeDef } from "@/lib/modes";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 
@@ -45,13 +46,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
   const [rows, setRows] = useState<string[]>([]);
   const [current, setCurrent] = useState("");
   const [shake, setShake] = useState(false);
-  const [already, setAlready] = useState<{ score: number; max: number } | null>(null);
-
-  useEffect(() => {
-    if (isAdminPreview()) return; // previews always play fresh, never recorded
-    const prev = getModeResult("word", date);
-    if (prev) setAlready({ score: prev.score, max: prev.maxScore });
-  }, [date]);
+  const { already, checking } = useModeGuard("word", date, WORD_POINTS[0]);
 
   const won = rows[rows.length - 1] === answer;
   const done = won || rows.length >= WORD_MAX_GUESSES;
@@ -138,6 +133,14 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
     if (m === "x") return { background: "rgb(var(--border))", borderColor: "rgb(var(--border))", opacity: 0.75 };
     return {};
   };
+
+  if (checking) {
+    return (
+      <GameShell mode="word" date={date}>
+        <div className="min-h-[40vh]" aria-hidden />
+      </GameShell>
+    );
+  }
 
   if (already) {
     return (
