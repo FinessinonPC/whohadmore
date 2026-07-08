@@ -32,7 +32,7 @@ export function GameStats() {
 
   // Chain's lifetime points on the same scale as the quick games.
   const chainScores = Object.values(chainResults).map((r) =>
-    chainDailyScore(r.reached, r.rounds, r.lives)
+    chainDailyScore(r.reached, r.rounds)
   );
   const chainAgg: ModeAgg = {
     played: chainScores.length,

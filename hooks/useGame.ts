@@ -6,7 +6,6 @@ import {
   isCorrectGuess,
   isLastPair,
   maxScore,
-  STARTING_LIVES,
   type ActivePair,
   type Side,
 } from "@/lib/gameLogic";
@@ -16,7 +15,7 @@ import type { GameCard } from "@/types";
 // it lands do we reveal correct/wrong.
 const COUNT_DURATION = 1900; // ~1.4s count-up + a ~0.5s suspense beat before the verdict
 const VERDICT_HOLD = 800; // correct: snappy move-on
-const WRONG_HOLD = 1700; // wrong: linger so the heart-loss flourish fully plays
+const WRONG_HOLD = 1000; // wrong: a brief beat, then move on (no lives to mourn)
 const SLIDE_DURATION = 480; // matches the CardPair slide transition
 
 export type GamePhase =
@@ -28,16 +27,14 @@ export type GamePhase =
   | "complete";
 
 export interface GameResultSummary {
-  reached: number; // how far they got (rounds played)
+  /** How many the player got right (0..rounds). Drives the score. */
+  reached: number;
   rounds: number; // total rounds (= best)
-  lives: number;
-  timeSeconds: number;
   wrongRounds: number[];
 }
 
 export interface GameCheckpoint {
   currentIndex: number;
-  lives: number;
   score: number;
   wrongRounds: number[];
   roundsPlayed: number;
@@ -55,8 +52,7 @@ interface UseGameOptions {
 export interface UseGameState {
   cards: GameCard[];
   currentIndex: number;
-  lives: number;
-  score: number;
+  score: number; // number correct so far
   phase: GamePhase;
   chosenSide: Side | null;
   pair: ActivePair | null;
@@ -64,30 +60,34 @@ export interface UseGameState {
   best: number;
   /** Right card reveals its value during a correct reveal. */
   revealRight: boolean;
-  elapsedSeconds: number;
   /** Round indices (0-based pairs) the player got wrong - for the timeline. */
   wrongRounds: number[];
   guess: (side: Side) => void;
   restart: () => void;
 }
 
+/**
+ * Chain, no lives: the player answers every round and the score is simply how
+ * many they got right. A wrong call no longer ends the run - it just doesn't
+ * count. The game finishes at the last pair.
+ */
 export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameState {
   const init = opts.initial ?? null;
   const [currentIndex, setCurrentIndex] = useState(init?.currentIndex ?? 0);
-  const [lives, setLives] = useState(init?.lives ?? STARTING_LIVES);
   const [score, setScore] = useState(init?.score ?? 0);
   const [phase, setPhase] = useState<GamePhase>("idle");
   const [chosenSide, setChosenSide] = useState<Side | null>(null);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [wrongRounds, setWrongRounds] = useState<number[]>(init?.wrongRounds ?? []);
 
   // Pending timers, cleared on unmount / restart so callbacks never fire late.
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  // Resume keeps the clock running from where it left off.
+  // Resume keeps the clock running from where it left off (used only for the
+  // resume checkpoint - Chain's score has no time component).
   const startedAt = useRef<number>(Date.now() - (init?.elapsedSeconds ?? 0) * 1000);
   const completedRef = useRef(false);
   // Refs mirror state so the completion summary reads current values.
   const roundsPlayedRef = useRef(init?.roundsPlayed ?? 0);
+  const correctRef = useRef(init?.score ?? 0);
   const wrongRoundsRef = useRef<number[]>(init?.wrongRounds ?? []);
 
   // Keep latest callbacks without re-arming effects.
@@ -117,35 +117,29 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
     (side: Side) => {
       if (phase !== "idle" || !pair) return;
 
-      const correct = isCorrectGuess(
-        side,
-        pair.left.stat_value,
-        pair.right.stat_value
-      );
-      const livesAtGuess = lives;
+      const correct = isCorrectGuess(side, pair.left.stat_value, pair.right.stat_value);
       const idx = currentIndex;
-      roundsPlayedRef.current += 1; // a committed guess = a round played (how far)
+      roundsPlayedRef.current += 1;
 
       setChosenSide(side);
       // 1) Count the value up with no verdict yet - pure suspense.
       setPhase("counting");
 
       schedule(() => {
-        // 2) The number has landed; now show the verdict and apply its effect.
+        // 2) The number has landed; now show the verdict.
         setPhase(correct ? "reveal-correct" : "reveal-wrong");
-        if (correct) setScore((s) => s + 1);
-        else {
-          setLives((l) => l - 1);
+        if (correct) {
+          correctRef.current += 1;
+          setScore((s) => s + 1);
+        } else {
           wrongRoundsRef.current = [...wrongRoundsRef.current, idx];
           setWrongRounds(wrongRoundsRef.current);
         }
 
-        // Linger after a miss so the player can watch the heart break.
         schedule(() => {
-          // 3) Either end the game or slide on to the next pair.
-          const willComplete =
-            isLastPair(idx, total) || (!correct && livesAtGuess - 1 <= 0);
-          if (willComplete) {
+          // 3) End at the last pair; otherwise slide on. Wrong answers no longer
+          //    end the run - the player always plays the whole chain.
+          if (isLastPair(idx, total)) {
             setPhase("complete");
             return;
           }
@@ -158,7 +152,7 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
         }, correct ? VERDICT_HOLD : WRONG_HOLD);
       }, COUNT_DURATION);
     },
-    [phase, pair, currentIndex, total, lives, schedule]
+    [phase, pair, currentIndex, total, schedule]
   );
 
   const restart = useCallback(() => {
@@ -166,30 +160,25 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
     completedRef.current = false;
     startedAt.current = Date.now();
     roundsPlayedRef.current = 0;
+    correctRef.current = 0;
     wrongRoundsRef.current = [];
     setCurrentIndex(0);
-    setLives(STARTING_LIVES);
     setScore(0);
     setChosenSide(null);
     setPhase("idle");
-    setElapsedSeconds(0);
     setWrongRounds([]);
   }, [clearTimers]);
 
-  // Freeze the clock and emit the result the moment the game completes (once).
+  // Emit the result the moment the game completes (once).
   useEffect(() => {
     if (phase !== "complete" || completedRef.current) return;
     completedRef.current = true;
-    const seconds = Math.max(0, Math.round((Date.now() - startedAt.current) / 1000));
-    setElapsedSeconds(seconds);
     onCompleteRef.current?.({
-      reached: roundsPlayedRef.current,
+      reached: correctRef.current,
       rounds: best,
-      lives,
-      timeSeconds: seconds,
       wrongRounds: wrongRoundsRef.current,
     });
-  }, [phase, best, lives]);
+  }, [phase, best]);
 
   // Persist a checkpoint at each stable pair boundary so leaving mid-game can
   // resume rather than restart.
@@ -197,25 +186,21 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
     if (phase !== "idle" || completedRef.current) return;
     onCheckpointRef.current?.({
       currentIndex,
-      lives,
       score,
       wrongRounds: wrongRoundsRef.current,
       roundsPlayed: roundsPlayedRef.current,
       elapsedSeconds: Math.max(0, Math.round((Date.now() - startedAt.current) / 1000)),
     });
-  }, [phase, currentIndex, lives, score]);
+  }, [phase, currentIndex, score]);
 
   // The right value is visible while it counts up and through the verdict. Once
   // the index advances (transitioning), the incoming right card stays hidden.
   const revealRight =
-    phase === "counting" ||
-    phase === "reveal-correct" ||
-    phase === "reveal-wrong";
+    phase === "counting" || phase === "reveal-correct" || phase === "reveal-wrong";
 
   return {
     cards,
     currentIndex,
-    lives,
     score,
     phase,
     chosenSide,
@@ -223,7 +208,6 @@ export function useGame(cards: GameCard[], opts: UseGameOptions = {}): UseGameSt
     total,
     best,
     revealRight,
-    elapsedSeconds,
     wrongRounds,
     guess,
     restart,

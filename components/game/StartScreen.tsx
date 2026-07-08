@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { TopNav } from "@/components/ui/TopNav";
 import { initialsFor } from "@/lib/wikimedia";
-import { STARTING_LIVES, maxScore } from "@/lib/gameLogic";
+import { maxScore } from "@/lib/gameLogic";
 import { formatDisplayDate, isToday } from "@/lib/date";
 import { isJuly4th } from "@/lib/festive";
 import { Fireworks } from "./Fireworks";
@@ -102,16 +102,12 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
 
         <p className="mt-5 max-w-sm text-balance text-[15px] leading-relaxed text-ink-secondary sm:text-base">
           Two cards, one stat - tap{" "}
-          <span className="font-semibold text-ink">whichever is higher</span>.
+          <span className="font-semibold text-ink">whichever is higher</span>. Every right
+          call adds to your score.
         </p>
 
-        {/* lives + rounds */}
-        <div className="mt-5 flex items-center gap-3">
-          <span className="flex items-center gap-1.5 text-3xl leading-none text-lives">
-            {Array.from({ length: STARTING_LIVES }).map((_, i) => (
-              <span key={i}>♥</span>
-            ))}
-          </span>
+        {/* rounds */}
+        <div className="mt-5">
           <span className="text-sm font-bold text-ink-secondary">{rounds} rounds</span>
         </div>
 

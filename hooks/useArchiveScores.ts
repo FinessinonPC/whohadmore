@@ -18,7 +18,7 @@ export interface DayScore {
   playedGames: number;
 }
 
-type ChainInfo = { reached: number; rounds: number; lives: number };
+type ChainInfo = { reached: number; rounds: number };
 
 const QUICK_MODES: ModeId[] = LIVE_MODES.filter((m) => m.id !== "chain").map((m) => m.id);
 
@@ -39,7 +39,7 @@ export function useArchiveScores(games: { play_date: string }[]) {
     const modes: Record<string, Record<string, number>> = {};
     for (const g of games) {
       const r = getLocalResult(g.play_date);
-      if (r) chain[g.play_date] = { reached: r.reached, rounds: r.rounds, lives: r.lives };
+      if (r) chain[g.play_date] = { reached: r.reached, rounds: r.rounds };
       for (const m of QUICK_MODES) {
         const res = getModeResult(m, g.play_date);
         if (res) (modes[g.play_date] ??= {})[m] = res.score;
@@ -61,7 +61,7 @@ export function useArchiveScores(games: { play_date: string }[]) {
   return useMemo(() => {
     return (date: string, filter: ArchiveFilter): DayScore => {
       const chain = localChain[date] ?? serverChain[date] ?? null;
-      const chainPts = chain ? chainDailyScore(chain.reached, chain.rounds, chain.lives) : 0;
+      const chainPts = chain ? chainDailyScore(chain.reached, chain.rounds) : 0;
       const chainPlayed = Boolean(chain);
 
       const modes: Record<string, number> = { ...serverModes[date], ...localModes[date] };
@@ -83,13 +83,4 @@ export function useArchiveScores(games: { play_date: string }[]) {
       return { played: playedGames > 0, points, playedGames };
     };
   }, [localChain, serverChain, localModes, serverModes]);
-}
-
-/** Performance band from a day's score, as the average per played game. */
-export function scoreTier(day: DayScore): "great" | "good" | "rough" | "none" {
-  if (!day.played) return "none";
-  const frac = day.playedGames > 0 ? day.points / (day.playedGames * 1000) : 0;
-  if (frac >= 0.8) return "great";
-  if (frac >= 0.5) return "good";
-  return "rough";
 }

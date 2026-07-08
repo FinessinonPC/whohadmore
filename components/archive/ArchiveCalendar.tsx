@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { todayISO } from "@/lib/date";
-import { scoreTier, useArchiveScores, type ArchiveFilter } from "@/hooks/useArchiveScores";
+import { modeDef } from "@/lib/modes";
+import { useArchiveScores, type ArchiveFilter } from "@/hooks/useArchiveScores";
 import type { DailyGame } from "@/types";
 
 type NumberedGame = DailyGame & { game_number: number };
@@ -12,29 +13,23 @@ interface ArchiveCalendarProps {
   games: NumberedGame[];
   /** Where a day cell links (defaults to that day's hub). */
   hrefFor?: (date: string) => string;
-  /** Current game filter - drives which score each day shows. */
+  /** Current game filter - drives which score each day shows and the accent. */
   filter?: ArchiveFilter;
 }
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 const pad = (n: number) => n.toString().padStart(2, "0");
+const BRAND = "#00C853";
 
-// Performance band -> cell + number styling (points-based, filter-aware).
-const TIER_CELL: Record<string, string> = {
-  great: "border-correct/45 bg-correct/15 hover:bg-correct/25",
-  good: "border-[#FFB300]/50 bg-[#FFB300]/15 hover:bg-[#FFB300]/25",
-  rough: "border-wrong/40 bg-wrong/12 hover:bg-wrong/20",
-  none: "border-border bg-surface hover:border-ink/30",
-};
-const TIER_TEXT: Record<string, string> = {
-  great: "text-correct",
-  good: "text-[#9A6A00]",
-  rough: "text-wrong",
-  none: "text-ink-secondary",
-};
+/** The accent for the current filter (brand green for "all"). Days aren't
+ *  colored by performance anymore - just tinted to invite a play. */
+function accentFor(filter: ArchiveFilter): string {
+  return filter === "all" ? BRAND : modeDef(filter).accent;
+}
 
 export function ArchiveCalendar({ games, hrefFor, filter = "all" }: ArchiveCalendarProps) {
   const scoreFor = useArchiveScores(games);
+  const accent = accentFor(filter);
   const today = todayISO();
   const [ty, tm] = today.split("-").map(Number);
 
@@ -120,24 +115,34 @@ export function ArchiveCalendar({ games, hrefFor, filter = "all" }: ArchiveCalen
           }
 
           const score = scoreFor(dateStr, filter);
-          const tier = scoreTier(score);
 
           return (
             <Link
               key={dateStr}
               href={hrefFor ? hrefFor(dateStr) : `/day/${dateStr}`}
               title={game.topic_label}
-              className={`group flex min-h-[84px] flex-col gap-1 rounded-xl border p-2 transition-colors sm:min-h-[112px] ${TIER_CELL[tier]} ${
-                isToday ? "ring-2 ring-ink/30" : ""
+              className={`group flex min-h-[84px] flex-col gap-1 rounded-xl border p-2 transition-all hover:-translate-y-0.5 sm:min-h-[112px] ${
+                isToday ? "ring-2 ring-ink/25" : ""
               }`}
+              style={{
+                background: score.played ? `${accent}14` : "transparent",
+                borderColor: score.played ? `${accent}55` : "rgb(var(--border))",
+              }}
             >
               <span className="text-xs font-bold text-ink">{day}</span>
               <span className="font-condensed text-base font-semibold text-ink/85 sm:text-lg">
                 No. {game.game_number}
               </span>
-              {score.played && (
-                <span className={`mt-auto tabular text-[11px] font-extrabold sm:text-sm ${TIER_TEXT[tier]}`}>
+              {score.played ? (
+                <span className="mt-auto tabular text-[11px] font-extrabold text-ink sm:text-sm">
                   {score.points.toLocaleString()}
+                </span>
+              ) : (
+                <span
+                  className="mt-auto text-[11px] font-bold opacity-70 transition-opacity group-hover:opacity-100 sm:text-xs"
+                  style={{ color: accent }}
+                >
+                  Play →
                 </span>
               )}
             </Link>
@@ -145,22 +150,20 @@ export function ArchiveCalendar({ games, hrefFor, filter = "all" }: ArchiveCalen
         })}
       </div>
 
-      {/* Legend */}
+      {/* Inviting footer - no performance grading, just a nudge to play more */}
       <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-ink-secondary">
-        <Swatch className="border-correct/45 bg-correct/15" label="Strong" />
-        <Swatch className="border-[#FFB300]/50 bg-[#FFB300]/15" label="Solid" />
-        <Swatch className="border-wrong/40 bg-wrong/12" label="Rough" />
-        <Swatch className="border-border bg-surface" label="Not played" />
+        <span className="flex items-center gap-1.5">
+          <span className="h-3 w-3 rounded border" style={{ background: `${accent}22`, borderColor: `${accent}66` }} />
+          Played
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-3 w-3 rounded border border-border" />
+          Yours to play
+        </span>
+        <span className="text-border">·</span>
+        <span>Every past day is free once you sign in</span>
       </div>
     </div>
-  );
-}
-
-function Swatch({ className, label }: { className: string; label: string }) {
-  return (
-    <span className="flex items-center gap-1.5">
-      <span className={`h-3 w-3 rounded border ${className}`} /> {label}
-    </span>
   );
 }
 

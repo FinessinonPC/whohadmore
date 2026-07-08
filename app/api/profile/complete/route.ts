@@ -3,9 +3,8 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import { isValidISODate, monthPeriod, previousISODate, todayISO } from "@/lib/date";
 import {
-  dailyScore,
+  chainDailyScore,
   earnedAchievementIds,
-  heartsFor,
   levelFromXp,
   pointsForGame,
   type Profile,
@@ -16,11 +15,8 @@ export const dynamic = "force-dynamic";
 interface Body {
   session_id?: string;
   play_date?: string;
-  score?: number;
-  reached?: number;
+  reached?: number; // how many correct
   rounds?: number;
-  lives?: number;
-  time_seconds?: number;
 }
 
 export async function POST(req: Request) {
@@ -34,16 +30,12 @@ export async function POST(req: Request) {
   const { session_id, play_date } = body;
   const reached = Number(body.reached);
   const rounds = Number(body.rounds);
-  const lives = Number(body.lives);
-  const time = Number.isFinite(Number(body.time_seconds)) ? Number(body.time_seconds) : 0;
 
   if (!Number.isFinite(reached) || !Number.isFinite(rounds)) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const stars = heartsFor(lives); // "stars" column now stores hearts banked
-  const cleared = rounds > 0 && reached >= rounds;
-  const flawless = cleared && lives >= 3;
+  const cleared = rounds > 0 && reached >= rounds; // every call right
 
   // No backend configured (demo mode): still report the (streak-free) XP for
   // display. `demo: true` makes this state visible - in this mode nothing is
@@ -51,8 +43,7 @@ export async function POST(req: Request) {
   if (!isSupabaseConfigured()) {
     return NextResponse.json({
       profile: null,
-      pointsEarned: pointsForGame(reached, rounds, time, 0),
-      stars,
+      pointsEarned: pointsForGame(reached, rounds, 0),
       demo: true,
     });
   }
@@ -82,7 +73,7 @@ export async function POST(req: Request) {
 
   // Already counted - return current standing untouched.
   if (existing) {
-    return NextResponse.json({ profile: profile ?? null, pointsEarned: 0, stars, alreadyPlayed: true });
+    return NextResponse.json({ profile: profile ?? null, pointsEarned: 0, alreadyPlayed: true });
   }
 
   // Streak only advances on the live daily game, not archive replays.
@@ -96,27 +87,27 @@ export async function POST(req: Request) {
           : 1;
   }
   const streakForPoints = profile ? (isToday ? nextStreak : profile.current_streak) : 0;
-  const pts = pointsForGame(reached, rounds, time, streakForPoints);
+  const pts = pointsForGame(reached, rounds, streakForPoints);
 
-  // Record the result with the credited points/stars (also enables backfill).
-  // This row is what the daily leaderboard reads, so a silent failure here is
-  // exactly why the board can look empty - surface it instead of swallowing it.
+  // Record the result with the credited points (also enables backfill). This
+  // row is what the daily leaderboard reads, so a silent failure here is exactly
+  // why the board can look empty - surface it instead of swallowing it. The
+  // hearts/time columns are retained for schema compatibility but unused now.
   const { error: insertError } = await supabase.from("game_results").insert({
     play_date,
     session_id,
     score: reached,
-    lives_remaining: Number.isFinite(lives) ? lives : null,
+    lives_remaining: null,
     completed: true,
-    time_seconds: time,
+    time_seconds: 0,
     points: pts,
-    stars,
+    stars: 0,
   });
   if (insertError) {
     console.error("[complete] game_results insert failed:", insertError);
     return NextResponse.json({
       profile: profile ?? null,
       pointsEarned: 0,
-      stars,
       error: "record_failed",
       code: insertError.code,
       detail: insertError.message,
@@ -124,31 +115,23 @@ export async function POST(req: Request) {
   }
 
   if (!profile) {
-    return NextResponse.json({ profile: null, pointsEarned: pts, stars });
+    return NextResponse.json({ profile: null, pointsEarned: pts });
   }
 
   const xp = profile.xp + pts;
   const level = levelFromXp(xp);
   const daysPlayed = profile.days_played + 1;
-  const totalStars = profile.total_stars + stars;
   const currentStreak = isToday ? nextStreak : profile.current_streak;
   const longestStreak = Math.max(profile.longest_streak, currentStreak);
   const monthlyScore = (profile.monthly_period === period ? profile.monthly_score : 0) + pts;
-  // All-time leaderboard score: streak-free (sum of daily scores). Only XP
+  // All-time score: streak-free sum of each day's Chain points (0–1000). Only XP
   // carries the streak bonus; the competitive boards don't.
-  const totalScore = (profile.total_score ?? 0) + dailyScore(reached, stars, time);
+  const totalScore = (profile.total_score ?? 0) + chainDailyScore(reached, rounds);
 
   const merged = Array.from(
     new Set([
       ...profile.achievements,
-      ...earnedAchievementIds({
-        daysPlayed,
-        totalStars,
-        currentStreak,
-        level,
-        clearedThisGame: cleared,
-        flawlessThisGame: flawless,
-      }),
+      ...earnedAchievementIds({ daysPlayed, currentStreak, level, clearedThisGame: cleared }),
     ])
   );
   const newAchievements = merged.filter((a) => !profile.achievements.includes(a));
@@ -159,7 +142,6 @@ export async function POST(req: Request) {
       xp,
       total_score: totalScore,
       days_played: daysPlayed,
-      total_stars: totalStars,
       current_streak: currentStreak,
       longest_streak: longestStreak,
       last_played_date: isToday ? play_date : profile.last_played_date,
@@ -175,7 +157,6 @@ export async function POST(req: Request) {
   return NextResponse.json({
     profile: updated ?? profile,
     pointsEarned: pts,
-    stars,
     newAchievements,
   });
 }

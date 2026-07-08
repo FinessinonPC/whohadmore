@@ -3,21 +3,20 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { Badge, categoryLabel } from "@/components/ui/Badge";
-import { scoreTier, useArchiveScores, type ArchiveFilter } from "@/hooks/useArchiveScores";
+import { useArchiveScores, type ArchiveFilter } from "@/hooks/useArchiveScores";
+import { modeDef } from "@/lib/modes";
 import { formatShortDate } from "@/lib/date";
 import type { DailyGame } from "@/types";
 
 type NumberedGame = DailyGame & { game_number: number };
 
-// Performance band -> pill styling.
-const TIER: Record<string, string> = {
-  great: "border-correct/30 bg-correct/10 text-correct",
-  good: "border-[#FFB300]/40 bg-[#FFB300]/10 text-[#9A6A00]",
-  rough: "border-wrong/30 bg-wrong/10 text-wrong",
-  none: "border-border bg-surface text-ink-secondary",
-};
+const BRAND = "#00C853";
+const accentFor = (filter: ArchiveFilter) => (filter === "all" ? BRAND : modeDef(filter).accent);
+const contrastFor = (filter: ArchiveFilter) => (filter === "all" ? "#0B0D10" : modeDef(filter).contrast);
 
-/** Mobile-friendly scrollable list of every game, newest first. */
+/** Mobile-friendly scrollable list of every game, newest first. No performance
+ *  grading - played days show their score, and days you haven't played invite a
+ *  tap (which nudges sign-in for past days). */
 export function ArchiveList({
   games,
   hrefFor,
@@ -28,6 +27,8 @@ export function ArchiveList({
   filter?: ArchiveFilter;
 }) {
   const scoreFor = useArchiveScores(games);
+  const accent = accentFor(filter);
+  const contrast = contrastFor(filter);
   const sorted = useMemo(
     () => [...games].sort((a, b) => (a.play_date < b.play_date ? 1 : -1)),
     [games]
@@ -45,7 +46,6 @@ export function ArchiveList({
     <ul className="divide-y divide-border border-y border-border">
       {sorted.map((game) => {
         const score = scoreFor(game.play_date, filter);
-        const tier = scoreTier(score);
         return (
           <li key={game.id}>
             <Link
@@ -65,12 +65,16 @@ export function ArchiveList({
               </div>
               {score.played ? (
                 <span
-                  className={`shrink-0 rounded-full border px-2.5 py-1 font-condensed text-sm font-semibold tabular ${TIER[tier]}`}
+                  className="shrink-0 rounded-full border px-2.5 py-1 font-condensed text-sm font-semibold tabular text-ink"
+                  style={{ background: `${accent}14`, borderColor: `${accent}55` }}
                 >
                   {score.points.toLocaleString()} pts
                 </span>
               ) : (
-                <span className="shrink-0 rounded-full bg-cta px-4 py-1.5 text-xs font-bold text-background">
+                <span
+                  className="shrink-0 rounded-full px-4 py-1.5 text-xs font-bold"
+                  style={{ background: accent, color: contrast }}
+                >
                   Play
                 </span>
               )}

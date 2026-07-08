@@ -11,10 +11,8 @@ const resultKey = (date: string) => `whohadmore:result:${date}`;
 const progressKey = (date: string) => `whohadmore:progress:${date}`;
 
 export interface StoredResult {
-  reached: number; // how far they made it (rounds)
+  reached: number; // how many they got right (0..rounds) - drives the score
   rounds: number; // total rounds
-  lives: number;
-  timeSeconds: number;
   wrongRounds: number[];
   xpEarned: number;
   completedAt: string; // ISO timestamp
@@ -76,7 +74,6 @@ export function clearLocalResult(date: string): void {
 
 export interface ProgressSnapshot {
   currentIndex: number;
-  lives: number;
   score: number;
   wrongRounds: number[];
   roundsPlayed: number;

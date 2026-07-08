@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
+import { isAdminPreview } from "@/lib/adminClient";
 import { DUALITY_MAX_MISTAKES, DUALITY_MAX_SCORE, DUALITY_PAIRS, dualityScore, modeDef } from "@/lib/modes";
 import { hashSeed, mulberry32, seededShuffle } from "@/lib/seed";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
@@ -45,6 +46,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
   const startRef = useRef<number | null>(null); // clock starts on first pick
 
   useEffect(() => {
+    if (isAdminPreview()) return; // previews always play fresh, never recorded
     const prev = getModeResult("duality", date);
     if (prev) setAlready({ score: prev.score, max: prev.maxScore });
   }, [date]);
@@ -98,6 +100,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
   // Persist once finished.
   useEffect(() => {
     if (!done) return;
+    if (isAdminPreview()) return; // don't record admin previews
     if (getModeResult("duality", date)) return;
     saveModeResult("duality", date, {
       score,

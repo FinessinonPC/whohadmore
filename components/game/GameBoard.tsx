@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { CardPair } from "./CardPair";
-import { LivesDisplay } from "./LivesDisplay";
 import { ChainTimeline } from "./ChainTimeline";
-import { HeartLossOverlay, type HeartLossEvent } from "./HeartLossOverlay";
 import { BrandLockup } from "@/components/ui/Logo";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 import {
@@ -15,7 +13,7 @@ import {
   type GamePhase,
   type GameResultSummary,
 } from "@/hooks/useGame";
-import { STARTING_LIVES, avoidAdjacentTies } from "@/lib/gameLogic";
+import { avoidAdjacentTies } from "@/lib/gameLogic";
 import { hashSeed, mulberry32, seededShuffle } from "@/lib/seed";
 import { getSessionId } from "@/lib/playStore";
 import { formatShortDate } from "@/lib/date";
@@ -108,18 +106,6 @@ export function GameBoard({
     return () => window.removeEventListener("keydown", onKey);
   }, [state.phase, state.guess]);
 
-  // Fire the dramatic overlay whenever a life is lost.
-  const [lossEvent, setLossEvent] = useState<HeartLossEvent | null>(null);
-  const prevLives = useRef(state.lives);
-  const lossKey = useRef(0);
-  useEffect(() => {
-    if (state.lives < prevLives.current) {
-      lossKey.current += 1;
-      setLossEvent({ key: lossKey.current, before: prevLives.current });
-    }
-    prevLives.current = state.lives;
-  }, [state.lives]);
-
   // Bottom bar tracks position through the chain (not score).
   const rounds = Math.max(1, state.total - 1);
   const roundsDone = state.phase === "complete" ? rounds : state.currentIndex;
@@ -128,7 +114,6 @@ export function GameBoard({
 
   return (
     <>
-      <HeartLossOverlay event={lossEvent} max={STARTING_LIVES} />
       {isJuly4th(date) && <Fireworks />}
 
       <main className="relative z-[46] mx-auto flex h-dvh w-full max-w-[440px] flex-col overflow-hidden px-4 pb-5 pt-5 md:max-w-[880px] lg:max-w-[1120px]">
@@ -146,7 +131,14 @@ export function GameBoard({
               <BrandLockup />
             </Link>
           )}
-          <LivesDisplay lives={state.lives} />
+          {/* Running tally of correct calls - this is the score now. */}
+          <span className="flex items-center gap-1.5 font-condensed text-lg font-semibold text-ink">
+            <span className="text-correct">✓</span>
+            <span className="tabular">
+              {state.score}
+              <span className="text-ink-secondary"> / {rounds}</span>
+            </span>
+          </span>
         </header>
 
         {/* Date + game number + topic - hidden on phones for a cleaner,

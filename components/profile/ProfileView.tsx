@@ -7,7 +7,8 @@ import { TopNav } from "@/components/ui/TopNav";
 import { GameStats } from "@/components/profile/GameStats";
 import { SignUpFlow } from "@/components/auth/SignUpFlow";
 import { useProfile } from "@/hooks/useProfile";
-import { ACHIEVEMENTS, levelInfo, rankTitle, streakMultiplier } from "@/lib/leaderboard";
+import { ACHIEVEMENTS, effectiveStreak, levelInfo, rankTitle, streakMultiplier } from "@/lib/leaderboard";
+import { previousISODate, todayISO } from "@/lib/date";
 
 /** The player's own profile: level, streak multiplier, and lifetime stats. */
 export function ProfileView() {
@@ -15,7 +16,13 @@ export function ProfileView() {
 
   const xp = profile?.xp ?? 0;
   const { level, into, needed } = levelInfo(xp);
-  const streak = profile?.current_streak ?? 0;
+  const today = todayISO();
+  const streak = effectiveStreak(
+    profile?.current_streak ?? 0,
+    profile?.last_played_date ?? null,
+    today,
+    previousISODate(today)
+  );
   const hasName = Boolean(profile?.username);
 
   return (

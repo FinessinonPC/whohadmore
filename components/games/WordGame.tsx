@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
+import { isAdminPreview } from "@/lib/adminClient";
 import { WORD_MAX_GUESSES, WORD_POINTS, modeDef } from "@/lib/modes";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 
@@ -47,6 +48,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
   const [already, setAlready] = useState<{ score: number; max: number } | null>(null);
 
   useEffect(() => {
+    if (isAdminPreview()) return; // previews always play fresh, never recorded
     const prev = getModeResult("word", date);
     if (prev) setAlready({ score: prev.score, max: prev.maxScore });
   }, [date]);
@@ -115,6 +117,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
   // Persist once finished.
   useEffect(() => {
     if (!done || rows.length === 0) return;
+    if (isAdminPreview()) return; // don't record admin previews
     if (getModeResult("word", date)) return;
     saveModeResult("word", date, {
       score,

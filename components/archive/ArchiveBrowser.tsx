@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { ArchiveCalendar } from "./ArchiveCalendar";
 import { ArchiveList } from "./ArchiveList";
 import { GameWordmark } from "@/components/ui/GameWordmarks";
 import { LIVE_MODES } from "@/lib/modes";
 import { type ArchiveFilter } from "@/hooks/useArchiveScores";
+import { useProfile } from "@/hooks/useProfile";
 import type { DailyGame } from "@/types";
 
 type NumberedGame = DailyGame & { game_number: number };
@@ -18,6 +20,8 @@ type Filter = ArchiveFilter;
  */
 export function ArchiveBrowser({ games }: { games: NumberedGame[] }) {
   const [filter, setFilter] = useState<Filter>("all");
+  const { profile } = useProfile();
+  const signedIn = Boolean(profile?.username);
 
   const hrefFor = (date: string) =>
     filter === "all"
@@ -26,6 +30,19 @@ export function ArchiveBrowser({ games }: { games: NumberedGame[] }) {
 
   return (
     <div>
+      {/* A gentle nudge: past days are the reason to make an account. */}
+      {!signedIn && (
+        <Link
+          href="/profile"
+          className="mb-5 flex items-center justify-between gap-3 rounded-2xl bg-cta px-5 py-3.5 text-background transition-transform hover:scale-[1.01]"
+        >
+          <span className="text-sm font-bold leading-snug">
+            Unlock every past day - free. Sign in to replay the archive and bank your scores.
+          </span>
+          <span className="text-xl">→</span>
+        </Link>
+      )}
+
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <button
           onClick={() => setFilter("all")}

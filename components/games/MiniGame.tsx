@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
+import { isAdminPreview } from "@/lib/adminClient";
 import { MINI_MAX_POINTS, miniScore, modeDef } from "@/lib/modes";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 import type { MiniClue, MiniDay } from "@/lib/contentPacks";
@@ -46,12 +47,24 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
   const [right, setRight] = useState<Set<string>>(new Set());
   const [checks, setChecks] = useState(0); // times Check was used - the crutch
   const [wrongNudge, setWrongNudge] = useState(false); // full grid, but not all right
-  const [done, setDone] = useState<null | { score: number; revealed: boolean }>(null);
+  const [done, setDone] = useState<null | { score: number; revealed: boolean; seconds: number }>(null);
   const [already, setAlready] = useState<{ score: number; max: number } | null>(null);
+  const [, tick] = useState(0); // drives the live clock re-render
   const startRef = useRef<number | null>(null); // clock starts on the first letter
   const secondsNow = () => (startRef.current ? (Date.now() - startRef.current) / 1000 : 0);
 
+  // Tick the visible clock once a second while the puzzle is live.
   useEffect(() => {
+    if (done || already) return;
+    const id = window.setInterval(() => tick((t) => t + 1), 1000);
+    return () => window.clearInterval(id);
+  }, [done, already]);
+
+  const shownSeconds = done ? done.seconds : Math.floor(secondsNow());
+  const clock = `${Math.floor(shownSeconds / 60)}:${String(Math.floor(shownSeconds) % 60).padStart(2, "0")}`;
+
+  useEffect(() => {
+    if (isAdminPreview()) return; // previews always play fresh, never recorded
     const prev = getModeResult("mini", date);
     if (prev) setAlready({ score: prev.score, max: prev.maxScore });
   }, [date]);
@@ -178,8 +191,9 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [type, arrow]);
 
-  const finish = (score: number, revealed: boolean) => {
-    setDone({ score, revealed });
+  const finish = (score: number, revealed: boolean, seconds: number) => {
+    setDone({ score, revealed, seconds: Math.floor(seconds) });
+    if (isAdminPreview()) return; // don't record admin previews
     if (getModeResult("mini", date)) return;
     saveModeResult("mini", date, {
       score,
@@ -217,8 +231,9 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
         else if (ch !== rows[r][c]) allRight = false;
       }
     if (full && allRight) {
+      const seconds = secondsNow();
       feedbackCorrect();
-      finish(miniScore(checks, secondsNow()), false);
+      finish(miniScore(checks, seconds), false, seconds);
     } else {
       setWrongNudge(full && !allRight);
     }
@@ -250,7 +265,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
     setEntries(rows.map((row) => row.split("").map((ch) => (ch === "#" ? "" : ch))));
     setWrong(new Set());
     feedbackWrong();
-    finish(0, true);
+    finish(0, true, secondsNow());
   };
 
   if (already && !done) {
@@ -274,6 +289,17 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
   return (
     <GameShell mode="mini" date={date}>
       <div className="flex flex-1 flex-col">
+        {/* live timer - solving faster scores more */}
+        <div className="mx-auto mb-2 flex w-full max-w-[300px] items-center justify-between">
+          <span className="small-caps text-[11px] text-ink-secondary">Speed counts</span>
+          <span
+            className="font-condensed text-lg font-semibold tabular text-ink"
+            aria-label="elapsed time"
+          >
+            {clock}
+          </span>
+        </div>
+
         {/* grid */}
         <div className="mx-auto grid w-full max-w-[300px] grid-cols-5 gap-1">
           {rows.map((row, r) =>

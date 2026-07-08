@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { GameBoard } from "@/components/game/GameBoard";
 import { ResultScreen } from "@/components/game/ResultScreen";
-import { pointsForGame } from "@/lib/leaderboard";
 import type { GameResultSummary } from "@/hooks/useGame";
 import type { FullGame } from "@/types";
 
@@ -32,13 +31,8 @@ export function PreviewPlayer({ game, date, onClose }: PreviewPlayerProps) {
         <ResultScreen
           reached={result.reached}
           rounds={result.rounds}
-          lives={result.lives}
-          timeSeconds={result.timeSeconds}
           wrongRounds={result.wrongRounds}
-          xpEarned={pointsForGame(result.reached, result.rounds, result.timeSeconds, 0)}
-          topicLabel={game.topic_label}
           date={date}
-          gameNumber={0}
           mode="preview"
           onPlayAgain={() => {
             setResult(null);

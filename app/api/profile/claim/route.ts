@@ -122,7 +122,7 @@ export async function POST(req: Request) {
         lives_remaining: Number.isFinite(lastGame.lives) ? lastGame.lives : null,
         completed: true,
         time_seconds: time,
-        points: pointsForGame(lastGame.reached, lastGame.rounds, time, 0),
+        points: pointsForGame(lastGame.reached, lastGame.rounds, 0),
         stars: heartsFor(lastGame.lives ?? 0),
       });
     }
@@ -164,11 +164,9 @@ export async function POST(req: Request) {
 
   const achievements = earnedAchievementIds({
     daysPlayed,
-    totalStars,
     currentStreak: streak,
     level: levelFromXp(xp),
-    clearedThisGame: rows.some((r) => (r.stars ?? 0) >= 3),
-    flawlessThisGame: false,
+    clearedThisGame: false,
   });
 
   const { data: created, error } = await supabase

@@ -13,6 +13,7 @@ import { LIVE_MODES, MODES, type ModeDef } from "@/lib/modes";
 import { useArchiveGate } from "@/hooks/useArchiveGate";
 import { ArchiveLock } from "@/components/games/ArchiveLock";
 import { DayBoard } from "@/components/hub/DayBoard";
+import { ShareResults } from "@/components/game/ShareResults";
 import { todayISO } from "@/lib/date";
 import { themeFor } from "@/lib/weekly";
 import { isJuly4th } from "@/lib/festive";
@@ -57,7 +58,7 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
       if (m.id === "chain") {
         const chain = getLocalResult(date);
         const prog = getProgress(date);
-        const pts = chain ? chainDailyScore(chain.reached, chain.rounds, chain.lives) : 0;
+        const pts = chain ? chainDailyScore(chain.reached, chain.rounds) : 0;
         next.chain = chain
           ? { played: true, label: `${pts}`, score: pts }
           : { played: false, label: prog && prog.roundsPlayed > 0 ? "Resume" : "Play", score: 0 };
@@ -206,6 +207,13 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
             );
           })}
         </div>
+
+        {/* All four done - invite a share (the growth loop) */}
+        {playedCount === LIVE_MODES.length && (
+          <div className="mt-5">
+            <ShareResults date={date} />
+          </div>
+        )}
 
         {!isToday && <DayBoard date={date} />}
 

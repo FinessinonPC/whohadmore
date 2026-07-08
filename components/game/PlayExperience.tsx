@@ -17,7 +17,7 @@ import {
   type StoredResult,
 } from "@/lib/playStore";
 import { msUntilNextGameMidnight } from "@/lib/date";
-import { levelFromXp, pointsForGame, type Profile } from "@/lib/leaderboard";
+import { pointsForGame } from "@/lib/leaderboard";
 import { maxScore } from "@/lib/gameLogic";
 import { usePlayedResults } from "@/hooks/usePlayedResults";
 import type { GameResultSummary } from "@/hooks/useGame";
@@ -44,20 +44,12 @@ export function PlayExperience({
   const [mode, setMode] = useState<Mode>("start");
   const [result, setResult] = useState<StoredResult | null>(null);
   const [alreadyPlayed, setAlreadyPlayed] = useState(false);
-  const [levelUp, setLevelUp] = useState<number | null>(null);
-  const [streak, setStreak] = useState<number | null>(null);
-  const [creditedXp, setCreditedXp] = useState<number | null>(null);
-  const [newAchievements, setNewAchievements] = useState<string[]>([]);
   const [resumeSnap, setResumeSnap] = useState<ProgressSnapshot | null>(null);
   const playedResults = usePlayedResults();
 
   // On load / whenever the day changes (midnight roll-over): restore a finished
   // result, otherwise pick up any in-progress game so we resume, not restart.
   useEffect(() => {
-    setLevelUp(null);
-    setStreak(null);
-    setCreditedXp(null);
-    setNewAchievements([]);
     const stored = getLocalResult(date);
     if (stored) {
       setResult(stored);
@@ -90,8 +82,6 @@ export function PlayExperience({
     const stored: StoredResult = {
       reached: sr.reached,
       rounds: initialGame ? maxScore(initialGame.cards.length) : sr.rounds,
-      lives: sr.lives,
-      timeSeconds: sr.timeSeconds,
       wrongRounds: [],
       xpEarned: sr.xpEarned,
       completedAt: new Date().toISOString(),
@@ -106,12 +96,10 @@ export function PlayExperience({
     (summary: GameResultSummary) => {
       // XP shown is the streak-free baseline (instant + works offline). The
       // leaderboard total credits the streak multiplier server-side.
-      const xpEarned = pointsForGame(summary.reached, summary.rounds, summary.timeSeconds, 0);
+      const xpEarned = pointsForGame(summary.reached, summary.rounds, 0);
       const stored: StoredResult = {
         reached: summary.reached,
         rounds: summary.rounds,
-        lives: summary.lives,
-        timeSeconds: summary.timeSeconds,
         wrongRounds: summary.wrongRounds,
         xpEarned,
         completedAt: new Date().toISOString(),
@@ -120,16 +108,11 @@ export function PlayExperience({
       clearProgress(date); // game is finished - nothing to resume
       setResult(stored);
       setAlreadyPlayed(false);
-      setLevelUp(null);
-      setStreak(null);
-      setCreditedXp(null);
-      setNewAchievements([]);
       setMode("completed");
 
-      // Record the result + update leaderboard stats (best-effort; the route is
-      // idempotent per session+date). Identity is the anonymous session_id.
-      // A returned profile means they were signed in before this game, so we can
-      // detect whether this run pushed them up a level.
+      // Record the result + update stats (best-effort; the route is idempotent
+      // per session+date). Identity is the anonymous session_id. Fire-and-forget
+      // - the minimal end screen doesn't wait on or display anything from this.
       void fetch("/api/profile/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -138,31 +121,10 @@ export function PlayExperience({
           play_date: date,
           reached: summary.reached,
           rounds: summary.rounds,
-          lives: summary.lives,
-          time_seconds: summary.timeSeconds,
         }),
-      })
-        .then((r) => r.json())
-        .then(
-          (data: {
-            profile: Profile | null;
-            pointsEarned?: number;
-            newAchievements?: string[];
-          }) => {
-            if (data.newAchievements?.length) setNewAchievements(data.newAchievements);
-            if (data.profile && typeof data.pointsEarned === "number") {
-              const after = levelFromXp(data.profile.xp);
-              const before = levelFromXp(data.profile.xp - data.pointsEarned);
-              if (after > before) setLevelUp(after);
-              // Streak (shown as a stat) and the actual credited XP (streak included).
-              setStreak(data.profile.current_streak);
-              if (data.pointsEarned > 0) setCreditedXp(data.pointsEarned);
-            }
-          }
-        )
-        .catch(() => {
-          /* never block the end screen on result tracking */
-        });
+      }).catch(() => {
+        /* never block the end screen on result tracking */
+      });
     },
     [date]
   );
@@ -190,18 +152,10 @@ export function PlayExperience({
       <ResultScreen
         reached={result.reached}
         rounds={result.rounds}
-        lives={result.lives}
-        timeSeconds={result.timeSeconds}
         wrongRounds={result.wrongRounds}
-        xpEarned={creditedXp ?? result.xpEarned}
-        topicLabel={game.topic_label}
         date={date}
-        gameNumber={gameNumber}
         mode="play"
         alreadyPlayed={alreadyPlayed}
-        levelUp={levelUp}
-        streak={streak}
-        newAchievements={newAchievements}
       />
     );
   }

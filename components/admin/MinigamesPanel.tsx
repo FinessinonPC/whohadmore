@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Sheet } from "@/components/ui/Sheet";
 import { Button } from "@/components/ui/Button";
-import { adminFetch } from "@/lib/adminClient";
+import { adminFetch, enableAdminPreview } from "@/lib/adminClient";
 import { GameWordmark } from "@/components/ui/GameWordmarks";
 import {
   deriveMiniSlots,
@@ -282,7 +282,7 @@ export function MinigamesPanel({ date }: { date: string }) {
     return m ? `${m.across[0]?.answer ?? ""} … ${m.down[m.down.length - 1]?.answer ?? ""} (${m.across.length + m.down.length} clues)` : "…";
   }
 
-  const previewHref = (mode: MinigameMode) => `/${mode}/${date}`;
+  const previewHref = (mode: MinigameMode) => `/${mode}/${date}?preview=1`;
 
   return (
     <section className="rounded-2xl border border-border bg-surface/50 p-5" id="quick-games">
@@ -328,6 +328,7 @@ export function MinigamesPanel({ date }: { date: string }) {
                   href={previewHref(m.id)}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => enableAdminPreview()}
                   className="rounded-2xl bg-surface px-3 py-2 text-sm font-bold text-ink transition-colors hover:bg-border/40"
                 >
                   Preview ↗

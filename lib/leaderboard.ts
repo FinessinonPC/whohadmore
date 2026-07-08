@@ -112,11 +112,12 @@ export function speedBonus(reached: number, timeSeconds: number): number {
   return Math.round(Math.max(0, reached) * SPEED_XP * speedFactor(timeSeconds, reached));
 }
 
-/** Base XP: distance + clear bonus + a speed component. */
-export function basePoints(reached: number, rounds: number, timeSeconds: number): number {
-  const distance = Math.max(0, reached) * DISTANCE_XP;
+/** Base XP: how many you got right + a bonus for a full clear. Chain has no
+ *  time component, so XP is purely about correct calls. */
+export function basePoints(reached: number, rounds: number): number {
+  const distance = Math.max(0, reached) * DISTANCE_XP; // per correct answer
   const clear = rounds > 0 && reached >= rounds ? CLEAR_BONUS : 0;
-  return distance + clear + speedBonus(reached, timeSeconds);
+  return distance + clear;
 }
 
 /** Gentle streak boost: +3% per consecutive day, capped at +60%. */
@@ -124,13 +125,23 @@ export function streakMultiplier(streak: number): number {
   return Math.min(1.6, 1 + 0.03 * Math.max(0, streak));
 }
 
-export function pointsForGame(
-  reached: number,
-  rounds: number,
-  timeSeconds: number,
-  streak: number
+/** The streak as it stands *right now*, for display. The stored value is only
+ *  reconciled on the next play, so a player who missed a day would otherwise see
+ *  a stale number - here it reads as broken (0) unless they played today or
+ *  yesterday. */
+export function effectiveStreak(
+  streak: number,
+  lastPlayedDate: string | null,
+  today: string,
+  yesterday: string
 ): number {
-  return Math.round(basePoints(reached, rounds, timeSeconds) * streakMultiplier(streak));
+  if (!lastPlayedDate) return 0;
+  if (lastPlayedDate === today || lastPlayedDate === yesterday) return Math.max(0, streak);
+  return 0;
+}
+
+export function pointsForGame(reached: number, rounds: number, streak: number): number {
+  return Math.round(basePoints(reached, rounds) * streakMultiplier(streak));
 }
 
 // --- Daily score -------------------------------------------------------------
@@ -149,19 +160,13 @@ export function dailyScore(reached: number, hearts: number, timeSeconds: number)
 }
 
 // --- Chain's daily points (0–1000) -------------------------------------------
-// Chain contributes to the combined daily total on the same 0–1000 scale as the
-// other games, so no game outweighs another. Distance is the bulk; the hearts
-// you finish a clear with are the efficiency signal (mirrors Word's guess count
-// and the Mini's checks). A flawless clear = 1000.
-const CHAIN_DISTANCE = 850; // full spread for how far you got
-const CHAIN_HEART = 50; // per heart kept on a clear (max 150 => 1000)
-
-export function chainDailyScore(reached: number, rounds: number, lives: number): number {
+// No hearts, no time: you play the whole chain and your score is simply the
+// share you got right, on the same 0–1000 scale as the other games. All correct
+// = 1000, so no game outweighs another.
+export function chainDailyScore(reached: number, rounds: number): number {
   if (rounds <= 0) return 0;
-  const distance = Math.min(1, Math.max(0, reached / rounds));
-  const cleared = reached >= rounds;
-  const heartBonus = cleared ? heartsFor(lives) * CHAIN_HEART : 0;
-  return Math.round(distance * CHAIN_DISTANCE + heartBonus);
+  const correct = Math.max(0, Math.min(reached, rounds));
+  return Math.round((correct / rounds) * 1000);
 }
 
 // --- Achievements ------------------------------------------------------------
@@ -175,12 +180,9 @@ export interface AchievementDef {
 
 export const ACHIEVEMENTS: AchievementDef[] = [
   { id: "first_game", label: "First Steps", description: "Play your first game.", icon: "🧭" },
-  { id: "perfect", label: "Clean Sweep", description: "Clear an entire chain.", icon: "🎯" },
-  { id: "flawless", label: "Flawless", description: "Clear a chain without losing a life.", icon: "💎" },
+  { id: "perfect", label: "Clean Sweep", description: "Get every call right in a Chain.", icon: "🎯" },
   { id: "streak7", label: "On Fire", description: "Reach a 7-day streak.", icon: "🔥" },
   { id: "streak30", label: "Unstoppable", description: "Reach a 30-day streak.", icon: "⚡" },
-  { id: "stars25", label: "Heart Collector", description: "Bank 25 hearts.", icon: "❤️" },
-  { id: "stars100", label: "Big Heart", description: "Bank 100 hearts.", icon: "💖" },
   { id: "level10", label: "Seasoned", description: "Reach level 10.", icon: "🏆" },
   // Collection achievements - earned across the whole roster, granted by the
   // quick-game recorder (/api/modes/complete).
@@ -199,11 +201,10 @@ export function achievementById(id: string): AchievementDef | undefined {
 
 export interface AchievementContext {
   daysPlayed: number;
-  totalStars: number;
   currentStreak: number;
   level: number;
+  /** True when every call in the Chain was right (a full clear). */
   clearedThisGame: boolean;
-  flawlessThisGame: boolean;
 }
 
 /** Which achievement ids are satisfied by the current stats / latest game. */
@@ -211,11 +212,8 @@ export function earnedAchievementIds(ctx: AchievementContext): string[] {
   const earned: string[] = [];
   if (ctx.daysPlayed >= 1) earned.push("first_game");
   if (ctx.clearedThisGame) earned.push("perfect");
-  if (ctx.flawlessThisGame) earned.push("flawless");
   if (ctx.currentStreak >= 7) earned.push("streak7");
   if (ctx.currentStreak >= 30) earned.push("streak30");
-  if (ctx.totalStars >= 25) earned.push("stars25");
-  if (ctx.totalStars >= 100) earned.push("stars100");
   if (ctx.level >= 10) earned.push("level10");
   return earned;
 }

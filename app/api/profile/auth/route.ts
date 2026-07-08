@@ -63,13 +63,13 @@ function aggregate(rows: ResultRow[], today: string, period: string) {
   const daysPlayed = dates.size;
   const streak = computeStreak(dates, today);
   const lastPlayed = rows.length ? rows.map((r) => r.play_date).sort().slice(-1)[0] : null;
+  // "Perfect" is awarded during live play (backfill can't know each game's
+  // round count). Streak/level/first-game achievements resolve from the totals.
   const achievements = earnedAchievementIds({
     daysPlayed,
-    totalStars,
     currentStreak: streak,
     level: levelFromXp(xp),
-    clearedThisGame: rows.some((r) => (r.stars ?? 0) >= 3),
-    flawlessThisGame: false,
+    clearedThisGame: false,
   });
   return { xp, totalStars, totalScore, monthlyScore, daysPlayed, streak, lastPlayed, achievements };
 }
@@ -145,6 +145,33 @@ export async function POST(req: Request) {
     // New days for the account - re-point them to the canonical session.
     if (move.length) {
       await supabase.from("game_results").update({ session_id: canonical }).in("id", move);
+    }
+
+    // Do the SAME for the quick games (Duality/Word/Mini) so their scores follow
+    // the player into their account instead of being stranded on the anonymous
+    // session - otherwise the profile's per-game stats look empty after sign-in.
+    // Keyed by (play_date, mode) to respect the table's unique constraint.
+    const { data: canonModes } = await supabase
+      .from("game_mode_results")
+      .select("play_date, mode")
+      .eq("session_id", canonical)
+      .returns<{ play_date: string; mode: string }[]>();
+    const canonModeKeys = new Set((canonModes ?? []).map((r) => `${r.play_date}:${r.mode}`));
+
+    const { data: curModes } = await supabase
+      .from("game_mode_results")
+      .select("id, play_date, mode")
+      .eq("session_id", session_id)
+      .returns<{ id: string; play_date: string; mode: string }[]>();
+    const modeDup = (curModes ?? [])
+      .filter((r) => canonModeKeys.has(`${r.play_date}:${r.mode}`))
+      .map((r) => r.id);
+    const modeMove = (curModes ?? [])
+      .filter((r) => !canonModeKeys.has(`${r.play_date}:${r.mode}`))
+      .map((r) => r.id);
+    if (modeDup.length) await supabase.from("game_mode_results").delete().in("id", modeDup);
+    if (modeMove.length) {
+      await supabase.from("game_mode_results").update({ session_id: canonical }).in("id", modeMove);
     }
 
     // Recompute the rolled-up stats from the account's full history. This

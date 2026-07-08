@@ -9,6 +9,8 @@ import { getModeResult } from "@/lib/modeStore";
 import { LIVE_MODES, modeDef, type ModeId } from "@/lib/modes";
 import { useArchiveGate } from "@/hooks/useArchiveGate";
 import { ArchiveLock } from "./ArchiveLock";
+import { ShareResults } from "@/components/game/ShareResults";
+import { isAdminPreview } from "@/lib/adminClient";
 import { isJuly4th } from "@/lib/festive";
 import { Fireworks } from "@/components/game/Fireworks";
 
@@ -27,7 +29,12 @@ export function GameShell({
   children: React.ReactNode;
 }) {
   const def = modeDef(mode);
-  const { locked, checking } = useArchiveGate(date);
+  const gate = useArchiveGate(date);
+  // Admins previewing from the panel bypass the sign-in wall entirely.
+  const [preview, setPreview] = useState(false);
+  useEffect(() => setPreview(isAdminPreview()), []);
+  const locked = preview ? false : gate.locked;
+  const checking = preview ? false : gate.checking;
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-5 pb-10 pt-5">
       {isJuly4th(date) && <Fireworks />}
@@ -97,11 +104,13 @@ export function NextGameCTA({ date, current }: { date: string; current: ModeId }
 
   return (
     <div className="flex flex-col gap-2.5">
+      <p className="text-center text-sm font-bold text-ink">That&apos;s all four - nice.</p>
+      <ShareResults date={date} />
       <Link
         href="/leaderboard"
-        className="flex h-14 w-full items-center justify-center rounded-2xl bg-cta text-base font-bold text-background transition-transform active:scale-[0.98]"
+        className="flex h-12 w-full items-center justify-center rounded-2xl border border-border bg-surface text-sm font-bold text-ink transition-colors hover:bg-border/40"
       >
-        All done - see today&apos;s leaderboard
+        See today&apos;s leaderboard
       </Link>
       <Link
         href="/"
