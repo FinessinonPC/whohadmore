@@ -44,7 +44,8 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
   const [dir, setDir] = useState<Dir>("A");
   const [wrong, setWrong] = useState<Set<string>>(new Set());
   const [right, setRight] = useState<Set<string>>(new Set());
-  const [fails, setFails] = useState(0);
+  const [checks, setChecks] = useState(0); // times Check was used - the crutch
+  const [wrongNudge, setWrongNudge] = useState(false); // full grid, but not all right
   const [done, setDone] = useState<null | { score: number; revealed: boolean }>(null);
   const [already, setAlready] = useState<{ score: number; max: number } | null>(null);
 
@@ -180,7 +181,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
     saveModeResult("mini", date, {
       score,
       maxScore: MINI_MAX_POINTS,
-      detail: [fails],
+      detail: [checks],
       completedAt: new Date().toISOString(),
     });
     void fetch("/api/modes/complete", {
@@ -192,31 +193,47 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
 
   const anyFilled = entries.some((row, r) => row.some((ch, c) => open(r, c) && ch !== ""));
 
-  const check = () => {
-    if (!anyFilled || done) return;
-    const bad = new Set<string>();
-    const good = new Set<string>();
-    let complete = true;
+  // Auto-complete: the moment every cell is filled AND all correct, the grid
+  // finishes on its own - no Check needed. A full-but-wrong grid just nudges
+  // "some letters are wrong" (without saying which - that's what Check is for).
+  useEffect(() => {
+    if (done || already) return;
+    let full = true;
+    let allRight = true;
     for (let r = 0; r < 5; r++)
       for (let c = 0; c < 5; c++) {
         if (!open(r, c)) continue;
         const ch = entries[r][c];
-        if (!ch) {
-          complete = false;
-          continue;
-        }
+        if (!ch) full = false;
+        else if (ch !== rows[r][c]) allRight = false;
+      }
+    if (full && allRight) {
+      feedbackCorrect();
+      finish(Math.max(MINI_MAX_POINTS - checks * MINI_CHECK_PENALTY, MINI_MIN_SCORE), false);
+    } else {
+      setWrongNudge(full && !allRight);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries, done, already, open]);
+
+  // Check is the crutch: it marks which filled letters are right/wrong and
+  // costs points, so a checked solve never scores full marks.
+  const check = () => {
+    if (!anyFilled || done) return;
+    const bad = new Set<string>();
+    const good = new Set<string>();
+    for (let r = 0; r < 5; r++)
+      for (let c = 0; c < 5; c++) {
+        if (!open(r, c)) continue;
+        const ch = entries[r][c];
+        if (!ch) continue;
         if (ch === rows[r][c]) good.add(`${r},${c}`);
         else bad.add(`${r},${c}`);
       }
-    if (complete && bad.size === 0) {
-      feedbackCorrect();
-      finish(Math.max(MINI_MAX_POINTS - fails * MINI_CHECK_PENALTY, MINI_MIN_SCORE), false);
-    } else {
-      feedbackWrong();
-      setWrong(bad);
-      setRight(good);
-      setFails((f) => f + 1);
-    }
+    feedbackWrong();
+    setWrong(bad);
+    setRight(good);
+    setChecks((n) => n + 1);
   };
 
   const reveal = () => {
@@ -298,18 +315,27 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
           )}
         </div>
 
+        {/* full grid but not all correct - nudge without giving it away */}
+        <div className="flex h-5 items-center justify-center">
+          {wrongNudge && !done && (
+            <p className="mt-2 text-xs font-bold" style={{ color: "#FF3B30" }}>
+              Some letters are wrong
+            </p>
+          )}
+        </div>
+
         {/* clue bar / result */}
         {done ? (
-          <div className="mt-5 text-center">
+          <div className="mt-3 text-center">
             <p className="font-condensed text-4xl font-semibold text-ink tabular">
               {done.revealed ? "Revealed" : `+${done.score}`}
             </p>
             <p className="mt-1 text-xs font-semibold text-ink-secondary">
               {done.revealed
                 ? "No points this time - tomorrow's grid awaits"
-                : fails === 0
-                  ? "Clean solve, first check"
-                  : `Solved with ${fails} failed ${fails === 1 ? "check" : "checks"}`}
+                : checks === 0
+                  ? "Clean solve - no checks used"
+                  : `Solved with ${checks} ${checks === 1 ? "check" : "checks"}`}
             </p>
           </div>
         ) : (
@@ -382,8 +408,8 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                 <Button size="lg" className="w-full" onClick={check} disabled={!anyFilled}>
                   {!anyFilled
                     ? "Type letters to check"
-                    : fails > 0
-                      ? "Check letters again"
+                    : checks > 0
+                      ? "Check again"
                       : "Check letters"}
                 </Button>
               </div>

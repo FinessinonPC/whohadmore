@@ -148,6 +148,22 @@ export function dailyScore(reached: number, hearts: number, timeSeconds: number)
   return correct + heartBonus + speed;
 }
 
+// --- Chain's daily points (0–1000) -------------------------------------------
+// Chain contributes to the combined daily total on the same 0–1000 scale as the
+// other games, so no game outweighs another. Distance is the bulk; the hearts
+// you finish a clear with are the efficiency signal (mirrors Word's guess count
+// and the Mini's checks). A flawless clear = 1000.
+const CHAIN_DISTANCE = 850; // full spread for how far you got
+const CHAIN_HEART = 50; // per heart kept on a clear (max 150 => 1000)
+
+export function chainDailyScore(reached: number, rounds: number, lives: number): number {
+  if (rounds <= 0) return 0;
+  const distance = Math.min(1, Math.max(0, reached / rounds));
+  const cleared = reached >= rounds;
+  const heartBonus = cleared ? heartsFor(lives) * CHAIN_HEART : 0;
+  return Math.round(distance * CHAIN_DISTANCE + heartBonus);
+}
+
 // --- Achievements ------------------------------------------------------------
 
 export interface AchievementDef {

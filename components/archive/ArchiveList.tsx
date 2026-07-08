@@ -3,14 +3,15 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Badge, categoryLabel } from "@/components/ui/Badge";
-import { getLocalResult } from "@/lib/playStore";
+import { getLocalResult, getSessionId } from "@/lib/playStore";
 import { getModeResult } from "@/lib/modeStore";
 import { usePlayedResults } from "@/hooks/usePlayedResults";
+import { chainDailyScore } from "@/lib/leaderboard";
 import { formatShortDate } from "@/lib/date";
 import type { DailyGame } from "@/types";
 
 type NumberedGame = DailyGame & { game_number: number };
-type PlayedResult = { reached: number; rounds: number; lives: number; total?: number };
+type ChainInfo = { reached: number; rounds: number; lives: number };
 
 function tierClass(reached: number, rounds: number): string {
   if (rounds <= 0) return "border-border bg-surface text-ink-secondary";
@@ -38,32 +39,52 @@ export function ArchiveList({ games, hrefFor }: { games: NumberedGame[]; hrefFor
     () => [...games].sort((a, b) => (a.play_date < b.play_date ? 1 : -1)),
     [games]
   );
-  const serverResults = usePlayedResults();
-  const [local, setLocal] = useState<Record<string, PlayedResult>>({});
+  // Chain history: server (cross-device) merged with anything fresher on this
+  // device. Quick-game points come from localStorage AND the server, so the
+  // total covers every game even for days played on another device.
+  const serverChain = usePlayedResults();
+  const [localChain, setLocalChain] = useState<Record<string, ChainInfo>>({});
+  const [localModes, setLocalModes] = useState<Record<string, number>>({});
+  const [serverModes, setServerModes] = useState<Record<string, number>>({});
+
   useEffect(() => {
-    const map: Record<string, PlayedResult> = {};
+    const chain: Record<string, ChainInfo> = {};
+    const modes: Record<string, number> = {};
     for (const g of games) {
       const r = getLocalResult(g.play_date);
-      const modes = (["duality", "word", "mini"] as const).reduce(
-        (a, m) => a + (getModeResult(m, g.play_date)?.score ?? 0),
+      if (r) chain[g.play_date] = { reached: r.reached, rounds: r.rounds, lives: r.lives };
+      const m = (["duality", "word", "mini"] as const).reduce(
+        (a, mode) => a + (getModeResult(mode, g.play_date)?.score ?? 0),
         0
       );
-      if (r || modes > 0) {
-        map[g.play_date] = {
-          reached: r?.reached ?? 0,
-          rounds: r?.rounds ?? 0,
-          lives: r?.lives ?? 0,
-          total: (r?.xpEarned ?? 0) + modes,
-        };
-      }
+      if (m > 0) modes[g.play_date] = m;
     }
-    setLocal(map);
+    setLocalChain(chain);
+    setLocalModes(modes);
   }, [games]);
-  // Account history (server) merged with anything fresher on this device.
-  const played: Record<string, PlayedResult> = useMemo(
-    () => ({ ...serverResults, ...local }),
-    [serverResults, local]
-  );
+
+  useEffect(() => {
+    fetch(`/api/modes/results?session=${getSessionId()}`)
+      .then((r) => r.json())
+      .then((d: { results?: Record<string, number> }) => setServerModes(d.results ?? {}))
+      .catch(() => setServerModes({}));
+  }, []);
+
+  // One combined figure per date: Chain's daily points + every quick game.
+  const infoFor = useMemo(() => {
+    return (date: string) => {
+      const chain = localChain[date] ?? serverChain[date] ?? null;
+      const chainPts = chain ? chainDailyScore(chain.reached, chain.rounds, chain.lives) : 0;
+      const modePts = localModes[date] ?? serverModes[date] ?? 0;
+      return {
+        played: Boolean(chain) || modePts > 0,
+        total: chainPts + modePts,
+        reached: chain?.reached ?? 0,
+        rounds: chain?.rounds ?? 0,
+        lives: chain?.lives ?? 0,
+      };
+    };
+  }, [localChain, localModes, serverChain, serverModes]);
 
   if (sorted.length === 0) {
     return (
@@ -76,7 +97,7 @@ export function ArchiveList({ games, hrefFor }: { games: NumberedGame[]; hrefFor
   return (
     <ul className="divide-y divide-border border-y border-border">
       {sorted.map((game) => {
-        const result = played[game.play_date];
+        const info = infoFor(game.play_date);
         return (
           <li key={game.id}>
             <Link
@@ -94,18 +115,16 @@ export function ArchiveList({ games, hrefFor }: { games: NumberedGame[]; hrefFor
                   <Badge tone="category">{categoryLabel(game.topic_category)}</Badge>
                 </div>
               </div>
-              {result ? (
+              {info.played ? (
                 <div className="flex shrink-0 items-center gap-2">
-                  <Hearts lives={result.lives} />
+                  {info.lives > 0 && <Hearts lives={info.lives} />}
                   <span
                     className={`rounded-full border px-2.5 py-1 font-condensed text-sm font-semibold tabular ${tierClass(
-                      result.reached,
-                      result.rounds
+                      info.reached,
+                      info.rounds
                     )}`}
                   >
-                    {result.total && result.total > 0
-                      ? `${result.total.toLocaleString()} pts`
-                      : `${result.reached}/${result.rounds}`}
+                    {info.total.toLocaleString()} pts
                   </span>
                 </div>
               ) : (

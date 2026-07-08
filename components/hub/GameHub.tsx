@@ -8,6 +8,7 @@ import { GameWordmark } from "@/components/ui/GameWordmarks";
 import { formatDisplayDate } from "@/lib/date";
 import { getLocalResult, getProgress } from "@/lib/playStore";
 import { getModeResult } from "@/lib/modeStore";
+import { chainDailyScore } from "@/lib/leaderboard";
 import { LIVE_MODES, MODES, type ModeDef } from "@/lib/modes";
 import { useArchiveGate } from "@/hooks/useArchiveGate";
 import { ArchiveLock } from "@/components/games/ArchiveLock";
@@ -56,8 +57,9 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
       if (m.id === "chain") {
         const chain = getLocalResult(date);
         const prog = getProgress(date);
+        const pts = chain ? chainDailyScore(chain.reached, chain.rounds, chain.lives) : 0;
         next.chain = chain
-          ? { played: true, label: `${chain.reached}/${chain.rounds}`, score: chain.xpEarned }
+          ? { played: true, label: `${pts}`, score: pts }
           : { played: false, label: prog && prog.roundsPlayed > 0 ? "Resume" : "Play", score: 0 };
       } else {
         const r = getModeResult(m.id, date);

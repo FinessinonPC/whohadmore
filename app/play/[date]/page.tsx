@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PlayExperience } from "@/components/game/PlayExperience";
 import { ChainGate } from "@/components/games/ChainGate";
-import { GameSeoFooter } from "@/components/seo/GameSeoFooter";
 import { getFullGame, getGameNumber } from "@/lib/games";
 import { puzzleDescription, puzzleTitle } from "@/lib/seo";
 import { isValidISODate, todayISO } from "@/lib/date";
@@ -48,17 +47,15 @@ export default async function PlayDatePage({
   ]);
 
   // Same experience as /play - isDaily just controls the midnight roll-over.
+  // No SEO footer here: the Chain page is just the game, like the other three.
   return (
-    <>
-      <ChainGate date={date} isDaily={date === todayISO()}>
-        <PlayExperience
-          initialGame={game}
-          date={date}
-          gameNumber={gameNumber}
-          isDaily={date === todayISO()}
-        />
-      </ChainGate>
-      {game && <GameSeoFooter game={game} date={date} />}
-    </>
+    <ChainGate date={date} isDaily={date === todayISO()}>
+      <PlayExperience
+        initialGame={game}
+        date={date}
+        gameNumber={gameNumber}
+        isDaily={date === todayISO()}
+      />
+    </ChainGate>
   );
 }

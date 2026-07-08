@@ -22,7 +22,15 @@ export interface ModeDef {
 
 export const DUALITY_PAIRS = 4;
 export const DUALITY_POINTS_PER_PAIR = 250;
-export const DUALITY_MAX_MISTAKES = 4;
+/** Three tries: three wrong lock-ins ends the game. */
+export const DUALITY_MAX_MISTAKES = 3;
+/** Each wrong lock-in costs points, so a clean solve beats a messy one. */
+export const DUALITY_MISTAKE_PENALTY = 150;
+
+/** Duality score (0–1000): pairs found, minus a penalty per wrong lock-in. */
+export function dualityScore(found: number, mistakes: number): number {
+  return Math.max(0, found * DUALITY_POINTS_PER_PAIR - mistakes * DUALITY_MISTAKE_PENALTY);
+}
 
 export const WORD_MAX_GUESSES = 6;
 /** Points by number of guesses used (index 0 = solved in 1). Fail = 0. */

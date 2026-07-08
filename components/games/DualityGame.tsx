@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
-import { DUALITY_MAX_MISTAKES, DUALITY_POINTS_PER_PAIR, modeDef } from "@/lib/modes";
+import { DUALITY_MAX_MISTAKES, DUALITY_POINTS_PER_PAIR, dualityScore, modeDef } from "@/lib/modes";
 import { hashSeed, mulberry32, seededShuffle } from "@/lib/seed";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 import type { DualityDay } from "@/lib/contentPacks";
@@ -16,11 +16,15 @@ const ACCENT = modeDef("duality").accent;
 const PAIR_COLORS = ["#FFC400", "#00C853", "#2E6BFF", "#A44BFF"];
 const PAIR_INK = ["#0B0D10", "#0B0D10", "#FFFFFF", "#FFFFFF"];
 
+/** Order-independent key for a pair of definitions, so a combo counts once. */
+const comboKey = (a: string, b: string) => [a, b].sort().join("|||");
+
 /**
  * Duality: eight definitions hide four pairs - each pair is two meanings of
  * the SAME word. Tap two that go together; matched pairs collapse into
- * difficulty-colored banners that reveal the word. Four mistakes allowed.
- * 250 points per pair. Content resolves server-side and arrives as a prop.
+ * difficulty-colored banners that reveal the word. Three wrong lock-ins ends
+ * it, each one costs points, and a combo can't be tried twice. Max 1000.
+ * Content resolves server-side and arrives as a prop.
  */
 export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
   // Board: the 8 defs shuffled the same way for everyone today.
@@ -34,6 +38,8 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [found, setFound] = useState<number[]>([]); // pair indexes, in found order
   const [mistakes, setMistakes] = useState(0);
+  const [tried, setTried] = useState<Set<string>>(new Set()); // wrong combos already used
+  const [shake, setShake] = useState<string[]>([]); // texts currently shaking (wrong)
   const [already, setAlready] = useState<{ score: number; max: number } | null>(null);
 
   useEffect(() => {
@@ -44,20 +50,25 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
   const failed = mistakes >= DUALITY_MAX_MISTAKES;
   const solved = found.length === day.pairs.length;
   const done = failed || solved;
-  const score = found.length * DUALITY_POINTS_PER_PAIR;
+  const score = dualityScore(found.length, mistakes);
   const max = day.pairs.length * DUALITY_POINTS_PER_PAIR;
+
+  const currentKey = selected.length === 2 ? comboKey(selected[0], selected[1]) : null;
+  const isRepeat = currentKey ? tried.has(currentKey) : false;
 
   const remaining = board.filter((d) => !found.includes(d.pair));
 
   const toggle = (text: string) => {
-    if (done) return;
+    if (done || shake.length > 0) return;
     setSelected((s) =>
       s.includes(text) ? s.filter((t) => t !== text) : s.length < 2 ? [...s, text] : s
     );
   };
 
   const submit = () => {
-    if (selected.length !== 2 || done) return;
+    if (selected.length !== 2 || done || shake.length > 0) return;
+    const key = comboKey(selected[0], selected[1]);
+    if (tried.has(key)) return; // no submitting the same combo twice
     const picked = selected.map((t) => board.find((d) => d.text === t)!);
     if (picked[0].pair === picked[1].pair) {
       setFound((f) => [...f, picked[0].pair]);
@@ -65,8 +76,13 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
       feedbackCorrect();
     } else {
       setMistakes((m) => m + 1);
-      setSelected([]);
+      setTried((t) => new Set(t).add(key));
+      setShake(selected); // shake the two wrong tiles, then clear them
       feedbackWrong();
+      window.setTimeout(() => {
+        setShake([]);
+        setSelected([]);
+      }, 450);
     }
   };
 
@@ -135,16 +151,24 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
           <div className="grid grid-cols-2 gap-2">
             {remaining.map((d) => {
               const isSel = selected.includes(d.text);
+              const isShaking = shake.includes(d.text);
               return (
-                <button
+                <motion.button
                   key={d.text}
                   onClick={() => toggle(d.text)}
-                  className={`flex min-h-[4.4rem] items-center justify-center rounded-xl px-3 py-3 text-center text-[13px] font-bold leading-snug transition-all active:scale-95 sm:text-sm ${
-                    isSel ? "bg-cta text-background" : "bg-surface text-ink"
+                  animate={isShaking ? { x: [0, -8, 8, -6, 6, 0] } : { x: 0 }}
+                  transition={isShaking ? { duration: 0.42 } : { duration: 0 }}
+                  className={`flex min-h-[4.4rem] items-center justify-center rounded-xl px-3 py-3 text-center text-[13px] font-bold leading-snug transition-colors active:scale-95 sm:text-sm ${
+                    isShaking
+                      ? "text-white"
+                      : isSel
+                        ? "bg-cta text-background"
+                        : "bg-surface text-ink"
                   }`}
+                  style={isShaking ? { background: "#FF3B30" } : undefined}
                 >
                   {d.text}
-                </button>
+                </motion.button>
               );
             })}
           </div>
@@ -173,7 +197,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
       <div className="mt-4 flex h-8 items-center justify-center gap-3">
         {done ? (
           <p className="font-condensed text-2xl font-semibold uppercase tracking-wide text-ink">
-            {solved ? `Perfect · +${score}` : `+${score}`}
+            {solved && mistakes === 0 ? `Perfect · +${score}` : `+${score}`}
           </p>
         ) : (
           <>
@@ -204,12 +228,21 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
               size="lg"
               className="shrink-0"
               onClick={() => setSelected([])}
-              disabled={selected.length === 0}
+              disabled={selected.length === 0 || shake.length > 0}
             >
               Clear
             </Button>
-            <Button size="lg" className="w-full" onClick={submit} disabled={selected.length !== 2}>
-              {selected.length === 2 ? "Lock it in" : `Pick ${2 - selected.length} more`}
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={submit}
+              disabled={selected.length !== 2 || isRepeat || shake.length > 0}
+            >
+              {selected.length !== 2
+                ? `Pick ${2 - selected.length} more`
+                : isRepeat
+                  ? "Already tried"
+                  : "Lock it in"}
             </Button>
           </div>
         )}
