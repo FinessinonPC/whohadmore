@@ -1,37 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { getLocalResult } from "@/lib/playStore";
-import { usePlayedResults } from "@/hooks/usePlayedResults";
+import { useMemo, useState } from "react";
 import { todayISO } from "@/lib/date";
+import { scoreTier, useArchiveScores, type ArchiveFilter } from "@/hooks/useArchiveScores";
 import type { DailyGame } from "@/types";
 
 type NumberedGame = DailyGame & { game_number: number };
-type PlayedResult = { reached: number; rounds: number };
 
 interface ArchiveCalendarProps {
   games: NumberedGame[];
   /** Where a day cell links (defaults to that day's hub). */
   hrefFor?: (date: string) => string;
+  /** Current game filter - drives which score each day shows. */
+  filter?: ArchiveFilter;
 }
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 const pad = (n: number) => n.toString().padStart(2, "0");
 
-/** green = cleared, yellow = made it past 7, red = out before 7. */
-function tierClass(reached: number, rounds: number): string {
-  if (reached >= rounds) return "border-correct/45 bg-correct/15 hover:bg-correct/25";
-  if (reached >= 7) return "border-[#FFB300]/50 bg-[#FFB300]/15 hover:bg-[#FFB300]/25";
-  return "border-wrong/40 bg-wrong/12 hover:bg-wrong/20";
-}
-function tierText(reached: number, rounds: number): string {
-  if (reached >= rounds) return "text-correct";
-  if (reached >= 7) return "text-[#9A6A00]";
-  return "text-wrong";
-}
+// Performance band -> cell + number styling (points-based, filter-aware).
+const TIER_CELL: Record<string, string> = {
+  great: "border-correct/45 bg-correct/15 hover:bg-correct/25",
+  good: "border-[#FFB300]/50 bg-[#FFB300]/15 hover:bg-[#FFB300]/25",
+  rough: "border-wrong/40 bg-wrong/12 hover:bg-wrong/20",
+  none: "border-border bg-surface hover:border-ink/30",
+};
+const TIER_TEXT: Record<string, string> = {
+  great: "text-correct",
+  good: "text-[#9A6A00]",
+  rough: "text-wrong",
+  none: "text-ink-secondary",
+};
 
-export function ArchiveCalendar({ games, hrefFor }: ArchiveCalendarProps) {
+export function ArchiveCalendar({ games, hrefFor, filter = "all" }: ArchiveCalendarProps) {
+  const scoreFor = useArchiveScores(games);
   const today = todayISO();
   const [ty, tm] = today.split("-").map(Number);
 
@@ -48,21 +51,6 @@ export function ArchiveCalendar({ games, hrefFor }: ArchiveCalendarProps) {
   const [ly, lm] = latest.split("-").map(Number);
   const [year, setYear] = useState(ly);
   const [month, setMonth] = useState(lm - 1);
-
-  const serverResults = usePlayedResults();
-  const [local, setLocal] = useState<Record<string, PlayedResult>>({});
-  useEffect(() => {
-    const map: Record<string, PlayedResult> = {};
-    games.forEach((g) => {
-      const r = getLocalResult(g.play_date);
-      if (r) map[g.play_date] = { reached: r.reached, rounds: r.rounds };
-    });
-    setLocal(map);
-  }, [games]);
-  const played: Record<string, PlayedResult> = useMemo(
-    () => ({ ...serverResults, ...local }),
-    [serverResults, local]
-  );
 
   const { cells, label } = useMemo(() => {
     const firstWeekday = new Date(Date.UTC(year, month, 1)).getUTCDay();
@@ -117,7 +105,6 @@ export function ArchiveCalendar({ games, hrefFor }: ArchiveCalendarProps) {
           const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`;
           const game = byDate[dateStr];
           const isToday = dateStr === today;
-          const result = played[dateStr];
 
           if (!game) {
             return (
@@ -132,16 +119,15 @@ export function ArchiveCalendar({ games, hrefFor }: ArchiveCalendarProps) {
             );
           }
 
-          const state = result
-            ? tierClass(result.reached, result.rounds)
-            : "border-border bg-surface hover:border-ink/30";
+          const score = scoreFor(dateStr, filter);
+          const tier = scoreTier(score);
 
           return (
             <Link
               key={dateStr}
               href={hrefFor ? hrefFor(dateStr) : `/day/${dateStr}`}
               title={game.topic_label}
-              className={`group flex min-h-[84px] flex-col gap-1 rounded-xl border p-2 transition-colors sm:min-h-[112px] ${state} ${
+              className={`group flex min-h-[84px] flex-col gap-1 rounded-xl border p-2 transition-colors sm:min-h-[112px] ${TIER_CELL[tier]} ${
                 isToday ? "ring-2 ring-ink/30" : ""
               }`}
             >
@@ -149,9 +135,9 @@ export function ArchiveCalendar({ games, hrefFor }: ArchiveCalendarProps) {
               <span className="font-condensed text-base font-semibold text-ink/85 sm:text-lg">
                 No. {game.game_number}
               </span>
-              {result && (
-                <span className={`mt-auto tabular text-[10px] font-extrabold sm:text-xs ${tierText(result.reached, result.rounds)}`}>
-                  {result.reached}/{result.rounds}
+              {score.played && (
+                <span className={`mt-auto tabular text-[11px] font-extrabold sm:text-sm ${TIER_TEXT[tier]}`}>
+                  {score.points.toLocaleString()}
                 </span>
               )}
             </Link>
@@ -161,9 +147,9 @@ export function ArchiveCalendar({ games, hrefFor }: ArchiveCalendarProps) {
 
       {/* Legend */}
       <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-ink-secondary">
-        <Swatch className="border-correct/45 bg-correct/15" label="Cleared it" />
-        <Swatch className="border-[#FFB300]/50 bg-[#FFB300]/15" label="Past 7" />
-        <Swatch className="border-wrong/40 bg-wrong/12" label="Out before 7" />
+        <Swatch className="border-correct/45 bg-correct/15" label="Strong" />
+        <Swatch className="border-[#FFB300]/50 bg-[#FFB300]/15" label="Solid" />
+        <Swatch className="border-wrong/40 bg-wrong/12" label="Rough" />
         <Swatch className="border-border bg-surface" label="Not played" />
       </div>
     </div>

@@ -33,10 +33,10 @@ were cut on 2026-07-07 (code in git history).
 
 | id | Name | Copies | Accent | Kind | One-liner |
 |----|------|--------|--------|------|-----------|
-| `chain` | Chain | The Higher Lower Game | `#00C853` green | stat | Classic higher-or-lower run (the original game) |
-| `duality` | Duality | NYT Connections (pairs twist) | `#06B6D4` cyan | pack | 8 definitions hide 4 pairs (two meanings, one word), difficulty-colored, 250/pair, 4 mistakes |
+| `chain` | Chain | The Higher Lower Game | `#00C853` green | stat | Classic higher-or-lower run; daily score = distance (850) + hearts on a clear (150), max 1000 |
+| `duality` | Duality | NYT Connections (pairs twist) | `#06B6D4` cyan | pack | 8 definitions hide 4 pairs, difficulty-colored; 200/pair + up to 200 speed on a solve, -150/mistake, 3 tries, max 1000 |
 | `word` | Word | Wordle | `#FFC400` yellow | pack | Daily 5-letter word, 6 tries; 1000..500 pts by guess count |
-| `mini` | Mini | NYT Mini crossword | `#2E6BFF` blue | pack | 5x5 grid; 1000 pts, -100 per failed check (floor 400), reveal = 0 |
+| `mini` | Mini | NYT Mini crossword | `#2E6BFF` blue | pack | 5x5 grid; auto-completes when all correct; 800 base + up to 200 speed, -100/Check (floor 300), reveal = 0 |
 
 **Weekday themes (Chain)**: every weekday has a flavor, derived from the
 date in `lib/weekly.ts` (Movie Monday, Trending Tuesday, World Wednesday,
@@ -114,8 +114,10 @@ accent-tinted square. New game = new icon following these exact rules.
   so a reload never re-deals an easier hand. Never `Math.random()` for gameplay.
 - **Ties**: filter cards to distinct `stat_value` before picking (see
   `pickRankCards`) - ordering/judging ties is unfair.
-- **Score budget**: every quick game maxes at **1000-1250 points** so no mode
-  dominates the combined total. Chain is open-ended (it's the flagship).
+- **Score budget**: every game (Chain included) maxes at **1000 points** on the
+  same scale, so no mode dominates the combined daily total. Duality and Mini
+  fold in a speed bonus so scores vary rather than clumping on a few tiers. XP
+  (leveling) is a separate currency from these daily points.
 - **One-screen rule**: a game session is ≤60 seconds, no scrolling mid-play
   on a 390px phone. Intro copy is one sentence, on the board itself.
 - **Already-played state**: score + "come back tomorrow" + NextGameCTA.

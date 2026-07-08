@@ -24,8 +24,9 @@ export async function POST(req: Request) {
       play_date?: string;
       mode?: string;
       score?: number;
+      clean?: boolean; // solved with no mistakes/checks - drives "perfect" badges
     };
-    const { session_id, play_date, mode, score } = body;
+    const { session_id, play_date, mode, score, clean } = body;
 
     const maxScore = mode ? MODE_MAX[mode] : undefined;
     if (
@@ -70,9 +71,9 @@ export async function POST(req: Request) {
         .maybeSingle<{ id: string; achievements: string[] | null }>();
       if (profile) {
         const earned: string[] = [];
-        if (mode === "duality" && score >= 1000) earned.push("duality_perfect");
+        if (mode === "duality" && clean) earned.push("duality_perfect");
         if (mode === "word" && score >= 800) earned.push("word_ace");
-        if (mode === "mini" && score >= 1000) earned.push("mini_clean");
+        if (mode === "mini" && clean) earned.push("mini_clean");
 
         // All four in one day: the three quick games recorded + a chain result.
         const { count: modeCount } = await supabase

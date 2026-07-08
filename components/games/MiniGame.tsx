@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
-import { MINI_CHECK_PENALTY, MINI_MAX_POINTS, MINI_MIN_SCORE, modeDef } from "@/lib/modes";
+import { MINI_MAX_POINTS, miniScore, modeDef } from "@/lib/modes";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 import type { MiniClue, MiniDay } from "@/lib/contentPacks";
 
@@ -48,6 +48,8 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
   const [wrongNudge, setWrongNudge] = useState(false); // full grid, but not all right
   const [done, setDone] = useState<null | { score: number; revealed: boolean }>(null);
   const [already, setAlready] = useState<{ score: number; max: number } | null>(null);
+  const startRef = useRef<number | null>(null); // clock starts on the first letter
+  const secondsNow = () => (startRef.current ? (Date.now() - startRef.current) / 1000 : 0);
 
   useEffect(() => {
     const prev = getModeResult("mini", date);
@@ -116,6 +118,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
         return;
       }
       if (!/^[A-Z]$/.test(key)) return;
+      if (startRef.current === null) startRef.current = Date.now();
       setEntries((e) => e.map((row, ri) => row.map((ch, ci) => (ri === r && ci === c ? key : ch))));
       clearMarks(r, c);
       const nr = dir === "A" ? r : r + 1;
@@ -187,7 +190,13 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
     void fetch("/api/modes/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ session_id: getSessionId(), play_date: date, mode: "mini", score }),
+      body: JSON.stringify({
+        session_id: getSessionId(),
+        play_date: date,
+        mode: "mini",
+        score,
+        clean: !revealed && checks === 0,
+      }),
     }).catch(() => {});
   };
 
@@ -209,7 +218,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
       }
     if (full && allRight) {
       feedbackCorrect();
-      finish(Math.max(MINI_MAX_POINTS - checks * MINI_CHECK_PENALTY, MINI_MIN_SCORE), false);
+      finish(miniScore(checks, secondsNow()), false);
     } else {
       setWrongNudge(full && !allRight);
     }

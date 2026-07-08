@@ -4,11 +4,12 @@ import { useState } from "react";
 import { ArchiveCalendar } from "./ArchiveCalendar";
 import { ArchiveList } from "./ArchiveList";
 import { GameWordmark } from "@/components/ui/GameWordmarks";
-import { LIVE_MODES, type ModeId } from "@/lib/modes";
+import { LIVE_MODES } from "@/lib/modes";
+import { type ArchiveFilter } from "@/hooks/useArchiveScores";
 import type { DailyGame } from "@/types";
 
 type NumberedGame = DailyGame & { game_number: number };
-type Filter = "all" | ModeId;
+type Filter = ArchiveFilter;
 
 /**
  * The archive's interactive shell: a game filter over the calendar/list.
@@ -57,10 +58,10 @@ export function ArchiveBrowser({ games }: { games: NumberedGame[] }) {
 
       {/* Calendar on desktop, list on mobile */}
       <div className="hidden sm:block">
-        <ArchiveCalendar games={games} hrefFor={hrefFor} />
+        <ArchiveCalendar games={games} hrefFor={hrefFor} filter={filter} />
       </div>
       <div className="sm:hidden">
-        <ArchiveList games={games} hrefFor={hrefFor} />
+        <ArchiveList games={games} hrefFor={hrefFor} filter={filter} />
       </div>
     </div>
   );

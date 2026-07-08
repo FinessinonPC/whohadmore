@@ -1,12 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
-import { DUALITY_MAX_MISTAKES, DUALITY_POINTS_PER_PAIR, dualityScore, modeDef } from "@/lib/modes";
+import { DUALITY_MAX_MISTAKES, DUALITY_MAX_SCORE, DUALITY_PAIRS, dualityScore, modeDef } from "@/lib/modes";
 import { hashSeed, mulberry32, seededShuffle } from "@/lib/seed";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 import type { DualityDay } from "@/lib/contentPacks";
@@ -40,7 +40,9 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
   const [mistakes, setMistakes] = useState(0);
   const [tried, setTried] = useState<Set<string>>(new Set()); // wrong combos already used
   const [shake, setShake] = useState<string[]>([]); // texts currently shaking (wrong)
+  const [elapsed, setElapsed] = useState(0); // seconds, frozen at finish
   const [already, setAlready] = useState<{ score: number; max: number } | null>(null);
+  const startRef = useRef<number | null>(null); // clock starts on first pick
 
   useEffect(() => {
     const prev = getModeResult("duality", date);
@@ -50,8 +52,10 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
   const failed = mistakes >= DUALITY_MAX_MISTAKES;
   const solved = found.length === day.pairs.length;
   const done = failed || solved;
-  const score = dualityScore(found.length, mistakes);
-  const max = day.pairs.length * DUALITY_POINTS_PER_PAIR;
+  const score = dualityScore(found.length, mistakes, elapsed);
+  const max = DUALITY_MAX_SCORE;
+
+  const secondsNow = () => (startRef.current ? (Date.now() - startRef.current) / 1000 : 0);
 
   const currentKey = selected.length === 2 ? comboKey(selected[0], selected[1]) : null;
   const isRepeat = currentKey ? tried.has(currentKey) : false;
@@ -60,6 +64,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
 
   const toggle = (text: string) => {
     if (done || shake.length > 0) return;
+    if (startRef.current === null) startRef.current = Date.now();
     setSelected((s) =>
       s.includes(text) ? s.filter((t) => t !== text) : s.length < 2 ? [...s, text] : s
     );
@@ -71,10 +76,14 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
     if (tried.has(key)) return; // no submitting the same combo twice
     const picked = selected.map((t) => board.find((d) => d.text === t)!);
     if (picked[0].pair === picked[1].pair) {
+      // Freeze the clock the instant the last pair lands, so the persisted
+      // score uses the real solve time (not a stale render value).
+      if (found.length + 1 >= DUALITY_PAIRS) setElapsed(secondsNow());
       setFound((f) => [...f, picked[0].pair]);
       setSelected([]);
       feedbackCorrect();
     } else {
+      if (mistakes + 1 >= DUALITY_MAX_MISTAKES) setElapsed(secondsNow());
       setMistakes((m) => m + 1);
       setTried((t) => new Set(t).add(key));
       setShake(selected); // shake the two wrong tiles, then clear them
@@ -99,9 +108,15 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
     void fetch("/api/modes/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ session_id: getSessionId(), play_date: date, mode: "duality", score }),
+      body: JSON.stringify({
+        session_id: getSessionId(),
+        play_date: date,
+        mode: "duality",
+        score,
+        clean: solved && mistakes === 0,
+      }),
     }).catch(() => {});
-  }, [done, score, max, date, found.length, mistakes]);
+  }, [done, score, max, date, found.length, mistakes, solved]);
 
   if (already) {
     return (

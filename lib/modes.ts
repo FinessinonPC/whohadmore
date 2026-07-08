@@ -20,27 +20,54 @@ export interface ModeDef {
   href: (date: string) => string;
 }
 
+// A speed component so timed games vary more than a handful of fixed tiers.
+// 1.0 at or under par, decaying toward 0 the longer you take - so a fast solve
+// edges out a slow one on the same board (and no timer => full credit).
+export function timeFactor(timeSeconds: number, parSeconds: number): number {
+  if (!Number.isFinite(timeSeconds) || timeSeconds <= 0) return 1;
+  return Math.max(0, Math.min(1, parSeconds / timeSeconds));
+}
+
 export const DUALITY_PAIRS = 4;
-export const DUALITY_POINTS_PER_PAIR = 250;
 /** Three tries: three wrong lock-ins ends the game. */
 export const DUALITY_MAX_MISTAKES = 3;
-/** Each wrong lock-in costs points, so a clean solve beats a messy one. */
-export const DUALITY_MISTAKE_PENALTY = 150;
+export const DUALITY_MAX_SCORE = 1000;
+const DUALITY_PAIR_POINTS = 200; // 4 pairs = 800 base, leaving room for speed
+const DUALITY_SPEED_BONUS = 200; // up to, awarded only on a full solve
+const DUALITY_MISTAKE_PENALTY = 150; // per wrong lock-in
+const DUALITY_PAR_SECONDS = 25;
 
-/** Duality score (0–1000): pairs found, minus a penalty per wrong lock-in. */
-export function dualityScore(found: number, mistakes: number): number {
-  return Math.max(0, found * DUALITY_POINTS_PER_PAIR - mistakes * DUALITY_MISTAKE_PENALTY);
+/** Duality score (0–1000): pairs found + a speed bonus on a solve, minus a
+ *  penalty per wrong lock-in. Fast + clean = 1000; a slow clean solve = 800. */
+export function dualityScore(found: number, mistakes: number, timeSeconds = 0): number {
+  const base = found * DUALITY_PAIR_POINTS;
+  const solved = found >= DUALITY_PAIRS;
+  const speed = solved
+    ? Math.round(DUALITY_SPEED_BONUS * timeFactor(timeSeconds, DUALITY_PAR_SECONDS))
+    : 0;
+  return Math.max(0, Math.min(DUALITY_MAX_SCORE, base - mistakes * DUALITY_MISTAKE_PENALTY + speed));
 }
 
 export const WORD_MAX_GUESSES = 6;
 /** Points by number of guesses used (index 0 = solved in 1). Fail = 0. */
 export const WORD_POINTS = [1000, 900, 800, 700, 600, 500];
 
-/** Mini crossword: start at 1000, each failed check costs 100, floor 400.
- *  Revealing the solution scores 0. */
+/** Mini crossword (0–1000): a solve base + a speed bonus, minus a penalty per
+ *  Check used. Fast + no checks = 1000; a slow clean solve = 800. Reveal = 0. */
 export const MINI_MAX_POINTS = 1000;
 export const MINI_CHECK_PENALTY = 100;
-export const MINI_MIN_SCORE = 400;
+export const MINI_MIN_SCORE = 300; // floor for a solve
+const MINI_SOLVE_BASE = 800;
+const MINI_SPEED_BONUS = 200;
+const MINI_PAR_SECONDS = 45;
+
+export function miniScore(checks: number, timeSeconds = 0): number {
+  const speed = Math.round(MINI_SPEED_BONUS * timeFactor(timeSeconds, MINI_PAR_SECONDS));
+  return Math.max(
+    MINI_MIN_SCORE,
+    Math.min(MINI_MAX_POINTS, MINI_SOLVE_BASE - checks * MINI_CHECK_PENALTY + speed)
+  );
+}
 
 /** The daily roster - familiar formats, one bold color block each. */
 export const MODES: ModeDef[] = [
@@ -60,7 +87,7 @@ export const MODES: ModeDef[] = [
     tagline: "Eight definitions, four hidden pairs. Two meanings, one word.",
     accent: "#06B6D4",
     contrast: "#0B0D10",
-    maxPoints: DUALITY_PAIRS * DUALITY_POINTS_PER_PAIR,
+    maxPoints: DUALITY_MAX_SCORE,
     status: "live",
     href: (date) => `/duality/${date}`,
   },
