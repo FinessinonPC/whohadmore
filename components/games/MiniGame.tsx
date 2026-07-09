@@ -101,6 +101,34 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
     setActive({ r: next.slot.row, c: next.slot.col });
   };
 
+  /** True once every cell in this slot has a letter - drives the clue strike-through. */
+  const isSlotFilled = useCallback(
+    (slot: MiniClue, d: Dir): boolean => {
+      for (let i = 0; i < slot.len; i++) {
+        const r = d === "A" ? slot.row : slot.row + i;
+        const c = d === "A" ? slot.col + i : slot.col;
+        if (!entries[r][c]) return false;
+      }
+      return true;
+    },
+    [entries]
+  );
+
+  /** Enter: jump to the next clue, skipping any that are already fully filled -
+   *  same idea as Wordle's Enter, adapted to "move on" instead of "submit". */
+  const gotoNextUnfilled = useCallback(() => {
+    const idx = slotOrder.findIndex((x) => x.d === dir && x.slot.num === activeSlot?.num);
+    if (idx === -1) return;
+    for (let step = 1; step <= slotOrder.length; step++) {
+      const next = slotOrder[(idx + step) % slotOrder.length];
+      if (!isSlotFilled(next.slot, next.d)) {
+        setDir(next.d);
+        setActive({ r: next.slot.row, c: next.slot.col });
+        return;
+      }
+    }
+  }, [slotOrder, dir, activeSlot, isSlotFilled]);
+
   const clearMarks = (r: number, c: number) => {
     const strip = (prev: Set<string>) => {
       const n = new Set(prev);
@@ -169,7 +197,10 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.key === "Backspace") {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        gotoNextUnfilled();
+      } else if (e.key === "Backspace") {
         e.preventDefault();
         type("BACK");
       } else if (e.key === "ArrowUp") {
@@ -188,7 +219,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [type, arrow]);
+  }, [type, arrow, gotoNextUnfilled]);
 
   const finish = (score: number, revealed: boolean, seconds: number) => {
     setDone({ score, revealed, seconds: Math.floor(seconds) });
@@ -396,7 +427,11 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
               className="min-h-[3rem] flex-1 rounded-xl px-3 py-2 text-center"
               style={{ background: `${ACCENT}1E` }}
             >
-              <span className="text-[13px] font-bold leading-snug text-ink">
+              <span
+                className={`text-[13px] font-bold leading-snug text-ink ${
+                  activeSlot && isSlotFilled(activeSlot, dir) ? "line-through opacity-50" : ""
+                }`}
+              >
                 <span style={{ color: ACCENT }} className="mr-1.5 font-condensed">
                   {activeSlot?.num}
                   {dir}
@@ -477,6 +512,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                 <ul className="flex flex-col gap-0.5">
                   {(d === "A" ? day.across : day.down).map((slot) => {
                     const isActive = dir === d && activeSlot?.num === slot.num;
+                    const filled = isSlotFilled(slot, d);
                     return (
                       <li key={`${d}${slot.num}`}>
                         <button
@@ -490,7 +526,11 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                           <span className="font-condensed font-bold" style={{ color: ACCENT }}>
                             {slot.num}
                           </span>
-                          <span className={isActive ? "font-semibold text-ink" : "text-ink-secondary"}>
+                          <span
+                            className={`${isActive ? "font-semibold text-ink" : "text-ink-secondary"} ${
+                              filled ? "line-through opacity-50" : ""
+                            }`}
+                          >
                             {slot.clue}
                           </span>
                         </button>

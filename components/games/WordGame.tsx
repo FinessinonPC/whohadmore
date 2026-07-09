@@ -9,6 +9,7 @@ import { isAdminPreview } from "@/lib/adminClient";
 import { useModeGuard } from "@/hooks/useModeGuard";
 import { WORD_MAX_GUESSES, WORD_POINTS, modeDef } from "@/lib/modes";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
+import { isValidWord } from "@/lib/wordList";
 
 const ACCENT = modeDef("word").accent;
 const GREEN = "#00C853";
@@ -46,6 +47,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
   const [rows, setRows] = useState<string[]>([]);
   const [current, setCurrent] = useState("");
   const [shake, setShake] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const { already, checking } = useModeGuard("word", date, WORD_POINTS[0]);
 
   const won = rows[rows.length - 1] === answer;
@@ -79,6 +81,13 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
         if (current.length !== 5) {
           setShake(true);
           window.setTimeout(() => setShake(false), 350);
+          return;
+        }
+        if (!isValidWord(current)) {
+          setShake(true);
+          setToast("Not in word list");
+          window.setTimeout(() => setShake(false), 350);
+          window.setTimeout(() => setToast(null), 1200);
           return;
         }
         const next = [...rows, current];
@@ -217,7 +226,9 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
                 {won ? `Got it in ${rows.length}` : "Out of tries - tomorrow's word awaits"}
               </p>
             </>
-          ) : done ? null : (
+          ) : done ? null : toast ? (
+            <p className="text-xs font-bold text-wrong">{toast}</p>
+          ) : (
             <p className="text-xs font-semibold text-ink-secondary">
               Guess the five-letter word · {WORD_MAX_GUESSES - rows.length} tries left
             </p>
