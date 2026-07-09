@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { MiniGame } from "@/components/games/MiniGame";
 import { getMiniContent } from "@/lib/minigames";
 import { isValidISODate } from "@/lib/date";
+import { requireDateAccess } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,7 @@ export default async function MiniPage({
 }) {
   const { date } = await params;
   if (!isValidISODate(date)) notFound();
+  await requireDateAccess(date);
   const day = await getMiniContent(date);
   return <MiniGame day={day} date={date} />;
 }

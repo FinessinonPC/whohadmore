@@ -5,6 +5,7 @@ import { ChainGate } from "@/components/games/ChainGate";
 import { getFullGame, getGameNumber } from "@/lib/games";
 import { puzzleDescription, puzzleTitle } from "@/lib/seo";
 import { isValidISODate, todayISO } from "@/lib/date";
+import { requireDateAccess } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,7 @@ export default async function PlayDatePage({
 }) {
   const { date } = await params;
   if (!isValidISODate(date)) notFound();
+  await requireDateAccess(date);
 
   const [game, gameNumber] = await Promise.all([
     getFullGame(date),

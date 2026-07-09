@@ -33,6 +33,7 @@ export function enableAdminPreview(): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(ADMIN_PREVIEW_KEY, "1");
+    document.cookie = `${ADMIN_PREVIEW_KEY}=1; path=/; max-age=86400`;
   } catch {
     /* non-fatal */
   }

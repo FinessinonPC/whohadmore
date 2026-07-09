@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { WordGame } from "@/components/games/WordGame";
 import { getWordContent } from "@/lib/minigames";
 import { isValidISODate } from "@/lib/date";
+import { requireDateAccess } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,7 @@ export default async function WordPage({
 }) {
   const { date } = await params;
   if (!isValidISODate(date)) notFound();
+  await requireDateAccess(date);
   const answer = await getWordContent(date);
   return <WordGame answer={answer} date={date} />;
 }

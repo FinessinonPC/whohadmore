@@ -4,6 +4,7 @@ import { GameHub } from "@/components/hub/GameHub";
 import { GameSeoFooter } from "@/components/seo/GameSeoFooter";
 import { getFullGame, getGameNumber } from "@/lib/games";
 import { formatDisplayDate, isValidISODate, todayISO } from "@/lib/date";
+import { requireDateAccess } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,7 @@ export default async function DayPage({
   if (!isValidISODate(date)) notFound();
   const today = todayISO();
   if (date === today) redirect("/");
-  if (date > today) notFound();
+  await requireDateAccess(date);
 
   const [game, gameNumber] = await Promise.all([getFullGame(date), getGameNumber(date)]);
 
