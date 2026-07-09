@@ -26,8 +26,8 @@ Editorial bar (what makes a great day):
 1) The aha. Every pair should produce a small delight when the word reveals - the second meaning should feel obvious IN HINDSIGHT, never contrived. If you have to squint, cut it.
 2) Fair. Both definitions are unmistakably correct for the word, and NO definition could plausibly describe a different pair's word. One clean answer, always.
 3) Tight writing. Definitions are 3-6 words, concrete, and evocative - written like crossword clues, not dictionary entries. Never include the answer word (or any form of it) in a definition.
-4) A real difficulty curve. Pair 1 lands in two seconds; pair 4 makes a smart player pause. Difficulty comes from the LESS-FAMOUS second meaning, not from obscure words.
-5) Everyday words only - the kind everyone knows in BOTH senses once revealed. Light and safe: no politics, religion, or tragedy.
+4) Make it CHALLENGING. Pair 1 can be a warm-up, but Pairs 2, 3, and 4 should be brain-benders. Use extremely clever misdirection, rarely-used but valid secondary meanings, and words that act as both nouns and verbs with completely different contexts. Make the player sweat.
+5) Everyday words only - but rely on their least commonly used definitions to crank up the difficulty. Light and safe: no politics, religion, or tragedy.
 6) Before answering, self-check every rule above against each pair.
 
 Return ONLY this JSON, no markdown fences:
