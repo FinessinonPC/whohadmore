@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { LIVE_MODES } from "@/lib/modes";
 import { formatDisplayDate } from "@/lib/date";
 import { useArchiveScores } from "@/hooks/useArchiveScores";
@@ -41,7 +41,8 @@ function shareText(date: string, scoreFor: ReturnType<typeof useArchiveScores>):
  */
 export function ShareResults({ date, className }: { date: string; className?: string }) {
   const [copied, setCopied] = useState(false);
-  const scoreFor = useArchiveScores([{ play_date: date }]);
+  const dates = useMemo(() => [{ play_date: date }], [date]);
+  const scoreFor = useArchiveScores(dates);
 
   async function share() {
     const text = shareText(date, scoreFor);
