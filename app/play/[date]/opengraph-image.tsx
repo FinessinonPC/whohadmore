@@ -4,7 +4,7 @@ import { ImageResponse } from "next/og";
 import { getGameMeta } from "@/lib/games";
 import { isValidISODate } from "@/lib/date";
 
-export const alt = "WhoHadMore - a daily higher/lower puzzle";
+export const alt = "WhoHadMore - a daily puzzle platform";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -45,13 +45,13 @@ export default async function Image({ params }: { params: Promise<{ date: string
                 background: "#0A0A0B",
               }}
             >
-              <svg width="26" height="30" viewBox="0 0 40 46">
-                <polygon points="20,0 0,20 40,20" fill="#00C853" />
-                <polygon points="0,26 40,26 20,46" fill="#FF3B30" />
+              <svg width="34" height="34" viewBox="0 0 64 64">
+                <path d="M 10 16 L 24 50 L 36 26" fill="none" stroke="#00C853" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M 28 26 L 40 50 L 54 16" fill="none" stroke="#FF3B30" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: "-0.02em", color: "#0A0A0B" }}>
-              WhoHadMore
+            <div style={{ fontSize: 30, fontWeight: 900, letterSpacing: "-0.02em", color: "#0A0A0B" }}>
+              WHOHADMORE
             </div>
           </div>
           <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "0.16em", color: "rgba(10,10,11,0.55)" }}>

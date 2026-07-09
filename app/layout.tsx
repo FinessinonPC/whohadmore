@@ -20,7 +20,7 @@ const oswald = Oswald({
 });
 
 const description =
-  "A daily higher/lower game. Two cards, one stat - tap the bigger number.";
+  "A free set of 4 quick daily puzzles: Chain, Duality, Word, and Mini.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
@@ -59,7 +59,7 @@ export default function RootLayout({
         "@id": `${siteUrl}/#website`,
         url: siteUrl,
         name: "WhoHadMore",
-        description: "A free daily higher-or-lower guessing game.",
+        description: "A free set of 4 quick daily puzzles: Chain, Duality, Word, and Mini.",
         publisher: { "@id": `${siteUrl}/#org` },
       },
       {

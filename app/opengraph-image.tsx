@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
-export const alt = "WhoHadMore - a daily higher/lower game";
+export const alt = "WhoHadMore - 4 quick daily puzzles";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -27,10 +27,10 @@ export default function OpengraphImage() {
           fontFamily: "Inter",
         }}
       >
-        {/* Mark - green ▲ (higher) over red ▼ (lower) */}
-        <svg width="200" height="230" viewBox="0 0 200 230">
-          <polygon points="100,0 0,102 200,102" fill="#00C853" />
-          <polygon points="0,128 200,128 100,230" fill="#FF3B30" />
+        {/* Mark - Abstract W */}
+        <svg width="180" height="180" viewBox="0 0 64 64">
+          <path d="M 10 16 L 24 50 L 36 26" fill="none" stroke="#00C853" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M 28 26 L 40 50 L 54 16" fill="none" stroke="#FF3B30" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
 
         <div
@@ -42,7 +42,7 @@ export default function OpengraphImage() {
             color: "#FFFFFF",
           }}
         >
-          WhoHadMore
+          WHOHADMORE
         </div>
 
         {/* Pill label */}
@@ -61,7 +61,7 @@ export default function OpengraphImage() {
             color: "#00C853",
           }}
         >
-          DAILY HIGHER-OR-LOWER
+          4 DAILY PUZZLES
         </div>
       </div>
     ),

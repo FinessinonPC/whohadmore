@@ -18,7 +18,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const cat = getCategorySeo(slug);
   if (!cat) return { title: "Category not found" };
-  const title = `${cat.label} Higher or Lower`;
+  const title = `${cat.label} Daily Puzzles`;
   const description = `${cat.intro} A new ${cat.label.toLowerCase()} puzzle in the rotation every day - free, no download.`;
   return {
     title,
@@ -45,8 +45,8 @@ export default async function CategoryPage({
 
   const faqs = [
     {
-      q: `What is ${cat.label} Higher or Lower?`,
-      a: `${cat.label} Higher or Lower is a free daily guessing game: two cards appear with one stat, and you tap whichever is higher. ${cat.intro}`,
+      q: `What are ${cat.label} Daily Puzzles?`,
+      a: `${cat.label} Daily Puzzles are a free set of guessing games across different categories. ${cat.intro}`,
     },
     {
       q: `Is there a new ${catLower} puzzle every day?`,
@@ -71,7 +71,7 @@ export default async function CategoryPage({
       },
       {
         "@type": "CollectionPage",
-        name: `${cat.label} Higher or Lower`,
+        name: `${cat.label} Daily Puzzles`,
         description: cat.intro,
         url: `${base}/category/${cat.slug}`,
         isPartOf: { "@type": "WebSite", name: "WhoHadMore", url: base },
@@ -100,7 +100,7 @@ export default async function CategoryPage({
 
       <div className="mb-6 mt-3">
         <h1 className="text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-          {cat.label} Higher or Lower
+          {cat.label} Daily Puzzles
         </h1>
         <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-ink-secondary">{cat.intro}</p>
         <p className="mt-2 text-sm font-semibold text-ink-secondary">

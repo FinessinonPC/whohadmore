@@ -7,22 +7,22 @@ import { todayISO } from "@/lib/date";
 export const dynamic = "force-dynamic";
 
 const DESCRIPTION =
-  "WhoHadMore is a free set of quick daily games - the higher-or-lower Chain, Duality, Word, and the Mini crossword - with one combined score and a daily leaderboard. New games every midnight.";
+  "WhoHadMore is a free set of quick daily puzzles - Chain, Duality, Word, and the Mini crossword - with one combined score and a daily leaderboard. New games every midnight.";
 
 export const metadata: Metadata = {
-  title: { absolute: "WhoHadMore - Daily Higher or Lower Games" },
+  title: { absolute: "WhoHadMore - 4 Quick Daily Puzzles" },
   description: DESCRIPTION,
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     url: "/",
     siteName: "WhoHadMore",
-    title: "WhoHadMore - Daily Higher or Lower Games",
+    title: "WhoHadMore - 4 Quick Daily Puzzles",
     description: DESCRIPTION,
   },
   twitter: {
     card: "summary_large_image",
-    title: "WhoHadMore - Daily Higher or Lower Games",
+    title: "WhoHadMore - 4 Quick Daily Puzzles",
     description: DESCRIPTION,
   },
 };

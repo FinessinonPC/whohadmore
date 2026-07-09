@@ -42,7 +42,7 @@ const FAQ_LD = {
       name: "Is there something new every day?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. All four games refresh at midnight - a new higher-or-lower topic, new pairs, a new word, and a new crossword grid.",
+        text: "Yes. All four games refresh at midnight - a new Chain topic, new pairs, a new word, and a new crossword grid.",
       },
     },
     {

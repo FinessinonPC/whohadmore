@@ -9,13 +9,13 @@ import { todayISO } from "@/lib/date";
 export const dynamic = "force-dynamic";
 
 const DESCRIPTION =
-  "Browse WhoHadMore's daily higher-or-lower games by category - sports, entertainment, geography, science, and current events. A fresh guessing puzzle every day.";
+  "Browse WhoHadMore's daily puzzles by category - sports, entertainment, geography, science, and current events. A fresh set of guessing puzzles every day.";
 
 export const metadata: Metadata = {
   title: "Categories",
   description: DESCRIPTION,
   alternates: { canonical: "/category" },
-  openGraph: { title: "Higher or Lower Games by Category", description: DESCRIPTION, url: "/category" },
+  openGraph: { title: "Daily Puzzles by Category", description: DESCRIPTION, url: "/category" },
 };
 
 export default async function CategoryIndexPage() {
@@ -29,12 +29,12 @@ export default async function CategoryIndexPage() {
   const itemListLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "WhoHadMore higher-or-lower game categories",
+    name: "WhoHadMore daily puzzle categories",
     numberOfItems: CATEGORIES.length,
     itemListElement: CATEGORIES.map((c, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      name: `${c.label} Higher or Lower`,
+      name: `${c.label} Daily Puzzles`,
       url: `${base}/category/${c.slug}`,
     })),
   };
@@ -44,7 +44,7 @@ export default async function CategoryIndexPage() {
       <TopNav />
 
       <div className="mb-6 mt-8">
-        <h1 className="text-3xl font-extrabold tracking-tight text-ink">Higher or Lower, by category</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-ink">Daily Puzzles, by category</h1>
         <p className="mt-1.5 max-w-xl text-sm text-ink-secondary">
           {DESCRIPTION} Pick a category to play every puzzle in it.
         </p>
@@ -60,7 +60,7 @@ export default async function CategoryIndexPage() {
               className="group rounded-2xl border border-border bg-surface/50 p-5 transition-colors hover:border-ink/20 hover:bg-surface"
             >
               <div className="flex items-baseline justify-between gap-3">
-                <h2 className="text-lg font-extrabold text-ink">{c.label} Higher or Lower</h2>
+                <h2 className="text-lg font-extrabold text-ink">{c.label} Daily Puzzles</h2>
                 <span className="shrink-0 text-xs font-bold text-ink-secondary">
                   {n} {n === 1 ? "puzzle" : "puzzles"}
                 </span>

@@ -17,8 +17,8 @@ export function BrandMark({ className = "", size }: MarkProps) {
       role="img"
       aria-label="WhoHadMore"
     >
-      <polygon points="32,4 4,32 60,32" className="fill-correct" />
-      <polygon points="8,40 56,40 32,62" className="fill-wrong" />
+      <path d="M 10 16 L 24 50 L 36 26" fill="none" className="stroke-correct" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M 28 26 L 40 50 L 54 16" fill="none" className="stroke-wrong" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
