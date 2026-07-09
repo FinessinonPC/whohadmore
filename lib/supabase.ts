@@ -40,7 +40,10 @@ export function getServerSupabase(): SupabaseClient {
   return createClient(
     requireEnv(SUPABASE_URL, "NEXT_PUBLIC_SUPABASE_URL"),
     requireEnv(SUPABASE_ANON_KEY, "NEXT_PUBLIC_SUPABASE_ANON_KEY"),
-    { auth: { persistSession: false } }
+    { 
+      auth: { persistSession: false },
+      global: { fetch: (url, init) => fetch(url, { ...init, cache: "no-store" }) }
+    }
   );
 }
 
@@ -49,6 +52,9 @@ export function getServiceSupabase(): SupabaseClient {
   return createClient(
     requireEnv(SUPABASE_URL, "NEXT_PUBLIC_SUPABASE_URL"),
     requireEnv(process.env.SUPABASE_SERVICE_ROLE_KEY, "SUPABASE_SERVICE_ROLE_KEY"),
-    { auth: { persistSession: false, autoRefreshToken: false } }
+    { 
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { fetch: (url, init) => fetch(url, { ...init, cache: "no-store" }) }
+    }
   );
 }

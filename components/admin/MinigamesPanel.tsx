@@ -78,7 +78,7 @@ METHOD - follow these steps in order, don't skip ahead to clue-writing:
 3. Find a word for every DOWN slot that satisfies ALL of its locked letters simultaneously. If no common word fits a slot's constraints, go back to step 1 and swap ONE across word - don't restart from scratch, just change the word causing the conflict.
 4. Write out the finished grid as 5 literal rows of text.
 5. VERIFY: read each down answer straight off the grid you just wrote (top-to-bottom in its column) and compare it letter-by-letter to what you intended. If even one letter is off, fix the grid now, before answering - a single wrong crossing invalidates the whole puzzle.
-6. Only now write the clues: short, fair, and warm - a small smile beats a groan. Clue the meaning players know best. Never let a clue contain the answer word itself. The 10 words must all be different.
+6. Only now write the clues: short, fair, and warm - a small smile beats a groan. Clue the meaning players know best. Never let a clue contain the answer word itself. The 10 words must all be different. IMPORTANT: Do NOT use double quotes (") anywhere inside the clue text, as it will break the JSON. Use single quotes (') instead if needed.
 
 Return ONLY this JSON, no markdown fences (rows use UPPERCASE letters and '#'):
 {

@@ -5,7 +5,7 @@
 // serves - so every date always has playable content, DB or not.
 // ============================================================================
 
-import { getServerSupabase } from "@/lib/supabase";
+import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import {
   getDualityDaily,
@@ -24,14 +24,15 @@ import {
 async function customPayload(mode: MinigameMode, date: string): Promise<unknown | null> {
   if (!isSupabaseConfigured()) return null;
   try {
-    const { data } = await getServerSupabase()
+    const { data } = await getServiceSupabase()
       .from("daily_minigames")
       .select("payload")
       .eq("play_date", date)
       .eq("mode", mode)
       .maybeSingle<{ payload: unknown }>();
     return data?.payload ?? null;
-  } catch {
+  } catch (e) {
+    console.error("customPayload error:", e);
     return null; // table missing / query failed - pack fallback
   }
 }
