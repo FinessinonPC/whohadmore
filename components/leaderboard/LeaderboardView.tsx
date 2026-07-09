@@ -9,9 +9,9 @@ import { type DailyRow, type LeaderboardRow } from "@/lib/leaderboard";
 
 const MEDAL = ["#FFB300", "#B8C2CC", "#CD7F32"]; // gold / silver / bronze
 
-export function LeaderboardView() {
+export function LeaderboardView({ initialRows = [] }: { initialRows?: LeaderboardRow[] }) {
   const { profile, loading } = useProfile();
-  const [rows, setRows] = useState<LeaderboardRow[]>([]);
+  const [rows, setRows] = useState<LeaderboardRow[]>(initialRows);
   const [daily, setDaily] = useState<DailyRow[]>([]);
   const [dailyRounds, setDailyRounds] = useState(0);
   const [tab, setTab] = useState<"daily" | "alltime">("daily");
@@ -82,8 +82,6 @@ export function LeaderboardView() {
               ))}
             </div>
           )
-        ) : loading ? (
-          <p className="py-8 text-center text-sm text-ink-secondary">Loading…</p>
         ) : rows.length === 0 ? (
           <EmptyBoard title="No scores yet" sub="Play games to climb the all-time board." />
         ) : (

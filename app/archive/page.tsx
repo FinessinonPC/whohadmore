@@ -5,8 +5,9 @@ import { TopNav } from "@/components/ui/TopNav";
 import { getPublishedGamesWithNumbers } from "@/lib/games";
 import { getSiteUrl } from "@/lib/site";
 import { todayISO } from "@/lib/date";
+import { ArchiveAuthGate } from "@/components/archive/ArchiveAuthGate";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Archive",
@@ -35,16 +36,18 @@ export default async function ArchivePage() {
     <main className="mx-auto w-full max-w-2xl px-4 pb-16 pt-5 sm:max-w-4xl">
       <TopNav />
 
-      <div className="mb-6 mt-8">
-        <h1 className="font-condensed text-4xl font-semibold uppercase tracking-wide text-ink">Archive</h1>
-        <p className="mt-1 text-sm text-ink-secondary">
-          {games.length} {games.length === 1 ? "day" : "days"} and counting - four games each,
-          with that day&apos;s leaderboard. Pick a day to open its games (sign in free to play
-          past days).
-        </p>
-      </div>
+      <ArchiveAuthGate>
+        <div className="mb-6 mt-8">
+          <h1 className="font-condensed text-4xl font-semibold uppercase tracking-wide text-ink">Archive</h1>
+          <p className="mt-1 text-sm text-ink-secondary">
+            {games.length} {games.length === 1 ? "day" : "days"} and counting - four games each,
+            with that day&apos;s leaderboard. Pick a day to open its games (sign in free to play
+            past days).
+          </p>
+        </div>
 
-      <ArchiveBrowser games={games} />
+        <ArchiveBrowser games={games} />
+      </ArchiveAuthGate>
 
       <script
         type="application/ld+json"

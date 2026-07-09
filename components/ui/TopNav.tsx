@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useProfile } from "@/hooks/useProfile";
 import { BrandLockup } from "./Logo";
 import { AccountButton } from "./AccountButton";
 import { ThemeToggle } from "./ThemeToggle";
@@ -8,6 +9,8 @@ import { ThemeToggle } from "./ThemeToggle";
 /** Shared top bar: brand on the left; Archive, Leaderboard, theme + account on
  *  the right. The brand always returns to the daily home page. */
 export function TopNav() {
+  const { profile } = useProfile();
+
   return (
     <header className="flex shrink-0 items-center justify-between">
       <Link href="/" aria-label="Home">
@@ -15,7 +18,7 @@ export function TopNav() {
       </Link>
       <div className="flex items-center gap-3">
         <Link
-          href="/archive"
+          href={profile?.username ? "/archive" : "/profile"}
           className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
         >
           Archive

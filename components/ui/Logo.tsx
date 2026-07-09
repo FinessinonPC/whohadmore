@@ -17,19 +17,19 @@ export function BrandMark({ className = "", size }: MarkProps) {
       role="img"
       aria-label="WhoHadMore"
     >
-      <polygon points="32,4 4,32 60,32" fill="#00C853" />
-      <polygon points="8,40 56,40 32,62" fill="#FF3B30" />
+      <polygon points="32,4 4,32 60,32" className="fill-correct" />
+      <polygon points="8,40 56,40 32,62" className="fill-wrong" />
     </svg>
   );
 }
 
-/** Glyph + lowercase wordmark used in page headers. */
+/** Glyph + condensed uppercase wordmark used in page headers. */
 export function BrandLockup({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-1.5 ${className}`}>
       <BrandMark className="h-[18px] w-[18px]" />
-      <span className="text-[15px] font-extrabold lowercase tracking-tight text-ink">
-        whohadmore
+      <span className="text-[17px] font-condensed font-bold uppercase tracking-wide text-ink mt-0.5">
+        WHOHADMORE
       </span>
     </span>
   );
