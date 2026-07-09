@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
     script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com;
     style-src 'self' 'unsafe-inline';
     connect-src 'self' https://*.supabase.co https://vitals.vercel-insights.com;
-    img-src 'self' data: https://upload.wikimedia.org https://*.wikipedia.org;
+    img-src * data: blob:;
     font-src 'self' data:;
   `.replace(/\s{2,}/g, ' ').trim();
 
