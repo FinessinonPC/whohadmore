@@ -96,7 +96,6 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteLd) }}
         />
         {children}
-        <Analytics />
       </body>
     </html>
   );
