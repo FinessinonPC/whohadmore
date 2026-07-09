@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { Badge, categoryLabel } from "@/components/ui/Badge";
 import { useArchiveScores, type ArchiveFilter } from "@/hooks/useArchiveScores";
 import { modeDef } from "@/lib/modes";
 import { formatShortDate } from "@/lib/date";
@@ -53,15 +52,12 @@ export function ArchiveList({
               className="flex items-center gap-3 py-3.5 transition-colors hover:bg-surface"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-ink">
-                  <span className="font-condensed text-ink-secondary">No. {game.game_number}</span>
-                  <span className="mx-1.5 text-ink-secondary">·</span>
-                  {game.topic_label}
+                <p className="font-condensed text-lg font-bold text-ink">
+                  No. {game.game_number}
                 </p>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="text-xs text-ink-secondary">{formatShortDate(game.play_date)}</span>
-                  <Badge tone="category">{categoryLabel(game.topic_category)}</Badge>
-                </div>
+                <p className="mt-0.5 text-sm font-semibold text-ink-secondary">
+                  {formatShortDate(game.play_date)}
+                </p>
               </div>
               {score.played ? (
                 <span
