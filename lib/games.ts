@@ -15,6 +15,10 @@ type GameMeta = Pick<
   "topic_label" | "stat_label" | "topic_category" | "stat_unit" | "description"
 >;
 
+// The date the "real" games started. Anything before this is ignored,
+// and the game count (Day 1) starts here.
+const LAUNCH_DATE = "2026-07-05";
+
 /** Lightweight meta for a published game (no cards) - used for SEO titles. */
 export async function getGameMeta(date: string): Promise<GameMeta | null> {
   if (!isSupabaseConfigured()) {
@@ -33,6 +37,7 @@ export async function getGameMeta(date: string): Promise<GameMeta | null> {
     .select("*")
     .eq("play_date", date)
     .eq("published", true)
+    .gte("play_date", LAUNCH_DATE)
     .maybeSingle<GameMeta>();
   return data ?? null;
 }
@@ -58,6 +63,7 @@ export const getFullGame = cache(async (date: string): Promise<FullGame | null> 
     .select("*")
     .eq("play_date", date)
     .eq("published", true)
+    .gte("play_date", LAUNCH_DATE)
     .maybeSingle<DailyGame>();
 
   if (!game) return null;
@@ -84,6 +90,7 @@ export async function getGameNumber(date: string): Promise<number> {
     .from("daily_games")
     .select("id", { count: "exact", head: true })
     .eq("published", true)
+    .gte("play_date", LAUNCH_DATE)
     .lte("play_date", date);
 
   return count ?? 0;
@@ -103,6 +110,7 @@ export async function getPublishedGamesWithNumbers(
     .from("daily_games")
     .select("*")
     .eq("published", true)
+    .gte("play_date", LAUNCH_DATE)
     .lte("play_date", today)
     .order("play_date", { ascending: true })
     .returns<DailyGame[]>();
@@ -121,6 +129,7 @@ export async function getRecentGameLinks(
     .from("daily_games")
     .select("play_date, topic_label")
     .eq("published", true)
+    .gte("play_date", LAUNCH_DATE)
     .lte("play_date", todayISO())
     .neq("play_date", excludeDate)
     .order("play_date", { ascending: false })
