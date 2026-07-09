@@ -1,23 +1,30 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useProfile } from "@/hooks/useProfile";
 
 export function ArchiveAuthGate({ children }: { children: React.ReactNode }) {
   const { profile, loading } = useProfile();
-  const router = useRouter();
 
-  useEffect(() => {
-    if (!loading && !profile?.username) {
-      router.replace("/profile");
-    }
-  }, [loading, profile, router]);
-
-  if (loading || !profile?.username) {
+  if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-ink"></div>
+      </div>
+    );
+  }
+
+  if (!profile?.username) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center text-center">
+        <h2 className="font-condensed text-3xl font-semibold uppercase tracking-wide text-ink">Archive Locked</h2>
+        <p className="mt-2 text-ink-secondary">The archive is only available for players who are signed in.</p>
+        <Link
+          href="/profile"
+          className="mt-6 rounded-full bg-cta px-6 py-2.5 text-sm font-bold text-background transition-colors hover:opacity-90"
+        >
+          Sign in to unlock
+        </Link>
       </div>
     );
   }

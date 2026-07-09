@@ -18,7 +18,7 @@ export function TopNav() {
       </Link>
       <div className="flex items-center gap-3">
         <Link
-          href={profile?.username ? "/archive" : "/profile"}
+          href="/archive"
           className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
         >
           Archive
