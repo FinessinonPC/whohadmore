@@ -74,14 +74,6 @@ export function LeaderboardView() {
                       {r.name}
                       {r.you && <span className="ml-1.5 font-extrabold text-correct">(you)</span>}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-ink-secondary">
-                      {r.reached}
-                      {dailyRounds > 0 ? `/${dailyRounds}` : ""} correct
-                      {" · "}
-                      {r.hearts}
-                      <span className="text-wrong">♥</span>
-                      {r.timeSeconds != null && <>{" · "}{formatClock(r.timeSeconds)}</>}
-                    </p>
                   </div>
                   <span className="tabular font-condensed text-xl font-semibold text-ink">
                     {r.score.toLocaleString()}
@@ -126,10 +118,7 @@ export function LeaderboardView() {
   );
 }
 
-function formatClock(s: number): string {
-  const m = Math.floor(s / 60);
-  return `${m}:${(s % 60).toString().padStart(2, "0")}`;
-}
+
 
 function TabButton({
   active,
