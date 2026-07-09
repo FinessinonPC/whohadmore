@@ -21,12 +21,17 @@ export interface StoredResult {
 /** Stable anonymous id, persisted across sessions. (Swapped for user_id later.) */
 export function getSessionId(): string {
   if (typeof window === "undefined") return "";
-  let id = window.localStorage.getItem(SESSION_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    window.localStorage.setItem(SESSION_KEY, id);
+  try {
+    let id = window.localStorage.getItem(SESSION_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      window.localStorage.setItem(SESSION_KEY, id);
+    }
+    return id;
+  } catch {
+    // If an extension or privacy setting blocks localStorage, return a temporary session
+    return "sess_temp_" + Math.random().toString(36).substring(2, 15);
   }
-  return id;
 }
 
 /** Adopt an account's canonical session id on this device after sign-in, so all
