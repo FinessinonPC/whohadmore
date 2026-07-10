@@ -18,10 +18,6 @@ export function middleware(request: NextRequest) {
   // Set the CSP header on the response
   response.headers.set('Content-Security-Policy', cspHeader);
 
-  // Force browsers to clear their HTTP cache so everyone gets the fixed version immediately
-  response.headers.set('Clear-Site-Data', '"cache"');
-  response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
-
   return response;
 }
 

@@ -36,25 +36,32 @@ export function getBrowserSupabase(): SupabaseClient {
 }
 
 // --- Server (anon) - for reading public, published data ---------------------
-export function getServerSupabase(): SupabaseClient {
+// `noCache` opts a specific call out of Next's fetch cache (e.g. admin-edited
+// content that must show up immediately). Defaults to normal caching - most
+// reads should be cached, so don't disable it app-wide.
+export function getServerSupabase(opts?: { noCache?: boolean }): SupabaseClient {
   return createClient(
     requireEnv(SUPABASE_URL, "NEXT_PUBLIC_SUPABASE_URL"),
     requireEnv(SUPABASE_ANON_KEY, "NEXT_PUBLIC_SUPABASE_ANON_KEY"),
-    { 
-      auth: { persistSession: false },
-      global: { fetch: (url, init) => fetch(url, { ...init, cache: "no-store" }) }
-    }
+    opts?.noCache
+      ? {
+          auth: { persistSession: false },
+          global: { fetch: (url, init) => fetch(url, { ...init, cache: "no-store" }) },
+        }
+      : { auth: { persistSession: false } }
   );
 }
 
 // --- Server (service role) - trusted writes only ----------------------------
-export function getServiceSupabase(): SupabaseClient {
+export function getServiceSupabase(opts?: { noCache?: boolean }): SupabaseClient {
   return createClient(
     requireEnv(SUPABASE_URL, "NEXT_PUBLIC_SUPABASE_URL"),
     requireEnv(process.env.SUPABASE_SERVICE_ROLE_KEY, "SUPABASE_SERVICE_ROLE_KEY"),
-    { 
-      auth: { persistSession: false, autoRefreshToken: false },
-      global: { fetch: (url, init) => fetch(url, { ...init, cache: "no-store" }) }
-    }
+    opts?.noCache
+      ? {
+          auth: { persistSession: false, autoRefreshToken: false },
+          global: { fetch: (url, init) => fetch(url, { ...init, cache: "no-store" }) },
+        }
+      : { auth: { persistSession: false, autoRefreshToken: false } }
   );
 }

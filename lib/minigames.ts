@@ -24,7 +24,9 @@ import {
 async function customPayload(mode: MinigameMode, date: string): Promise<unknown | null> {
   if (!isSupabaseConfigured()) return null;
   try {
-    const { data } = await getServiceSupabase()
+    // noCache: an admin's edit must show up immediately, not after a stale
+    // cached read - this is the one query that needs it, not every query.
+    const { data } = await getServiceSupabase({ noCache: true })
       .from("daily_minigames")
       .select("payload")
       .eq("play_date", date)
