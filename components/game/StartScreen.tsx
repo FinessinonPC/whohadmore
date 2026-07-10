@@ -100,15 +100,32 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
           {game.topic_label}
         </h1>
 
-        <p className="mt-5 max-w-sm text-balance text-[15px] leading-relaxed text-ink-secondary sm:text-base">
-          Two cards, one stat - tap{" "}
-          <span className="font-semibold text-ink">whichever is higher</span>. Every right
-          call adds to your score.
+        {/* What today's chain is actually comparing - the hook. The admin's
+            description says it best when present; otherwise build the question
+            straight from the stat so players always know what "higher" means. */}
+        <p className="mt-5 max-w-md text-balance text-[15px] leading-relaxed text-ink-secondary sm:text-base">
+          {game.description?.trim() ? (
+            game.description
+          ) : (
+            <>
+              Two at a time - tap whichever has the higher{" "}
+              <span className="font-semibold text-ink">{game.stat_label.toLowerCase()}</span>.
+            </>
+          )}
         </p>
 
+        {/* The stat being compared, always visible even when a description runs */}
+        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-1.5">
+          <span className="small-caps text-[10px] text-ink-secondary">Comparing</span>
+          <span className="text-sm font-bold text-ink">
+            {game.stat_label}
+            {game.stat_unit ? <span className="text-ink-secondary"> · {game.stat_unit}</span> : null}
+          </span>
+        </div>
+
         {/* rounds */}
-        <div className="mt-5">
-          <span className="text-sm font-bold text-ink-secondary">{rounds} rounds</span>
+        <div className="mt-4">
+          <span className="text-sm font-bold text-ink-secondary">{rounds} rounds · higher wins</span>
         </div>
 
         <Button size="lg" onClick={onStart} className="mt-8 w-full max-w-xs">

@@ -141,14 +141,17 @@ export function GameBoard({
           </span>
         </header>
 
-        {/* Date + game number + topic - hidden on phones for a cleaner,
-            pictures-first play view (kept on tablet/desktop). */}
-        <div className="mt-4 hidden shrink-0 text-center md:block">
-          <p className="small-caps text-[11px] text-ink-secondary">
+        {/* What's being compared - always visible, even mid-game, so a player
+            who skipped the start screen still knows what "higher" means. The
+            date/number metadata stays tablet/desktop-only. */}
+        <div className="mt-3 shrink-0 text-center">
+          <p className="hidden small-caps text-[11px] text-ink-secondary md:block">
             {formatShortDate(date)} · {embedded ? "Preview" : `Game No. ${gameNumber}`}
           </p>
-          <p className="mt-1.5 small-caps text-xs text-ink-secondary">{game.topic_label}</p>
-          <p className="mt-1 text-[13px] text-ink-secondary">{game.stat_label}</p>
+          <p className="text-[13px] font-semibold text-ink-secondary md:mt-1">
+            {game.stat_label}
+            {game.stat_unit ? ` (${game.stat_unit})` : ""}
+          </p>
         </div>
 
         {/* The two cards - fill all remaining space */}
