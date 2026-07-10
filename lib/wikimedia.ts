@@ -8,6 +8,27 @@
 
 const REST_SUMMARY = "https://en.wikipedia.org/api/rest_v1/page/summary/";
 
+/** Card images render full-bleed at up to ~440 CSS px on 2-3x screens, so
+ *  ~1000 real pixels is the sweet spot: sharp on phones, still lightweight. */
+const CARD_IMAGE_PX = 960;
+
+/**
+ * Rewrite a Wikimedia thumbnail URL to a larger width. Thumb URLs end in
+ * ".../NNNpx-File.jpg" and the width segment can be swapped for any size -
+ * this is how ALL existing stored 320px URLs get sharp without touching the
+ * DB. Never downscales, and leaves non-Wikimedia URLs untouched. (If the
+ * original is smaller than the requested width Wikimedia 404s - render with
+ * a fallback to the stored URL, e.g. Card.tsx's onError chain.)
+ */
+export function hiResThumb(url: string, px: number = CARD_IMAGE_PX): string {
+  if (!/\/wikipedia\/[^/]+\/thumb\//.test(url)) return url;
+  const m = url.match(/\/(\d{2,4})px-([^/]+)$/);
+  if (!m) return url;
+  const current = Number(m[1]);
+  if (!Number.isFinite(current) || current >= px) return url;
+  return url.replace(/\/\d{2,4}px-([^/]+)$/, `/${px}px-$1`);
+}
+
 // Wikimedia asks API clients to identify themselves with a descriptive UA.
 const USER_AGENT =
   "WhoHadMore/1.0 (daily higher-lower trivia game; contact via repo)";
@@ -41,7 +62,8 @@ export async function getWikimediaThumbnail(
         originalimage?: { source?: string };
       };
       const direct = data.thumbnail?.source ?? data.originalimage?.source ?? null;
-      if (direct) return direct;
+      // The summary thumbnail is only ~320px - upscale the URL so cards are sharp.
+      if (direct) return hiResThumb(direct);
     }
   } catch {
     /* fall through to search */
@@ -78,7 +100,7 @@ export async function searchWikimediaImages(
     gsrlimit: String(limit),
     prop: "pageimages",
     piprop: "thumbnail",
-    pithumbsize: "640", // bigger so cards stay sharp
+    pithumbsize: String(CARD_IMAGE_PX), // these URLs get saved to the DB - keep them sharp
   });
 
   try {

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { CountUp } from "./CountUp";
 import { formatStat } from "@/lib/gameLogic";
-import { imageCreditUrl, initialsFor } from "@/lib/wikimedia";
+import { hiResThumb, imageCreditUrl, initialsFor } from "@/lib/wikimedia";
 import type { GameCard } from "@/types";
 
 export type CardStatus = "idle" | "correct" | "wrong";
@@ -49,7 +49,14 @@ export function Card({
   disabled,
   onSelect,
 }: CardProps) {
+  // Try the sharp (upscaled-URL) rendition first; if Wikimedia rejects it
+  // (original smaller than the requested width) fall back to the stored URL,
+  // and only then to initials. Fixes soft photos from old 320px stored URLs.
   const [imgFailed, setImgFailed] = useState(false);
+  const [useOriginal, setUseOriginal] = useState(false);
+  const storedUrl = card.image_url ?? "";
+  const sharpUrl = hiResThumb(storedUrl);
+  const imgSrc = useOriginal ? storedUrl : sharpUrl;
   const hasImage = Boolean(card.image_url) && !imgFailed;
 
   return (
@@ -77,11 +84,14 @@ export function Card({
         {hasImage ? (
           // eslint-disable-next-line @next/next/no-img-element -- arbitrary remote hosts (manual overrides) can't be statically allow-listed
           <img
-            src={card.image_url ?? ""}
+            src={imgSrc}
             alt={card.entity_name}
             className="absolute inset-0 h-full w-full object-cover object-center"
             draggable={false}
-            onError={() => setImgFailed(true)}
+            onError={() => {
+              if (!useOriginal && sharpUrl !== storedUrl) setUseOriginal(true);
+              else setImgFailed(true);
+            }}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-[#E4E5E9] font-condensed text-7xl font-bold text-[#AFB3BC]">
