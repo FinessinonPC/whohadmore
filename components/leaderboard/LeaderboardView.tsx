@@ -9,25 +9,32 @@ import { type DailyRow, type LeaderboardRow } from "@/lib/leaderboard";
 
 const MEDAL = ["#FFB300", "#B8C2CC", "#CD7F32"]; // gold / silver / bronze
 
-export function LeaderboardView({ initialRows = [] }: { initialRows?: LeaderboardRow[] }) {
-  const { profile, loading } = useProfile();
-  const [rows, setRows] = useState<LeaderboardRow[]>(initialRows);
-  const [daily, setDaily] = useState<DailyRow[]>([]);
-  const [dailyRounds, setDailyRounds] = useState(0);
+export function LeaderboardView({
+  initialRows = [],
+  initialDaily = [],
+  initialDailyRounds = 0,
+}: {
+  initialRows?: LeaderboardRow[];
+  initialDaily?: DailyRow[];
+  initialDailyRounds?: number;
+}) {
+  const { profile } = useProfile();
+  // Server-rendered data shows immediately; the client re-fetch below only
+  // exists to mark "you" (the viewer's session id isn't known at SSR time),
+  // so it enhances what's already on screen instead of starting from empty.
+  const [rows] = useState<LeaderboardRow[]>(initialRows);
+  const [daily, setDaily] = useState<DailyRow[]>(initialDaily);
+  const [dailyRounds, setDailyRounds] = useState(initialDailyRounds);
   const [tab, setTab] = useState<"daily" | "alltime">("daily");
 
   useEffect(() => {
-    fetch("/api/leaderboard")
-      .then((r) => r.json())
-      .then((d: { rows: LeaderboardRow[] }) => setRows(d.rows ?? []))
-      .catch(() => setRows([]));
     fetch(`/api/leaderboard/daily?session=${getSessionId()}`)
       .then((r) => r.json())
       .then((d: { rows: DailyRow[]; rounds: number }) => {
         setDaily(d.rows ?? []);
         setDailyRounds(d.rounds ?? 0);
       })
-      .catch(() => setDaily([]));
+      .catch(() => {});
   }, [profile]);
 
   return (
