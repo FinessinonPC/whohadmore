@@ -53,6 +53,20 @@ export function puzzleNumberCard(gameNumber: number | null, subline: string): Im
             textAlign: "center",
           }}
         >
+          {/* The Crown Chip - the brand mark */}
+          <svg width="88" height="88" viewBox="0 0 100 100" style={{ marginBottom: 22 }}>
+            <g transform="rotate(-6 50 50)">
+              <rect x="18" y="22" width="68" height="68" rx="15" fill="#000000" opacity="0.45" />
+              <rect x="14" y="18" width="68" height="68" rx="15" fill="#F6F1E3" stroke="#16181D" strokeWidth="6.5" />
+              <path
+                d="M 28 66 L 25 38 L 39 49 L 48 33 L 57 49 L 71 38 L 68 66 Z"
+                fill="#FFB300"
+                stroke="#16181D"
+                strokeWidth="4.5"
+                strokeLinejoin="round"
+              />
+            </g>
+          </svg>
           <div
             style={{
               fontSize: 30,
