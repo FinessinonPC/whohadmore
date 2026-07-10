@@ -7,7 +7,7 @@ import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
 import { isAdminPreview } from "@/lib/adminClient";
 import { useModeGuard } from "@/hooks/useModeGuard";
-import { WORD_MAX_GUESSES, WORD_POINTS, modeDef } from "@/lib/modes";
+import { WORD_MAX_GUESSES, WORD_POINTS, wordLossScore, modeDef } from "@/lib/modes";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 import { isValidWord } from "@/lib/wordList";
 
@@ -52,7 +52,8 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
 
   const won = rows[rows.length - 1] === answer;
   const done = won || rows.length >= WORD_MAX_GUESSES;
-  const score = won ? WORD_POINTS[rows.length - 1] : 0;
+  // A loss still pays for the letters you proved green - partial credit.
+  const score = won ? WORD_POINTS[rows.length - 1] : done ? wordLossScore(rows, answer) : 0;
 
   // Hold the result + CTA until the last row finishes its flip reveal.
   const [revealDone, setRevealDone] = useState(false);
@@ -128,6 +129,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
       maxScore: WORD_POINTS[0],
       detail: [rows.length],
       completedAt: new Date().toISOString(),
+      state: { rows }, // the finished board, for the come-back-and-admire view
     });
     void fetch("/api/modes/complete", {
       method: "POST",
@@ -152,18 +154,50 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
   }
 
   if (already) {
+    // The finished board, there to admire. Guesses live in the local result's
+    // state; a cross-device return (no local state) still shows the answer.
+    const savedRows =
+      ((getModeResult("word", date)?.state as { rows?: string[] } | undefined)?.rows ?? []).filter(
+        (r) => typeof r === "string" && r.length === 5
+      );
     return (
       <GameShell mode="word" date={date}>
-        <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <p className="small-caps text-xs text-ink-secondary">Already played</p>
-          <p className="mt-3 font-condensed text-6xl font-semibold text-ink tabular">
-            {already.score}
-            <span className="text-3xl text-ink-secondary"> / {already.max}</span>
-          </p>
-          <p className="mb-6 mt-2 text-sm text-ink-secondary">A new word drops tomorrow.</p>
-          <div className="w-full max-w-xs">
-            <NextGameCTA date={date} current="word" />
+        <p className="text-center text-xs font-semibold text-ink-secondary">
+          You played this one - here&apos;s how it went
+        </p>
+        {savedRows.length > 0 ? (
+          <div className="mx-auto mt-4 grid w-full max-w-[280px] gap-1.5">
+            {savedRows.map((row, r) => {
+              const marks = evaluate(row, answer);
+              return (
+                <div key={r} className="grid grid-cols-5 gap-1.5">
+                  {row.split("").map((ch, c) => (
+                    <div
+                      key={c}
+                      className="flex aspect-square items-center justify-center rounded-lg border-2 border-border font-condensed text-xl font-semibold uppercase text-ink"
+                      style={tileStyle(marks[c])}
+                    >
+                      {ch}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
           </div>
+        ) : (
+          <p className="mt-6 text-center font-condensed text-4xl font-semibold uppercase tracking-wide text-ink">
+            {answer}
+          </p>
+        )}
+        <div className="mt-5 text-center">
+          <p className="font-condensed text-5xl font-semibold text-ink tabular">
+            {already.score}
+            <span className="text-2xl text-ink-secondary"> / {already.max}</span>
+          </p>
+          <p className="mt-1 text-xs font-semibold text-ink-secondary">A new word drops tomorrow.</p>
+        </div>
+        <div className="mt-auto pb-1 pt-5">
+          <NextGameCTA date={date} current="word" />
         </div>
       </GameShell>
     );
@@ -223,7 +257,11 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
                 {won ? `+${score}` : answer}
               </p>
               <p className="mt-0.5 text-xs font-semibold text-ink-secondary">
-                {won ? `Got it in ${rows.length}` : "Out of tries - tomorrow's word awaits"}
+                {won
+                  ? `Got it in ${rows.length}`
+                  : score > 0
+                    ? `Out of tries · +${score} for the greens you locked in`
+                    : "Out of tries - tomorrow's word awaits"}
               </p>
             </>
           ) : done ? null : toast ? (

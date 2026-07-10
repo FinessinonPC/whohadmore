@@ -7,7 +7,7 @@ import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
 import { isAdminPreview } from "@/lib/adminClient";
 import { useModeGuard } from "@/hooks/useModeGuard";
-import { MINI_MAX_POINTS, miniScore, modeDef } from "@/lib/modes";
+import { MINI_MAX_POINTS, MINI_REVEAL_CREDIT, miniScore, modeDef } from "@/lib/modes";
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 import type { MiniClue, MiniDay } from "@/lib/contentPacks";
 
@@ -292,10 +292,22 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
 
   const reveal = () => {
     if (done) return;
+    // Partial credit for the letters that were already right before revealing -
+    // giving up with 80% of the grid correct shouldn't score the same as
+    // giving up blank. Scaled to always land below a real solve.
+    let openCells = 0;
+    let correct = 0;
+    for (let r = 0; r < 5; r++)
+      for (let c = 0; c < 5; c++) {
+        if (!open(r, c)) continue;
+        openCells += 1;
+        if (entries[r][c] === rows[r][c]) correct += 1;
+      }
+    const partial = openCells > 0 ? Math.round(MINI_REVEAL_CREDIT * (correct / openCells)) : 0;
     setEntries(rows.map((row) => row.split("").map((ch) => (ch === "#" ? "" : ch))));
     setWrong(new Set());
     feedbackWrong();
-    finish(0, true, secondsNow());
+    finish(partial, true, secondsNow());
   };
 
   if (checking && !done) {
@@ -307,18 +319,44 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
   }
 
   if (already && !done) {
+    // The solved grid, there to admire, plus the score this player banked.
     return (
       <GameShell mode="mini" date={date}>
-        <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <p className="small-caps text-xs text-ink-secondary">Already played</p>
-          <p className="mt-3 font-condensed text-6xl font-semibold text-ink tabular">
+        <p className="text-center text-xs font-semibold text-ink-secondary">
+          You played this one - here&apos;s the finished grid
+        </p>
+        <div className="mx-auto mt-4 grid w-full max-w-[300px] grid-cols-5 gap-1">
+          {rows.map((row, r) =>
+            row.split("").map((ch, c) => {
+              if (ch === "#")
+                return <div key={`${r},${c}`} className="aspect-square rounded-md bg-[#000000]/60 dark:bg-black" />;
+              const num = numberAt.get(`${r},${c}`);
+              return (
+                <div
+                  key={`${r},${c}`}
+                  className="relative flex aspect-square items-center justify-center rounded-md bg-surface font-condensed text-xl font-semibold uppercase"
+                  style={{ color: "#00C853" }}
+                >
+                  {num && (
+                    <span className="absolute left-0.5 top-0 text-[8px] font-bold text-ink-secondary opacity-60">
+                      {num}
+                    </span>
+                  )}
+                  {ch}
+                </div>
+              );
+            })
+          )}
+        </div>
+        <div className="mt-5 text-center">
+          <p className="font-condensed text-5xl font-semibold text-ink tabular">
             {already.score}
-            <span className="text-3xl text-ink-secondary"> / {already.max}</span>
+            <span className="text-2xl text-ink-secondary"> / {already.max}</span>
           </p>
-          <p className="mb-6 mt-2 text-sm text-ink-secondary">A new grid drops tomorrow.</p>
-          <div className="w-full max-w-xs">
-            <NextGameCTA date={date} current="mini" />
-          </div>
+          <p className="mt-1 text-xs font-semibold text-ink-secondary">A new grid drops tomorrow.</p>
+        </div>
+        <div className="mt-auto pb-1 pt-5">
+          <NextGameCTA date={date} current="mini" />
         </div>
       </GameShell>
     );
@@ -407,7 +445,9 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
             </p>
             <p className="mt-1 text-xs font-semibold text-ink-secondary">
               {done.revealed
-                ? "No points this time - tomorrow's grid awaits"
+                ? done.score > 0
+                  ? `+${done.score} for the letters you had right`
+                  : "No points this time - tomorrow's grid awaits"
                 : checks === 0
                   ? "Clean solve - no checks used"
                   : `Solved with ${checks} ${checks === 1 ? "check" : "checks"}`}

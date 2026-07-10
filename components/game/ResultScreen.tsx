@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { BrandLockup } from "@/components/ui/Logo";
 import { GameWordmark } from "@/components/ui/GameWordmarks";
@@ -13,6 +14,10 @@ import { Fireworks } from "./Fireworks";
 import { chainDailyScore } from "@/lib/leaderboard";
 import { modeDef } from "@/lib/modes";
 import { isJuly4th } from "@/lib/festive";
+import { avoidAdjacentTies, formatStat } from "@/lib/gameLogic";
+import { hashSeed, mulberry32, seededShuffle } from "@/lib/seed";
+import { getSessionId } from "@/lib/playStore";
+import type { GameCard } from "@/types";
 
 interface ResultScreenProps {
   /** How many the player got right (0..rounds). */
@@ -22,6 +27,9 @@ interface ResultScreenProps {
   date: string;
   mode: "play" | "preview";
   alreadyPlayed?: boolean;
+  /** The day's cards - when present, the answers render ranked for admiring. */
+  cards?: GameCard[];
+  statUnit?: string | null;
   onPlayAgain?: () => void;
   onClose?: () => void;
 }
@@ -45,11 +53,24 @@ export function ResultScreen({
   wrongRounds,
   date,
   mode,
+  cards,
+  statUnit,
   onPlayAgain,
   onClose,
 }: ResultScreenProps) {
   const points = chainDailyScore(reached, rounds);
   const perfect = rounds > 0 && reached >= rounds;
+
+  // The answers, ranked - the same 11 cards this player saw (identical seeded
+  // shuffle to GameBoard's), sorted highest to lowest so the finished puzzle
+  // can be admired. Client-only render, so getSessionId is safe here.
+  const ranked = useMemo(() => {
+    if (!cards || cards.length < 2) return [];
+    const subset = avoidAdjacentTies(
+      seededShuffle(cards, mulberry32(hashSeed(`${getSessionId()}:${date}`))).slice(0, 11)
+    );
+    return [...subset].sort((a, b) => b.stat_value - a.stat_value);
+  }, [cards, date]);
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-5 pb-10 pt-5">
@@ -93,6 +114,34 @@ export function ResultScreen({
         <div className="mt-6 w-full max-w-xs">
           <ChainTimeline position={rounds} total={rounds} wrongRounds={wrongRounds} />
         </div>
+
+        {/* The answers, ranked - admire the finished puzzle */}
+        {ranked.length > 0 && (
+          <div className="mt-7 w-full max-w-xs">
+            <p className="small-caps text-center text-[10px] text-ink-secondary">
+              The answers · highest to lowest
+            </p>
+            <ul className="mt-2 overflow-hidden rounded-2xl border border-border bg-surface text-left">
+              {ranked.map((c, i) => (
+                <li
+                  key={c.id}
+                  className={`flex items-center gap-2.5 px-3.5 py-2 ${i > 0 ? "border-t border-border/60" : ""}`}
+                >
+                  <span className="w-5 shrink-0 font-condensed text-sm font-semibold text-ink-secondary">
+                    {i + 1}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">
+                    {c.entity_name}
+                  </span>
+                  <span className="tabular shrink-0 font-condensed text-sm font-semibold text-ink">
+                    {formatStat(c.stat_value)}
+                    {statUnit ? <span className="text-ink-secondary"> {statUnit}</span> : null}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </motion.div>
 
       {/* Hand off to the next game (or restart the preview) */}

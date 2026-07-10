@@ -10,6 +10,9 @@ export interface ModeResult {
   maxScore: number;
   detail: number[]; // per-slot / per-round points for the result breakdown
   completedAt: string;
+  /** Optional finished-board state (e.g. Word's guesses) so the "already
+   *  played" view can show the completed puzzle, not just the score. */
+  state?: unknown;
 }
 
 const key = (mode: ModeId, date: string) => `whohadmore:${mode}:${date}`;

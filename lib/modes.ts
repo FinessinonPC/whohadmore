@@ -41,27 +41,47 @@ const DUALITY_MISTAKE_PENALTY = 150; // per wrong lock-in
 const DUALITY_FAST_SECONDS = 8; // <= this => full speed bonus
 const DUALITY_SLOW_SECONDS = 60; // >= this => no speed bonus
 
+/** Every pair you find banks at least this much, no matter how many mistakes -
+ *  finding 1 pair should never score 0. */
+const DUALITY_PAIR_FLOOR = 100;
+
 /** Duality score (0–1000): pairs found + a speed bonus on a solve, minus a
- *  penalty per wrong lock-in. Only a fast, clean solve reaches 1000. */
+ *  penalty per wrong lock-in - but each found pair keeps a guaranteed floor,
+ *  so partial progress always pays something. Only a fast, clean solve = 1000. */
 export function dualityScore(found: number, mistakes: number, timeSeconds = 0): number {
   const base = found * DUALITY_PAIR_POINTS;
   const solved = found >= DUALITY_PAIRS;
   const speed = solved
     ? Math.round(DUALITY_SPEED_BONUS * timeFactor(timeSeconds, DUALITY_FAST_SECONDS, DUALITY_SLOW_SECONDS))
     : 0;
-  return Math.max(0, Math.min(DUALITY_MAX_SCORE, base - mistakes * DUALITY_MISTAKE_PENALTY + speed));
+  const net = base - mistakes * DUALITY_MISTAKE_PENALTY + speed;
+  return Math.min(DUALITY_MAX_SCORE, Math.max(found * DUALITY_PAIR_FLOOR, net, 0));
 }
 
 export const WORD_MAX_GUESSES = 6;
-/** Points by number of guesses used (index 0 = solved in 1). Fail = 0. */
+/** Points by number of guesses used (index 0 = solved in 1). */
 export const WORD_POINTS = [1000, 900, 800, 700, 600, 500];
+/** A lost Word still pays for knowledge earned: per letter locked green. */
+export const WORD_GREEN_POINTS = 40; // max 5 x 40 = 200, always below the worst win
+
+/** Partial credit on a lost Word: points per position the player proved green
+ *  across all guesses. Losing with 4 letters placed beats losing blind. */
+export function wordLossScore(rows: string[], answer: string): number {
+  let greens = 0;
+  for (let c = 0; c < answer.length; c++) {
+    if (rows.some((r) => r[c] === answer[c])) greens += 1;
+  }
+  return greens * WORD_GREEN_POINTS;
+}
 
 /** Mini crossword (0–1000): a solve base + a speed bonus, minus a penalty per
  *  Check. Full speed bonus for a solve within par (45s), tapering off after
- *  that. Reveal = 0. e.g. a clean solve ≤45s = 1000; ~90s ≈ 900; very slow = 800. */
+ *  that. Revealing pays partial credit for the letters you had right (max 250,
+ *  always below a real solve). e.g. clean solve ≤45s = 1000; very slow = 800. */
 export const MINI_MAX_POINTS = 1000;
 export const MINI_CHECK_PENALTY = 100;
 export const MINI_MIN_SCORE = 300; // floor for a solve
+export const MINI_REVEAL_CREDIT = 250; // scaled by share of correct letters at reveal
 const MINI_SOLVE_BASE = 800;
 const MINI_SPEED_BONUS = 200;
 const MINI_PAR_SECONDS = 45;

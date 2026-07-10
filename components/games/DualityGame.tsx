@@ -125,18 +125,36 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
   }
 
   if (already) {
+    // The finished puzzle, there to admire: all four pairs revealed, plus
+    // the score this player banked.
     return (
       <GameShell mode="duality" date={date}>
-        <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <p className="small-caps text-xs text-ink-secondary">Already played</p>
-          <p className="mt-3 font-condensed text-6xl font-semibold text-ink tabular">
+        <p className="text-center text-xs font-semibold text-ink-secondary">
+          You played this one - here are the answers
+        </p>
+        <div className="mt-4 flex flex-col gap-2">
+          {day.pairs.map((p, order) => (
+            <div
+              key={p.word}
+              className="rounded-xl px-4 py-3 text-center"
+              style={{ background: PAIR_COLORS[order], color: PAIR_INK[order] }}
+            >
+              <p className="font-condensed text-2xl font-semibold uppercase tracking-wide leading-none">
+                {p.word}
+              </p>
+              <p className="mt-1 text-[11px] font-bold opacity-80">{p.defs.join("  ·  ")}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 text-center">
+          <p className="font-condensed text-5xl font-semibold text-ink tabular">
             {already.score}
-            <span className="text-3xl text-ink-secondary"> / {already.max}</span>
+            <span className="text-2xl text-ink-secondary"> / {already.max}</span>
           </p>
-          <p className="mb-6 mt-2 text-sm text-ink-secondary">Four new pairs tomorrow.</p>
-          <div className="w-full max-w-xs">
-            <NextGameCTA date={date} current="duality" />
-          </div>
+          <p className="mt-1 text-xs font-semibold text-ink-secondary">Four new pairs tomorrow.</p>
+        </div>
+        <div className="mt-auto pb-1 pt-5">
+          <NextGameCTA date={date} current="duality" />
         </div>
       </GameShell>
     );

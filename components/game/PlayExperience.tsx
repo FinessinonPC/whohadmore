@@ -156,6 +156,8 @@ export function PlayExperience({
         date={date}
         mode="play"
         alreadyPlayed={alreadyPlayed}
+        cards={game.cards}
+        statUnit={game.stat_unit}
       />
     );
   }
