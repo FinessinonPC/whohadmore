@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { GameCalendar } from "@/components/admin/GameCalendar";
+import { BackfillButton } from "@/components/admin/BackfillButton";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,8 @@ export default function AdminPage() {
             <span className="h-1.5 w-1.5 rounded-full bg-[#06B6D4] opacity-25" /> auto pack
           </span>
         </div>
+
+        <BackfillButton />
       </main>
     </AdminGate>
   );
