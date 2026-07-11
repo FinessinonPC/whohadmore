@@ -29,6 +29,7 @@ const config: Config = {
         // letters - is the fat marker pen. Inter remains the loading fallback.
         sans: ["var(--font-hand)", "var(--font-inter)", "system-ui", "sans-serif"],
         condensed: ["var(--font-marker)", "var(--font-hand)", "cursive"],
+        display: ["var(--font-oswald)", "var(--font-inter)", "sans-serif"],
       },
       fontSize: {
         // Display values — the hero of every card

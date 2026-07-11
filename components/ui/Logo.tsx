@@ -37,8 +37,8 @@ export function BrandMark({ className = "", size }: MarkProps) {
 export function BrandLockup({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
-      <BrandMark className="h-[20px] w-[20px]" />
-      <span className="text-[17px] font-condensed font-bold uppercase tracking-wide text-ink mt-0.5">
+      <BrandMark className="h-[27px] w-[27px]" />
+      <span className="text-[17px] font-display font-bold uppercase tracking-wide text-ink mt-0.5">
         WHOHADMORE
       </span>
     </span>

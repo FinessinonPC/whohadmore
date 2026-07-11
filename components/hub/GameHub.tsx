@@ -136,7 +136,7 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
             {isToday ? "" : "Archive · "}
             {formatDisplayDate(date)} · Card No. {gameNumber}
           </span>
-          <h1 className="mt-3 font-condensed text-4xl font-semibold uppercase leading-none tracking-wide text-ink">
+          <h1 className="mt-3 font-display text-4xl font-semibold uppercase leading-none tracking-wide text-ink">
             {isToday ? "Today's card" : "That day's card"}
           </h1>
           <p className="mt-2.5 font-condensed text-lg font-semibold text-ink">
@@ -187,6 +187,7 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
                 <Link
                   href={mode.href(date)}
                   className="card-ink group relative flex items-center gap-3.5 rounded-[14px] py-[15px] pl-5 pr-4 transition-transform duration-100 hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px]"
+                  style={{ background: `${mode.accent}2B` }}
                 >
                   <span
                     className="absolute bottom-2.5 left-0 top-2.5 w-1.5 rounded-r-full"
