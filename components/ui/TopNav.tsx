@@ -19,13 +19,13 @@ export function TopNav() {
       <div className="flex items-center gap-3">
         <Link
           href="/archive"
-          className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
+          className="small-caps hidden text-[10.5px] font-bold text-ink-secondary transition-colors hover:text-ink sm:inline"
         >
           Archive
         </Link>
         <Link
           href="/leaderboard"
-          className="text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
+          className="small-caps hidden text-[10.5px] font-bold text-ink-secondary transition-colors hover:text-ink sm:inline"
         >
           Leaderboard
         </Link>

@@ -42,14 +42,14 @@ export function ArchiveList({
   }
 
   return (
-    <ul className="divide-y divide-border border-y border-border">
+    <ul className="flex flex-col gap-3">
       {sorted.map((game) => {
         const score = scoreFor(game.play_date, filter);
         return (
           <li key={game.id}>
             <Link
               href={hrefFor ? hrefFor(game.play_date) : `/day/${game.play_date}`}
-              className="flex items-center gap-3 py-3.5 transition-colors hover:bg-surface"
+              className="card-ink flex items-center gap-3 rounded-xl px-4 py-3.5 transition-transform hover:-translate-y-0.5"
             >
               <div className="min-w-0 flex-1">
                 <p className="font-condensed text-lg font-bold text-ink">

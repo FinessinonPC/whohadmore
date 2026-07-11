@@ -39,7 +39,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0B0D10",
+  themeColor: "#EAE3D2",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -83,10 +83,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${oswald.variable}`} suppressHydrationWarning>
       <head>
-        {/* Apply the saved/system theme before paint to avoid a flash. */}
+        {/* Paper-first: light is the flagship look; dark only when chosen. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':true;document.documentElement.classList.toggle('dark',d);}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('theme');document.documentElement.classList.toggle('dark',t==='dark');}catch(e){}})();`,
           }}
         />
       </head>

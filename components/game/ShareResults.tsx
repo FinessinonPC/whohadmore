@@ -64,7 +64,7 @@ export function ShareResults({ date, className }: { date: string; className?: st
       onClick={share}
       className={
         className ??
-        "flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-cta text-base font-bold text-background transition-transform active:scale-[0.98]"
+        "ink-shadow-sm flex h-14 w-full items-center justify-center gap-2 rounded-xl border-[3px] border-ink bg-cta text-base font-bold text-background transition-all hover:opacity-95 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
       }
     >
       {copied ? "Copied to clipboard" : "Share your scores"}

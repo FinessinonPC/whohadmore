@@ -26,7 +26,7 @@ export function ChainWordmark({ className = "", alt }: WordmarkProps) {
     <span className={`${base} ${className}`} aria-label="Chain">
       <span>CH</span>
       <svg viewBox="0 0 56 56" className="mx-[0.02em] h-[0.74em] w-auto self-center" aria-hidden>
-        <polygon points="28,2 2,54 54,54" fill={alt ?? "currentColor"} />
+        <polygon points="28,4 3,52 53,52" fill={alt ?? "currentColor"} stroke="#16181D" strokeWidth="5" strokeLinejoin="round" />
       </svg>
       <span>IN</span>
     </span>
@@ -49,8 +49,8 @@ export function WordWordmark({ className = "", alt }: WordmarkProps) {
     <span className={`${base} ${className}`} aria-label="Word">
       <span>W</span>
       <svg viewBox="0 0 56 56" className="mx-[0.05em] h-[0.72em] w-auto self-center" aria-hidden>
-        <rect x="3" y="3" width="50" height="50" rx="10" fill={alt ?? "currentColor"} />
-        <circle cx="28" cy="28" r="11" fill="none" stroke={alt ? "currentColor" : "#0B0D10"} strokeWidth="7" />
+        <rect x="4" y="4" width="48" height="48" rx="10" fill={alt ?? "currentColor"} stroke="#16181D" strokeWidth="5" />
+        <circle cx="28" cy="28" r="10" fill="none" stroke="#16181D" strokeWidth="7" />
       </svg>
       <span>RD</span>
     </span>
@@ -63,8 +63,8 @@ export function MiniWordmark({ className = "", alt }: WordmarkProps) {
     <span className={`${base} ${className}`} aria-label="Mini">
       <span>MIN</span>
       <svg viewBox="0 0 26 56" className="ml-[0.08em] h-[0.72em] w-auto self-center" aria-hidden>
-        <rect x="2" y="2" width="22" height="24" rx="5" fill="none" stroke={alt ?? "currentColor"} strokeWidth="5" />
-        <rect x="2" y="31" width="22" height="23" rx="5" fill={alt ?? "currentColor"} />
+        <rect x="3" y="3" width="20" height="22" rx="5" fill="none" stroke="#16181D" strokeWidth="5" />
+        <rect x="3" y="30" width="20" height="23" rx="5" fill={alt ?? "currentColor"} stroke="#16181D" strokeWidth="4" />
       </svg>
     </span>
   );

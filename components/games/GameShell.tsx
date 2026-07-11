@@ -49,8 +49,8 @@ export function GameShell({
         <Link href="/" aria-label="Back to today's games">
           <BrandLockup />
         </Link>
-        <span style={{ color: def.accent }}>
-          <GameWordmark mode={mode} className="text-xl" />
+        <span className="text-ink">
+          <GameWordmark mode={mode} className="text-xl" alt={def.accent} />
         </span>
       </header>
       <div className="relative z-[46] mt-6 flex flex-1 flex-col">
@@ -93,17 +93,16 @@ export function NextGameCTA({ date, current }: { date: string; current: ModeId }
       <div className="flex flex-col gap-2.5">
         <Link
           href={def.href(date)}
-          className="flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl text-base font-bold transition-transform active:scale-[0.98]"
-          style={{ background: def.accent, color: def.contrast }}
+          className="card-ink tilt-l flex h-14 w-full items-center justify-center gap-2.5 rounded-xl text-base font-bold text-ink transition-all hover:-translate-y-0.5 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
         >
-          <span className="text-sm font-semibold opacity-75">Next up</span>
-          <GameWordmark mode={next} className="text-2xl" />
+          <span className="small-caps text-[10px] font-bold text-ink-secondary">Next up</span>
+          <GameWordmark mode={next} className="text-2xl text-ink" alt={def.accent} />
         </Link>
         <Link
           href="/"
-          className="py-1 text-center text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
+          className="small-caps py-1 text-center text-[10px] font-bold text-ink-secondary transition-colors hover:text-ink"
         >
-          Back to today&apos;s games
+          Back to today&apos;s card
         </Link>
       </div>
     );
@@ -111,19 +110,21 @@ export function NextGameCTA({ date, current }: { date: string; current: ModeId }
 
   return (
     <div className="flex flex-col gap-2.5">
-      <p className="text-center text-sm font-bold text-ink">That&apos;s all four - nice.</p>
+      <p className="text-center font-condensed text-lg font-semibold uppercase tracking-wide text-ink">
+        Card complete <span className="marker-gold">- nice.</span>
+      </p>
       <ShareResults date={date} />
       <Link
         href="/leaderboard"
-        className="flex h-12 w-full items-center justify-center rounded-2xl border border-border bg-surface text-sm font-bold text-ink transition-colors hover:bg-border/40"
+        className="card-ink-flat flex h-12 w-full items-center justify-center rounded-xl text-sm font-bold text-ink transition-colors hover:bg-border/30"
       >
         See today&apos;s leaderboard
       </Link>
       <Link
         href="/"
-        className="py-1 text-center text-xs font-semibold text-ink-secondary transition-colors hover:text-ink"
+        className="small-caps py-1 text-center text-[10px] font-bold text-ink-secondary transition-colors hover:text-ink"
       >
-        Back to today&apos;s games
+        Back to today&apos;s card
       </Link>
     </div>
   );

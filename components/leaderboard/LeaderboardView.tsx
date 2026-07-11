@@ -50,7 +50,7 @@ export function LeaderboardView({
 
       {/* Daily / All-time toggle */}
       <section className="mt-6">
-        <div className="mb-3 inline-flex rounded-full bg-surface p-1">
+        <div className="card-ink-flat mb-3 inline-flex rounded-full p-1">
           <TabButton active={tab === "daily"} onClick={() => setTab("daily")}>
             Daily
           </TabButton>
@@ -63,12 +63,12 @@ export function LeaderboardView({
           daily.length === 0 ? (
             <EmptyBoard title="No scores yet today" sub="Be the first to play today's game." />
           ) : (
-            <div className="overflow-hidden rounded-3xl bg-surface">
+            <div className="card-ink tilt-l overflow-hidden rounded-xl">
               {daily.map((r, i) => (
                 <div
                   key={i}
                   className={`flex items-center gap-3 px-4 py-3 ${i > 0 ? "border-t border-border/70" : ""} ${
-                    r.you ? "bg-correct/15 ring-1 ring-inset ring-correct/40" : ""
+                    r.you ? "bg-[#FFB300]/20 ring-2 ring-inset ring-[#FFB300]" : ""
                   }`}
                 >
                   <RankBadge rank={r.rank} />
@@ -92,14 +92,14 @@ export function LeaderboardView({
         ) : rows.length === 0 ? (
           <EmptyBoard title="No scores yet" sub="Play games to climb the all-time board." />
         ) : (
-          <div className="overflow-hidden rounded-3xl bg-surface">
+          <div className="card-ink tilt-l overflow-hidden rounded-xl">
             {rows.map((r, i) => {
               const me = r.username === profile?.username;
               return (
                 <div
                   key={r.rank}
                   className={`flex items-center gap-3 px-4 py-3.5 ${i > 0 ? "border-t border-border/70" : ""} ${
-                    me ? "bg-correct/15 ring-1 ring-inset ring-correct/40" : ""
+                    me ? "bg-[#FFB300]/20 ring-2 ring-inset ring-[#FFB300]" : ""
                   }`}
                 >
                   <RankBadge rank={r.rank} />
@@ -138,7 +138,7 @@ function TabButton({
     <button
       onClick={onClick}
       className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
-        active ? "bg-background text-ink shadow-sm" : "text-ink-secondary hover:text-ink"
+        active ? "bg-cta text-background" : "text-ink-secondary hover:text-ink"
       }`}
     >
       {children}
@@ -148,10 +148,10 @@ function TabButton({
 
 function EmptyBoard({ title, sub }: { title: string; sub: string }) {
   return (
-    <div className="rounded-3xl bg-surface px-6 py-10 text-center">
+    <div className="card-ink tilt-l rounded-xl px-6 py-10 text-center">
       <p className="text-sm font-semibold text-ink">{title}</p>
       <p className="mt-1 text-sm text-ink-secondary">{sub}</p>
-      <Link href="/" className="mt-4 inline-block rounded-full bg-cta px-5 py-2 text-xs font-bold text-background">
+      <Link href="/" className="ink-shadow-sm mt-4 inline-block rounded-full border-2 border-ink bg-cta px-5 py-2 text-xs font-bold text-background">
         Play today&apos;s games
       </Link>
     </div>
@@ -163,7 +163,7 @@ function RankBadge({ rank }: { rank: number }) {
   if (medal) {
     return (
       <span
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-condensed text-sm font-semibold text-[#0B0D10]"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 border-ink font-condensed text-sm font-semibold text-[#16181D]"
         style={{ backgroundColor: medal }}
       >
         {rank}

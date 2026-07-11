@@ -95,9 +95,9 @@ export function CardPair({
         })}
       </AnimatePresence>
 
-      {/* Angular VS tag on the seam between the two cards */}
+      {/* The VS chip on the seam - printed scorecard style */}
       <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
-        <div className="flex h-11 w-11 -rotate-6 items-center justify-center bg-ink font-condensed text-base font-bold tracking-wider text-background shadow-lg ring-2 ring-background">
+        <div className="card-ink ink-shadow-sm flex h-11 w-11 -rotate-6 items-center justify-center rounded-[10px] font-condensed text-base font-bold tracking-wider text-ink">
           VS
         </div>
       </div>

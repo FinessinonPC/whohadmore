@@ -85,8 +85,8 @@ export function ResultScreen({
             <BrandLockup />
           </Link>
         )}
-        <span style={{ color: modeDef("chain").accent }}>
-          <GameWordmark mode="chain" className="text-xl" />
+        <span className="text-ink">
+          <GameWordmark mode="chain" className="text-xl" alt={modeDef("chain").accent} />
         </span>
       </header>
 
@@ -100,15 +100,26 @@ export function ResultScreen({
           {headline(reached, rounds)}
         </h2>
 
-        {/* Your score, in points */}
-        <div className="mt-3">
+        {/* Your score, inked onto the card */}
+        <div className="relative mt-3">
           <span className="font-condensed text-[5.5rem] font-bold leading-none text-ink tabular">
             <CountUp value={points} run duration={1.1} />
           </span>
+          {perfect && (
+            <svg viewBox="0 0 100 100" className="absolute -right-9 -top-2 h-10 w-10 rotate-12" aria-hidden>
+              <path
+                d="M 50 8 L 61 36 L 92 38 L 68 58 L 76 90 L 50 71 L 24 90 L 32 58 L 8 38 L 39 36 Z"
+                fill="#FFB300"
+                stroke="#16181D"
+                strokeWidth="6"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
         </div>
         <p className="small-caps mt-1 text-[11px] text-ink-secondary">points</p>
-        <p className="mt-2 text-sm font-semibold text-ink">
-          {reached} of {rounds} correct
+        <p className="mt-2 font-condensed text-lg font-semibold text-ink">
+          <span className="marker-gold">{reached} of {rounds} correct</span>
         </p>
 
         <div className="mt-6 w-full max-w-xs">
@@ -118,14 +129,14 @@ export function ResultScreen({
         {/* The answers, ranked - admire the finished puzzle */}
         {ranked.length > 0 && (
           <div className="mt-7 w-full max-w-xs">
-            <p className="small-caps text-center text-[10px] text-ink-secondary">
+            <p className="small-caps text-center text-[10px] font-bold text-ink-secondary">
               The answers · highest to lowest
             </p>
-            <ul className="mt-2 overflow-hidden rounded-2xl border border-border bg-surface text-left">
+            <ul className="card-ink tilt-l mt-2.5 overflow-hidden rounded-xl text-left">
               {ranked.map((c, i) => (
                 <li
                   key={c.id}
-                  className={`flex items-center gap-2.5 px-3.5 py-2 ${i > 0 ? "border-t border-border/60" : ""}`}
+                  className={`flex items-center gap-2.5 px-3.5 py-2 ${i > 0 ? "border-t-2 border-border" : ""}`}
                 >
                   <span className="w-5 shrink-0 font-condensed text-sm font-semibold text-ink-secondary">
                     {i + 1}

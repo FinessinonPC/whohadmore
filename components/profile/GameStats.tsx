@@ -49,7 +49,7 @@ export function GameStats() {
   const maxed = LIVE_MODES.filter((m) => aggFor(m.id).best >= 1000).length;
 
   return (
-    <section className="mt-4 rounded-[28px] bg-surface p-6">
+    <section className="mt-4 card-ink rounded-2xl p-6">
       <h2 className="text-sm font-extrabold text-ink">Across every game</h2>
       <p className="mt-0.5 text-[11px] leading-snug text-ink-secondary">
         Points are how you score each day - up to 1,000 a game. (Separate from XP, which

@@ -329,12 +329,12 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
           {rows.map((row, r) =>
             row.split("").map((ch, c) => {
               if (ch === "#")
-                return <div key={`${r},${c}`} className="aspect-square rounded-md bg-[#000000]/60 dark:bg-black" />;
+                return <div key={`${r},${c}`} className="aspect-square rounded-md bg-[#16181D]" />;
               const num = numberAt.get(`${r},${c}`);
               return (
                 <div
                   key={`${r},${c}`}
-                  className="relative flex aspect-square items-center justify-center rounded-md bg-surface font-condensed text-xl font-semibold uppercase"
+                  className="relative flex aspect-square items-center justify-center rounded-md border-[1.5px] border-ink/50 bg-surface font-condensed text-xl font-semibold uppercase"
                   style={{ color: "#00C853" }}
                 >
                   {num && (
@@ -383,7 +383,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
           {rows.map((row, r) =>
             row.split("").map((solutionCh, c) => {
               if (solutionCh === "#")
-                return <div key={`${r},${c}`} className="aspect-square rounded-md bg-[#000000]/60 dark:bg-black" />;
+                return <div key={`${r},${c}`} className="aspect-square rounded-md bg-[#16181D]" />;
               const k = `${r},${c}`;
               const isActive = active.r === r && active.c === c;
               const inWord = inActiveSlot(r, c);
@@ -399,7 +399,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                       if (!slotFor(r, c, dir)) setDir((d) => (d === "A" ? "D" : "A"));
                     }
                   }}
-                  className="relative flex aspect-square items-center justify-center rounded-md font-condensed text-xl font-semibold uppercase transition-colors lg:rounded-lg lg:text-4xl"
+                  className="relative flex aspect-square items-center justify-center rounded-md border-[1.5px] border-ink/50 font-condensed text-xl font-semibold uppercase transition-colors lg:rounded-lg lg:text-4xl"
                   style={{
                     background: isActive ? ACCENT : inWord ? `${ACCENT}33` : "rgb(var(--surface))",
                     color: isActive
@@ -458,13 +458,13 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
             <button
               onClick={() => gotoSlot(-1)}
               aria-label="Previous clue"
-              className="shrink-0 rounded-xl bg-surface px-3 text-ink-secondary"
+              className="card-ink-flat shrink-0 rounded-xl px-3 text-ink-secondary"
             >
               ‹
             </button>
             <button
               onClick={() => setDir((d) => (d === "A" ? "D" : "A"))}
-              className="min-h-[3rem] flex-1 rounded-xl px-3 py-2 text-center"
+              className="min-h-[3rem] flex-1 rounded-xl border-2 border-ink px-3 py-2 text-center"
               style={{ background: `${ACCENT}1E` }}
             >
               <span
@@ -482,7 +482,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
             <button
               onClick={() => gotoSlot(1)}
               aria-label="Next clue"
-              className="shrink-0 rounded-xl bg-surface px-3 text-ink-secondary"
+              className="card-ink-flat shrink-0 rounded-xl px-3 text-ink-secondary"
             >
               ›
             </button>
@@ -503,7 +503,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                       <button
                         key={k}
                         onClick={() => type(k)}
-                        className="flex h-11 flex-1 items-center justify-center rounded-lg bg-surface text-sm font-extrabold text-ink active:scale-95"
+                        className="card-ink-flat flex h-11 flex-1 items-center justify-center rounded-lg text-sm font-extrabold text-ink active:scale-95"
                       >
                         {k}
                       </button>
@@ -512,7 +512,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                       <button
                         onClick={() => type("BACK")}
                         aria-label="Delete"
-                        className="flex h-11 flex-[1.6] items-center justify-center rounded-lg bg-surface text-base font-extrabold text-ink active:scale-95"
+                        className="card-ink-flat flex h-11 flex-[1.6] items-center justify-center rounded-lg text-base font-extrabold text-ink active:scale-95"
                       >
                         ⌫
                       </button>

@@ -20,8 +20,9 @@ interface CardProps {
   onSelect: () => void;
 }
 
+// Idle cards wear the printed ink line; the verdict re-inks them.
 const BORDER_COLOR: Record<CardStatus, string> = {
-  idle: "rgba(0,0,0,0)",
+  idle: "#16181D",
   correct: "#00C853",
   wrong: "#FF3B30",
 };
@@ -66,7 +67,7 @@ export function Card({
         onClick={onSelect}
         disabled={disabled}
         aria-label={`Choose ${card.entity_name}`}
-        className="group relative flex h-full w-full items-end justify-center overflow-hidden rounded-[26px] border-[3px] bg-[#F1F1F3] text-left shadow-xl will-change-transform disabled:cursor-default"
+        className="group relative flex h-full w-full items-end justify-center overflow-hidden rounded-[22px] border-[3px] bg-[#F1F1F3] text-left ink-shadow will-change-transform disabled:cursor-default"
         animate={{
           x: shake ? [0, -10, 10, -8, 8, 0] : 0,
           borderColor: BORDER_COLOR[status],

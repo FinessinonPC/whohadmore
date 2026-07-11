@@ -125,8 +125,10 @@ export function ArchiveCalendar({ games, hrefFor, filter = "all" }: ArchiveCalen
                 isToday ? "ring-2 ring-ink/25" : ""
               }`}
               style={{
-                background: score.played ? `${accent}14` : "transparent",
-                borderColor: score.played ? `${accent}55` : "rgb(var(--border))",
+                background: score.played ? `${accent}18` : "rgb(var(--surface) / 0.5)",
+                borderColor: score.played ? "rgb(var(--ink))" : "rgb(var(--ink) / 0.3)",
+                borderStyle: score.played ? "solid" : "dashed",
+                borderWidth: 2,
               }}
             >
               <span className="text-xs font-bold text-ink">{day}</span>

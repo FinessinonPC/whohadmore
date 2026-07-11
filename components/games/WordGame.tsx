@@ -174,7 +174,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
                   {row.split("").map((ch, c) => (
                     <div
                       key={c}
-                      className="flex aspect-square items-center justify-center rounded-lg border-2 border-border font-condensed text-xl font-semibold uppercase text-ink"
+                      className="flex aspect-square items-center justify-center rounded-lg border-2 border-ink/30 font-condensed text-xl font-semibold uppercase text-ink"
                       style={tileStyle(marks[c])}
                     >
                       {ch}
@@ -237,7 +237,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
                   return (
                     <div
                       key={c}
-                      className="flex aspect-square items-center justify-center rounded-lg border-2 border-border font-condensed text-2xl font-semibold uppercase text-ink"
+                      className="flex aspect-square items-center justify-center rounded-lg border-2 border-ink/30 font-condensed text-2xl font-semibold uppercase text-ink"
                       style={ch ? { borderColor: "rgb(var(--ink-2))" } : {}}
                     >
                       {ch ?? ""}
@@ -284,7 +284,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
                   {i === 2 && (
                     <button
                       onClick={() => type("ENTER")}
-                      className="flex h-12 flex-[1.6] items-center justify-center rounded-lg bg-cta text-[11px] font-extrabold text-background active:scale-95"
+                      className="flex h-12 flex-[1.6] items-center justify-center rounded-lg border-2 border-ink bg-cta text-[11px] font-extrabold text-background active:scale-95"
                     >
                       ENTER
                     </button>
@@ -295,7 +295,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
                       <button
                         key={k}
                         onClick={() => type(k)}
-                        className="flex h-12 flex-1 items-center justify-center rounded-lg bg-surface text-sm font-extrabold text-ink active:scale-95"
+                        className="card-ink-flat flex h-12 flex-1 items-center justify-center rounded-lg text-sm font-extrabold text-ink active:scale-95"
                         style={
                           st === "g"
                             ? { background: GREEN, color: "#0B0D10" }
@@ -314,7 +314,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
                     <button
                       onClick={() => type("BACK")}
                       aria-label="Delete"
-                      className="flex h-12 flex-[1.6] items-center justify-center rounded-lg bg-surface text-base font-extrabold text-ink active:scale-95"
+                      className="card-ink-flat flex h-12 flex-[1.6] items-center justify-center rounded-lg text-base font-extrabold text-ink active:scale-95"
                     >
                       ⌫
                     </button>
@@ -360,7 +360,7 @@ function FlipTile({
           ? { duration: 0.52, delay: delayMs / 1000, times: [0, 0.5, 1], ease: "easeInOut" }
           : undefined
       }
-      className="flex aspect-square items-center justify-center rounded-lg border-2 border-border font-condensed text-2xl font-semibold uppercase text-ink"
+      className="flex aspect-square items-center justify-center rounded-lg border-2 border-ink/30 font-condensed text-2xl font-semibold uppercase text-ink"
       style={shown ? revealedStyle : {}}
     >
       {ch}

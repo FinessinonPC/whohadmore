@@ -10,14 +10,17 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size;
 }
 
+// Scorecard buttons: printed, not painted - heavy ink line + solid ink shadow
+// that the press physically flattens (translate onto the shadow).
 const base =
-  "inline-flex items-center justify-center font-bold rounded-2xl transition-all duration-150 " +
-  "active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none select-none " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:ring-offset-2";
+  "inline-flex items-center justify-center font-bold rounded-xl transition-all duration-100 " +
+  "active:translate-x-[3px] active:translate-y-[3px] active:shadow-none " +
+  "disabled:opacity-40 disabled:pointer-events-none select-none " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30 focus-visible:ring-offset-2";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-cta text-background hover:opacity-90",
-  secondary: "bg-surface text-ink border border-border hover:bg-border/40",
+  primary: "bg-cta text-background border-[3px] border-ink ink-shadow-sm hover:opacity-95",
+  secondary: "bg-surface text-ink border-[3px] border-ink ink-shadow-sm hover:bg-border/30",
   ghost: "bg-transparent text-ink-secondary hover:text-ink hover:bg-surface",
 };
 

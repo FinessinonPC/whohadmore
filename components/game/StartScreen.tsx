@@ -52,16 +52,16 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       >
-        <span style={{ color: modeDef("chain").accent }}>
-          <GameWordmark mode="chain" className="text-2xl" />
+        <span className="text-ink">
+          <GameWordmark mode="chain" className="text-2xl" alt={modeDef("chain").accent} />
         </span>
         <p className="small-caps mt-2 text-[11px] font-bold" style={{ color: modeDef("chain").accent }}>
           {themeFor(date).name}
         </p>
-        <p className="small-caps mt-1.5 text-xs text-ink-secondary">
-          {formatDisplayDate(date)}
-          {!isToday(date) ? " · Archive" : ""} · Game No. {gameNumber}
-        </p>
+        <span className="stamp-red mt-3">
+          {!isToday(date) ? "Archive · " : ""}
+          {formatDisplayDate(date)} · Game No. {gameNumber}
+        </span>
 
         {/* Hero montage - a fanned peek at today's lineup */}
         <div className="relative mt-6 flex h-44 w-full items-center justify-center sm:h-60">
@@ -70,7 +70,7 @@ export function StartScreen({ game, date, gameNumber, resuming = false, onStart 
             return (
               <motion.div
                 key={card.id}
-                className="absolute h-32 w-24 overflow-hidden rounded-xl bg-surface shadow-xl ring-1 ring-border sm:h-48 sm:w-36"
+                className="ink-shadow-sm absolute h-32 w-24 overflow-hidden rounded-xl border-[2.5px] border-ink bg-surface sm:h-48 sm:w-36"
                 style={{ zIndex: hero.length - Math.abs(offset) }}
                 initial={{ opacity: 0, y: 24, rotate: offset * 4, scale: 0.9 }}
                 animate={{

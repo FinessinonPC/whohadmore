@@ -32,7 +32,7 @@ export function ProfileView() {
       <h1 className="mt-8 text-4xl font-extrabold tracking-tight text-ink">Profile</h1>
       <p className="mt-1 text-[15px] text-ink-secondary">Your level, streak, and lifetime stats across every game.</p>
 
-      <section className="mt-6 rounded-[28px] bg-surface p-6">
+      <section className="mt-6 card-ink rounded-2xl p-6">
         {hasName ? (
           <>
             <div className="flex items-center gap-4">
@@ -57,7 +57,7 @@ export function ProfileView() {
               </div>
               <div className="h-3.5 w-full overflow-hidden rounded-full bg-background">
                 <motion.div
-                  className="h-full rounded-full bg-correct"
+                  className="h-full rounded-full bg-[#FFB300]"
                   initial={{ width: 0 }}
                   animate={{ width: `${needed > 0 ? (into / needed) * 100 : 0}%` }}
                   transition={{ type: "spring", damping: 24, stiffness: 180 }}
@@ -99,7 +99,7 @@ export function ProfileView() {
 function Achievements({ earned }: { earned: string[] }) {
   const earnedSet = new Set(earned);
   return (
-    <section className="mt-4 mb-2 rounded-[28px] bg-surface p-6">
+    <section className="mt-4 mb-2 card-ink rounded-2xl p-6">
       <div className="flex items-baseline justify-between">
         <h2 className="text-sm font-extrabold text-ink">Achievements</h2>
         <span className="text-xs font-semibold text-ink-secondary">
@@ -113,7 +113,7 @@ function Achievements({ earned }: { earned: string[] }) {
             <div
               key={a.id}
               className={`group relative flex cursor-help flex-col items-center gap-1.5 rounded-2xl border p-2.5 text-center transition-colors ${
-                got ? "border-correct/30 bg-correct/5" : "border-border bg-background"
+                got ? "border-ink bg-[#FFB300]/15" : "border-border bg-background"
               }`}
             >
               <span className={`text-2xl leading-none ${got ? "" : "opacity-30 grayscale"}`}>{a.icon}</span>
@@ -195,7 +195,7 @@ function LevelRing({ level, progress }: { level: number; progress: number }) {
           cy="36"
           r={r}
           fill="none"
-          stroke="#00C853"
+          stroke="#FFB300"
           strokeWidth="7"
           strokeLinecap="round"
           strokeDasharray={c}
