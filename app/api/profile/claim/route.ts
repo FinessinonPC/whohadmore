@@ -144,15 +144,25 @@ export async function POST(req: Request) {
     >();
 
   const rows = results ?? [];
+  
+  const { data: modeResults } = await supabase
+    .from("game_mode_results")
+    .select("score")
+    .eq("session_id", session_id)
+    .returns<{ score: number | null }[]>();
+  const modeRows = modeResults ?? [];
+  
   const dates = new Set(rows.map((r) => r.play_date));
   const xp = rows.reduce((s, r) => s + (r.points ?? 0), 0);
   const totalStars = rows.reduce((s, r) => s + (r.stars ?? 0), 0);
   // Streak-free all-time score = sum of each game's daily score.
-  const totalScore = rows.reduce(
+  let totalScore = rows.reduce(
     (s, r) =>
       s + dailyScore(r.score ?? 0, r.stars ?? heartsFor(r.lives_remaining ?? 0), r.time_seconds ?? 0),
     0
   );
+  totalScore += modeRows.reduce((s, r) => s + (r.score ?? 0), 0);
+  
   const monthlyScore = rows
     .filter((r) => r.play_date.startsWith(period))
     .reduce((s, r) => s + (r.points ?? 0), 0);

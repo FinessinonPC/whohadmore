@@ -48,15 +48,17 @@ function computeStreak(dates: Set<string>, today: string): number {
 
 /** Roll a session's full result history up into profile stats. Idempotent: the
  *  same rows always produce the same totals (points/stars are stored per game). */
-function aggregate(rows: ResultRow[], today: string, period: string) {
+function aggregate(rows: ResultRow[], modeRows: { score: number | null }[], today: string, period: string) {
   const dates = new Set(rows.map((r) => r.play_date));
   const xp = rows.reduce((s, r) => s + (r.points ?? 0), 0);
   const totalStars = rows.reduce((s, r) => s + (r.stars ?? 0), 0);
-  const totalScore = rows.reduce(
+  let totalScore = rows.reduce(
     (s, r) =>
       s + dailyScore(r.score ?? 0, r.stars ?? heartsFor(r.lives_remaining ?? 0), r.time_seconds ?? 0),
     0
   );
+  totalScore += modeRows.reduce((s, r) => s + (r.score ?? 0), 0);
+  
   const monthlyScore = rows
     .filter((r) => r.play_date.startsWith(period))
     .reduce((s, r) => s + (r.points ?? 0), 0);
@@ -186,7 +188,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ profile: existing, loggedIn: true });
     }
 
-    const agg = aggregate(rows, today, period);
+    const { data: allModes } = await supabase
+      .from("game_mode_results")
+      .select("score")
+      .eq("session_id", canonical)
+      .returns<{ score: number | null }[]>();
+    const modeRows = allModes ?? [];
+
+    const agg = aggregate(rows, modeRows, today, period);
     const { data: updated } = await supabase
       .from("profiles")
       .update({
@@ -226,7 +235,12 @@ export async function POST(req: Request) {
     .select(RESULT_COLUMNS)
     .eq("session_id", session_id)
     .returns<ResultRow[]>();
-  const agg = aggregate(results ?? [], today, period);
+  const { data: modeResults } = await supabase
+    .from("game_mode_results")
+    .select("score")
+    .eq("session_id", session_id)
+    .returns<{ score: number | null }[]>();
+  const agg = aggregate(results ?? [], modeResults ?? [], today, period);
 
   const { data: created, error } = await supabase
     .from("profiles")

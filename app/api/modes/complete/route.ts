@@ -45,7 +45,21 @@ export async function POST(req: Request) {
 
     if (!isSupabaseConfigured()) return NextResponse.json({ ok: true, recorded: false });
 
-    const { error } = await getServiceSupabase()
+    const supabase = getServiceSupabase();
+
+    const { data: existing } = await supabase
+      .from("game_mode_results")
+      .select("id")
+      .eq("session_id", session_id)
+      .eq("play_date", play_date)
+      .eq("mode", mode)
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json({ ok: true, recorded: false });
+    }
+
+    const { error } = await supabase
       .from("game_mode_results")
       .upsert(
         {
@@ -61,14 +75,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, recorded: false });
     }
 
-    // Collection achievements - best-effort, never blocks recording.
+    // Collection achievements and score update - best-effort, never blocks recording.
     try {
-      const supabase = getServiceSupabase();
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, achievements")
+        .select("id, achievements, total_score")
         .eq("session_id", session_id)
-        .maybeSingle<{ id: string; achievements: string[] | null }>();
+        .maybeSingle<{ id: string; achievements: string[] | null; total_score: number | null }>();
       if (profile) {
         const earned: string[] = [];
         if (mode === "duality" && clean) earned.push("duality_perfect");
@@ -92,9 +105,12 @@ export async function POST(req: Request) {
 
         const have = profile.achievements ?? [];
         const merged = Array.from(new Set([...have, ...earned]));
-        if (merged.length > have.length) {
-          await supabase.from("profiles").update({ achievements: merged }).eq("id", profile.id);
-        }
+        const newTotal = (profile.total_score ?? 0) + Math.round(score);
+        
+        await supabase
+          .from("profiles")
+          .update({ achievements: merged, total_score: newTotal })
+          .eq("id", profile.id);
       }
     } catch {
       /* achievements are decorative - recording already succeeded */
