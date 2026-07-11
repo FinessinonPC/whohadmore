@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Oswald } from "next/font/google";
+import { Inter, Kalam, Permanent_Marker } from "next/font/google";
 import { getSiteUrl } from "@/lib/site";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
+// The scorecard is filled in BY HAND: Kalam is the handwriting every label,
+// clue and sentence is written in; Permanent Marker is the fat pen used for
+// titles, scores, and the game names. Inter stays loaded as the fallback.
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -11,12 +14,18 @@ const inter = Inter({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-// Condensed display face for the big stat numbers - editorial, not generic.
-const oswald = Oswald({
+const kalam = Kalam({
   subsets: ["latin"],
-  variable: "--font-oswald",
+  variable: "--font-hand",
   display: "swap",
-  weight: ["500", "600", "700"],
+  weight: ["300", "400", "700"],
+});
+
+const marker = Permanent_Marker({
+  subsets: ["latin"],
+  variable: "--font-marker",
+  display: "swap",
+  weight: "400",
 });
 
 const description =
@@ -81,7 +90,7 @@ export default function RootLayout({
     ],
   };
   return (
-    <html lang="en" className={`${inter.variable} ${oswald.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${kalam.variable} ${marker.variable}`} suppressHydrationWarning>
       <head>
         {/* Paper-first: light is the flagship look; dark only when chosen. */}
         <script

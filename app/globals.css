@@ -68,16 +68,21 @@
 
   /* --- The Scorecard system ------------------------------------------------ */
 
-  /* A printed panel: cream stock, heavy ink line, solid ink shadow. */
+  /* A hand-drawn panel: cream stock, heavy ink line, solid ink shadow. The
+     lopsided radii are the classic sketched-box trick - no two corners match,
+     so the border reads as drawn by hand, not extruded by a computer. These
+     radii intentionally win over rounded-* utilities (declared later). */
   .card-ink {
     background: rgb(var(--surface));
     border: 3px solid rgb(var(--ink));
     box-shadow: 5px 5px 0 rgb(var(--shadow));
+    border-radius: 18px 8px 20px 9px / 9px 19px 8px 21px;
   }
-  /* Lighter-weight print: tiles, keys, chips - line only, no shadow. */
+  /* Lighter-weight sketch: tiles, keys, chips - line only, no shadow. */
   .card-ink-flat {
     background: rgb(var(--surface));
     border: 2px solid rgb(var(--ink));
+    border-radius: 11px 6px 12px 7px / 7px 12px 6px 11px;
   }
   /* Standalone solid shadows. */
   .ink-shadow {

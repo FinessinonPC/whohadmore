@@ -24,8 +24,11 @@ const config: Config = {
         lives: "#FF3B30",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        condensed: ["var(--font-oswald)", "var(--font-inter)", "sans-serif"],
+        // Handwritten scorecard: Kalam is the site's handwriting (all body
+        // text); the "condensed" slot - titles, scores, wordmarks, crossword
+        // letters - is the fat marker pen. Inter remains the loading fallback.
+        sans: ["var(--font-hand)", "var(--font-inter)", "system-ui", "sans-serif"],
+        condensed: ["var(--font-marker)", "var(--font-hand)", "cursive"],
       },
       fontSize: {
         // Display values — the hero of every card
