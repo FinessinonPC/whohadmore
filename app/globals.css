@@ -10,6 +10,7 @@
   :root {
     --bg: 234 227 210; /* aged paper */
     --surface: 255 253 244; /* cream panel */
+    --card: 243 231 199; /* manila index card - every card is cut from this */
     --border: 214 207 187; /* soft paper rule */
     --ink: 22 24 29; /* printer's ink */
     --ink-2: 96 100 87;
@@ -20,6 +21,7 @@
   .dark {
     --bg: 19 17 12; /* night stock */
     --surface: 32 29 22;
+    --card: 42 38 27; /* night manila */
     --border: 62 57 44;
     --ink: 237 232 216; /* cream ink */
     --ink-2: 158 152 133;
@@ -68,21 +70,25 @@
 
   /* --- The Scorecard system ------------------------------------------------ */
 
-  /* A hand-drawn panel: cream stock, heavy ink line, solid ink shadow. The
-     lopsided radii are the classic sketched-box trick - no two corners match,
-     so the border reads as drawn by hand, not extruded by a computer. These
-     radii intentionally win over rounded-* utilities (declared later). */
+  /* A hand-drawn panel: manila card stock, heavy ink line, solid ink shadow.
+     The lopsided radii are the classic sketched-box trick - no two corners
+     match, so the border reads as drawn by hand, not extruded by a computer.
+     These radii intentionally win over rounded-* utilities (declared later). */
   .card-ink {
-    background: rgb(var(--surface));
+    background: rgb(var(--card));
     border: 3px solid rgb(var(--ink));
     box-shadow: 5px 5px 0 rgb(var(--shadow));
-    border-radius: 18px 8px 20px 9px / 9px 19px 8px 21px;
+    border-radius: 24px 10px 26px 8px / 9px 25px 8px 27px;
   }
   /* Lighter-weight sketch: tiles, keys, chips - line only, no shadow. */
   .card-ink-flat {
-    background: rgb(var(--surface));
+    background: rgb(var(--card));
     border: 2px solid rgb(var(--ink));
-    border-radius: 11px 6px 12px 7px / 7px 12px 6px 11px;
+    border-radius: 14px 6px 15px 7px / 7px 14px 6px 15px;
+  }
+  /* Wonky corners for anything that isn't a card (buttons, small boxes). */
+  .wonky {
+    border-radius: 13px 7px 15px 6px / 7px 14px 6px 13px;
   }
   /* Standalone solid shadows. */
   .ink-shadow {
@@ -103,7 +109,7 @@
     display: inline-block;
     border: 2.5px dashed #B03A2A;
     color: #B03A2A;
-    border-radius: 8px;
+    border-radius: 12px 6px 13px 5px / 6px 12px 5px 13px;
     padding: 4px 13px;
     rotate: -2deg;
     font-size: 10.5px;
@@ -121,8 +127,9 @@
   /* The "not filled in yet" dashed box on the scorecard. */
   .blank-box {
     border: 2.5px dashed rgb(var(--ink) / 0.4);
-    border-radius: 8px;
+    border-radius: 11px 5px 12px 6px / 6px 11px 5px 12px;
     color: rgb(var(--ink) / 0.55);
+    rotate: -0.6deg;
   }
 
   /* Hide scrollbars on horizontal scrollers (archive month strip, etc.). */

@@ -136,7 +136,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
           {day.pairs.map((p, order) => (
             <div
               key={p.word}
-              className="ink-shadow-sm rounded-xl border-[3px] border-ink px-4 py-3 text-center"
+              className={`ink-shadow-sm wonky border-[3px] border-ink px-4 py-3 text-center ${order % 2 === 0 ? "tilt-l" : "tilt-r"}`}
               style={{ background: PAIR_COLORS[order], color: PAIR_INK[order] }}
             >
               <p className="font-condensed text-2xl font-semibold uppercase tracking-wide leading-none">
@@ -173,7 +173,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
             key={pairIdx}
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="ink-shadow-sm rounded-xl border-[3px] border-ink px-4 py-3 text-center"
+            className={`ink-shadow-sm wonky border-[3px] border-ink px-4 py-3 text-center ${order % 2 === 0 ? "tilt-l" : "tilt-r"}`}
             style={{ background: PAIR_COLORS[order], color: PAIR_INK[order] }}
           >
             <p className="font-condensed text-2xl font-semibold uppercase tracking-wide leading-none">
@@ -197,12 +197,12 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
                   onClick={() => toggle(d.text)}
                   animate={isShaking ? { x: [0, -8, 8, -6, 6, 0] } : { x: 0 }}
                   transition={isShaking ? { duration: 0.42 } : { duration: 0 }}
-                  className={`flex min-h-[4.4rem] items-center justify-center rounded-xl border-2 border-ink px-3 py-3 text-center text-[13px] font-bold leading-snug transition-colors active:scale-95 sm:text-sm ${
+                  className={`wonky flex min-h-[4.4rem] items-center justify-center border-2 border-ink px-3 py-3 text-center text-[13px] font-bold leading-snug transition-colors active:scale-95 sm:text-sm ${
                     isShaking
                       ? "text-white"
                       : isSel
                         ? "bg-cta text-background ink-shadow-sm"
-                        : "bg-surface text-ink"
+                        : "bg-card text-ink"
                   }`}
                   style={isShaking ? { background: "#FF3B30" } : undefined}
                 >
@@ -219,7 +219,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
             found.includes(pairIdx) ? null : (
               <div
                 key={p.word}
-                className="card-ink-flat rounded-xl px-4 py-3 text-center"
+                className="card-ink-flat px-4 py-3 text-center"
               >
                 <p className="font-condensed text-2xl font-semibold uppercase tracking-wide leading-none text-ink-secondary">
                   {p.word}

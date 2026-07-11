@@ -46,7 +46,7 @@ export function FormatFeedback() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -12 }}
-        className="mt-5 w-full rounded-2xl border border-border bg-surface p-4 text-center"
+        className="card-ink-flat mt-5 w-full p-4 text-center"
       >
         {thanks ? (
           <p className="py-2 text-sm font-bold text-ink">Thanks - noted.</p>
@@ -60,14 +60,14 @@ export function FormatFeedback() {
               <button
                 onClick={() => vote("up")}
                 aria-label="Thumbs up"
-                className="flex h-12 w-16 items-center justify-center rounded-2xl border border-border bg-background text-2xl transition-colors hover:border-correct hover:bg-correct/10"
+                className="wonky flex h-12 w-16 items-center justify-center border border-border bg-background text-2xl transition-colors hover:border-correct hover:bg-correct/10"
               >
                 👍
               </button>
               <button
                 onClick={() => vote("down")}
                 aria-label="Thumbs down"
-                className="flex h-12 w-16 items-center justify-center rounded-2xl border border-border bg-background text-2xl transition-colors hover:border-wrong hover:bg-wrong/10"
+                className="wonky flex h-12 w-16 items-center justify-center border border-border bg-background text-2xl transition-colors hover:border-wrong hover:bg-wrong/10"
               >
                 👎
               </button>

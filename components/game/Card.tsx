@@ -67,7 +67,7 @@ export function Card({
         onClick={onSelect}
         disabled={disabled}
         aria-label={`Choose ${card.entity_name}`}
-        className="group relative flex h-full w-full items-end justify-center overflow-hidden rounded-[22px] border-[3px] bg-[#F1F1F3] text-left ink-shadow will-change-transform disabled:cursor-default"
+        className="group relative flex h-full w-full items-end justify-center overflow-hidden rounded-[26px_11px_28px_10px/11px_27px_10px_29px] border-[3px] bg-[#F1F1F3] text-left ink-shadow will-change-transform disabled:cursor-default"
         animate={{
           x: shake ? [0, -10, 10, -8, 8, 0] : 0,
           borderColor: BORDER_COLOR[status],
@@ -110,10 +110,10 @@ export function Card({
 
         {/* Name + value: compact pills hugging the bottom edge, off the subject */}
         <div className="relative z-10 mb-3 flex max-w-[94%] flex-col items-center gap-1.5 px-2">
-          <span className="line-clamp-2 rounded-xl border border-black/10 bg-white/95 px-3.5 py-1 text-center text-[13px] font-bold leading-snug text-[#101318] shadow-md sm:px-4 sm:text-sm">
+          <span className="wonky line-clamp-2 border border-black/10 bg-white/95 px-3.5 py-1 text-center text-[13px] font-bold leading-snug text-[#101318] shadow-md sm:px-4 sm:text-sm">
             {card.entity_name}
           </span>
-          <span className="tabular rounded-lg border border-black/10 bg-white/95 px-3 py-0.5 text-center font-condensed text-xl font-semibold text-[#101318] shadow-md sm:text-2xl">
+          <span className="wonky tabular border border-black/10 bg-white/95 px-3 py-0.5 text-center font-condensed text-xl font-semibold text-[#101318] shadow-md sm:text-2xl">
             {!revealValue ? (
               "?"
             ) : (

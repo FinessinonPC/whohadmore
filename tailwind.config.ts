@@ -13,6 +13,7 @@ const config: Config = {
         // still support /opacity modifiers. Accents stay fixed.
         background: "rgb(var(--bg) / <alpha-value>)",
         surface: "rgb(var(--surface) / <alpha-value>)",
+        card: "rgb(var(--card) / <alpha-value>)",
         border: "rgb(var(--border) / <alpha-value>)",
         ink: {
           DEFAULT: "rgb(var(--ink) / <alpha-value>)", // text primary

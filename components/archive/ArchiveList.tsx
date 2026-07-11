@@ -3,15 +3,10 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useArchiveScores, type ArchiveFilter } from "@/hooks/useArchiveScores";
-import { modeDef } from "@/lib/modes";
 import { formatShortDate } from "@/lib/date";
 import type { DailyGame } from "@/types";
 
 type NumberedGame = DailyGame & { game_number: number };
-
-const BRAND = "#00C853";
-const accentFor = (filter: ArchiveFilter) => (filter === "all" ? BRAND : modeDef(filter).accent);
-const contrastFor = (filter: ArchiveFilter) => (filter === "all" ? "#0B0D10" : modeDef(filter).contrast);
 
 /** Mobile-friendly scrollable list of every game, newest first. No performance
  *  grading - played days show their score, and days you haven't played invite a
@@ -26,8 +21,6 @@ export function ArchiveList({
   filter?: ArchiveFilter;
 }) {
   const scoreFor = useArchiveScores(games);
-  const accent = accentFor(filter);
-  const contrast = contrastFor(filter);
   const sorted = useMemo(
     () => [...games].sort((a, b) => (a.play_date < b.play_date ? 1 : -1)),
     [games]
@@ -49,7 +42,7 @@ export function ArchiveList({
           <li key={game.id}>
             <Link
               href={hrefFor ? hrefFor(game.play_date) : `/day/${game.play_date}`}
-              className="card-ink flex items-center gap-3 rounded-xl px-4 py-3.5 transition-transform hover:-translate-y-0.5"
+              className="card-ink flex items-center gap-3 px-4 py-3.5 transition-transform hover:-translate-y-0.5"
             >
               <div className="min-w-0 flex-1">
                 <p className="font-condensed text-lg font-bold text-ink">
@@ -60,17 +53,11 @@ export function ArchiveList({
                 </p>
               </div>
               {score.played ? (
-                <span
-                  className="shrink-0 rounded-full border px-2.5 py-1 font-condensed text-sm font-semibold tabular text-ink"
-                  style={{ background: `${accent}14`, borderColor: `${accent}55` }}
-                >
+                <span className="marker-gold shrink-0 font-condensed text-base font-semibold tabular text-ink">
                   {score.points.toLocaleString()} pts
                 </span>
               ) : (
-                <span
-                  className="shrink-0 rounded-full px-4 py-1.5 text-xs font-bold"
-                  style={{ background: accent, color: contrast }}
-                >
+                <span className="blank-box flex h-[30px] shrink-0 items-center px-3.5 text-[10px] font-bold uppercase tracking-[0.08em]">
                   Play
                 </span>
               )}

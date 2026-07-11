@@ -50,7 +50,7 @@ export function LeaderboardView({
 
       {/* Daily / All-time toggle */}
       <section className="mt-6">
-        <div className="card-ink-flat mb-3 inline-flex rounded-full p-1">
+        <div className="card-ink-flat mb-3 inline-flex p-1">
           <TabButton active={tab === "daily"} onClick={() => setTab("daily")}>
             Daily
           </TabButton>
@@ -137,7 +137,7 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
+      className={`wonky px-4 py-1.5 text-xs font-bold transition-colors ${
         active ? "bg-cta text-background" : "text-ink-secondary hover:text-ink"
       }`}
     >
@@ -151,7 +151,7 @@ function EmptyBoard({ title, sub }: { title: string; sub: string }) {
     <div className="card-ink tilt-l rounded-xl px-6 py-10 text-center">
       <p className="text-sm font-semibold text-ink">{title}</p>
       <p className="mt-1 text-sm text-ink-secondary">{sub}</p>
-      <Link href="/" className="ink-shadow-sm mt-4 inline-block rounded-full border-2 border-ink bg-cta px-5 py-2 text-xs font-bold text-background">
+      <Link href="/" className="ink-shadow-sm wonky mt-4 inline-block border-2 border-ink bg-cta px-5 py-2 text-xs font-bold text-background">
         Play today&apos;s games
       </Link>
     </div>

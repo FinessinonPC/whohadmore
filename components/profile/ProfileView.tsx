@@ -112,7 +112,7 @@ function Achievements({ earned }: { earned: string[] }) {
           return (
             <div
               key={a.id}
-              className={`group relative flex cursor-help flex-col items-center gap-1.5 rounded-2xl border p-2.5 text-center transition-colors ${
+              className={`wonky group relative flex cursor-help flex-col items-center gap-1.5 border p-2.5 text-center transition-colors ${
                 got ? "border-ink bg-[#FFB300]/15" : "border-border bg-background"
               }`}
             >

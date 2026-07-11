@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { todayISO } from "@/lib/date";
-import { modeDef } from "@/lib/modes";
 import { useArchiveScores, type ArchiveFilter } from "@/hooks/useArchiveScores";
 import type { DailyGame } from "@/types";
 
@@ -13,23 +12,19 @@ interface ArchiveCalendarProps {
   games: NumberedGame[];
   /** Where a day cell links (defaults to that day's hub). */
   hrefFor?: (date: string) => string;
-  /** Current game filter - drives which score each day shows and the accent. */
+  /** Current game filter - drives which score each day shows. */
   filter?: ArchiveFilter;
 }
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 const pad = (n: number) => n.toString().padStart(2, "0");
-const BRAND = "#00C853";
 
-/** The accent for the current filter (brand green for "all"). Days aren't
- *  colored by performance anymore - just tinted to invite a play. */
-function accentFor(filter: ArchiveFilter): string {
-  return filter === "all" ? BRAND : modeDef(filter).accent;
-}
+/* Played days get the gold marker wash - same gold as every finished thing on
+   the scorecard. One color, whatever the filter. */
+const PLAYED_WASH = "rgba(255, 179, 0, 0.16)";
 
 export function ArchiveCalendar({ games, hrefFor, filter = "all" }: ArchiveCalendarProps) {
   const scoreFor = useArchiveScores(games);
-  const accent = accentFor(filter);
   const today = todayISO();
   const [ty, tm] = today.split("-").map(Number);
 
@@ -125,10 +120,11 @@ export function ArchiveCalendar({ games, hrefFor, filter = "all" }: ArchiveCalen
                 isToday ? "ring-2 ring-ink/25" : ""
               }`}
               style={{
-                background: score.played ? `${accent}18` : "rgb(var(--surface) / 0.5)",
+                background: score.played ? PLAYED_WASH : "rgb(var(--surface) / 0.5)",
                 borderColor: score.played ? "rgb(var(--ink))" : "rgb(var(--ink) / 0.3)",
                 borderStyle: score.played ? "solid" : "dashed",
                 borderWidth: 2,
+                borderRadius: "13px 7px 14px 6px / 7px 13px 6px 14px",
               }}
             >
               <span className="text-xs font-bold text-ink">{day}</span>
@@ -140,10 +136,7 @@ export function ArchiveCalendar({ games, hrefFor, filter = "all" }: ArchiveCalen
                   {score.points.toLocaleString()}
                 </span>
               ) : (
-                <span
-                  className="mt-auto text-[11px] font-bold opacity-70 transition-opacity group-hover:opacity-100 sm:text-xs"
-                  style={{ color: accent }}
-                >
+                <span className="mt-auto text-[11px] font-bold text-ink-secondary opacity-70 transition-opacity group-hover:opacity-100 sm:text-xs">
                   Play →
                 </span>
               )}
@@ -155,7 +148,7 @@ export function ArchiveCalendar({ games, hrefFor, filter = "all" }: ArchiveCalen
       {/* Inviting footer - no performance grading, just a nudge to play more */}
       <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-ink-secondary">
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded border" style={{ background: `${accent}22`, borderColor: `${accent}66` }} />
+          <span className="h-3 w-3 rounded border border-ink/60" style={{ background: PLAYED_WASH }} />
           Played
         </span>
         <span className="flex items-center gap-1.5">

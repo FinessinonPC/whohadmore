@@ -46,7 +46,7 @@ function StarStamp({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden>
       <path
-        d="M 50 8 L 61 36 L 92 38 L 68 58 L 76 90 L 50 71 L 24 90 L 32 58 L 8 38 L 39 36 Z"
+        d="M 52 9 L 64 34 L 91 36 L 69 57 L 78 88 L 50 70 L 27 90 L 30 58 L 8 39 L 38 33 Z"
         fill="#FFB300"
         stroke="#16181D"
         strokeWidth="6"
@@ -58,8 +58,8 @@ function StarStamp({ className = "" }: { className?: string }) {
 
 /**
  * The daily hub, games-first: a thin header, the date, then each game as a
- * big solid-color block whose wordmark is the hero. No icons in boxes, no
- * marketing copy - the cards ARE the page.
+ * hand-drawn manila card whose wordmark is the hero - color lives only in
+ * the lettering. No icons in boxes, no marketing copy: the cards ARE the page.
  */
 export function GameHub({ game, date, gameNumber }: GameHubProps) {
   const [tiles, setTiles] = useState<Record<string, TileState>>({});
@@ -111,7 +111,7 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
       <main className="mx-auto flex min-h-dvh max-w-game flex-col items-center justify-center gap-3 px-6 text-center">
         <h1 className="text-xl font-extrabold text-ink">No game today</h1>
         <p className="text-sm text-ink-secondary">Check back soon - a new game drops daily.</p>
-        <Link href="/archive" className="mt-2 rounded-full border border-border bg-surface px-5 py-2 text-sm font-semibold text-ink">
+        <Link href="/archive" className="wonky mt-2 border-2 border-ink bg-card px-5 py-2 text-sm font-semibold text-ink">
           Browse the archive
         </Link>
       </main>
@@ -166,7 +166,7 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.05 + i * 0.05 }}
-                  className={`card-ink-flat relative rounded-[14px] px-4 py-4 opacity-60 ${tilt}`}
+                  className={`card-ink-flat relative px-4 py-4 opacity-60 ${tilt}`}
                 >
                   <GameWordmark mode={mode.id} className="text-2xl text-ink" alt={mode.accent} />
                   <span className="small-caps absolute right-4 top-4 text-[10px] font-bold text-ink-secondary">
@@ -186,14 +186,8 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
               >
                 <Link
                   href={mode.href(date)}
-                  className="card-ink group relative flex items-center gap-3.5 rounded-[14px] py-[15px] pl-5 pr-4 transition-transform duration-100 hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px]"
-                  style={{ background: `${mode.accent}2B` }}
+                  className="card-ink group relative flex items-center gap-3.5 py-[15px] pl-5 pr-4 transition-transform duration-100 hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px]"
                 >
-                  <span
-                    className="absolute bottom-2.5 left-0 top-2.5 w-1.5 rounded-r-full"
-                    style={{ background: mode.accent }}
-                    aria-hidden
-                  />
                   <span className="min-w-0 flex-1">
                     <GameWordmark mode={mode.id} className="text-[26px] text-ink" alt={mode.accent} />
                     <span className="mt-0.5 block truncate text-[11px] font-bold text-ink-secondary">

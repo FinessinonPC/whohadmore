@@ -198,7 +198,7 @@ function EmptyState({ date, isDaily }: { date: string; isDaily: boolean }) {
       </p>
       <Link
         href="/archive"
-        className="mt-2 rounded-full border border-border bg-surface px-5 py-2 text-sm font-semibold text-ink"
+        className="wonky mt-2 border-2 border-ink bg-card px-5 py-2 text-sm font-semibold text-ink"
       >
         Browse the archive
       </Link>

@@ -97,7 +97,7 @@ export function CardPair({
 
       {/* The VS chip on the seam - printed scorecard style */}
       <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
-        <div className="card-ink ink-shadow-sm flex h-11 w-11 -rotate-6 items-center justify-center rounded-[10px] font-condensed text-base font-bold tracking-wider text-ink">
+        <div className="card-ink-flat ink-shadow-sm flex h-11 w-11 -rotate-6 items-center justify-center font-condensed text-base font-bold tracking-wider text-ink">
           VS
         </div>
       </div>

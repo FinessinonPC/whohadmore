@@ -67,7 +67,7 @@ export function GameStats() {
           const agg = aggFor(m.id);
           const avg = agg.played > 0 ? Math.round(agg.total / agg.played) : 0;
           return (
-            <div key={m.id} className="flex items-center gap-4 rounded-2xl border border-border bg-background px-4 py-3">
+            <div key={m.id} className="wonky flex items-center gap-4 border border-border bg-background px-4 py-3">
               <span className="w-24 shrink-0" style={{ color: m.accent }}>
                 <GameWordmark mode={m.id} className="text-xl" />
               </span>

@@ -27,7 +27,7 @@ export function DayBoard({ date }: { date: string }) {
   }, [date]);
 
   return (
-    <section className="mt-6 rounded-3xl border border-border bg-surface p-5">
+    <section className="card-ink-flat mt-6 p-5">
       <div className="flex items-baseline justify-between">
         <h2 className="font-condensed text-xl font-semibold uppercase tracking-wide text-ink">
           That day&apos;s board

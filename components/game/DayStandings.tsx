@@ -56,7 +56,7 @@ export function DayStandings({ date, me }: { date: string; me: Me }) {
   }, [date, username, reached, hearts, timeSeconds, score]);
 
   return (
-    <div className="mt-5 w-full rounded-2xl border border-border bg-surface p-4 text-left">
+    <div className="card-ink-flat mt-5 w-full p-4 text-left">
       <div className="flex items-baseline justify-between">
         <p className="text-sm font-extrabold text-ink">How everyone did</p>
         <p className="text-[11px] text-ink-secondary">{formatShortDate(date)}</p>

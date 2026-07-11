@@ -34,7 +34,7 @@ export function ArchiveBrowser({ games }: { games: NumberedGame[] }) {
       {!signedIn && (
         <Link
           href="/profile"
-          className="card-ink tilt-l mb-5 flex items-center justify-between gap-3 rounded-xl px-5 py-3.5 text-ink transition-transform hover:scale-[1.01]"
+          className="card-ink tilt-l mb-5 flex items-center justify-between gap-3 px-5 py-3.5 text-ink transition-transform hover:scale-[1.01]"
         >
           <span className="text-sm font-bold leading-snug">
             Unlock every past day - free. Sign in to replay the archive and bank your scores.
@@ -46,7 +46,7 @@ export function ArchiveBrowser({ games }: { games: NumberedGame[] }) {
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <button
           onClick={() => setFilter("all")}
-          className={`rounded-full border-2 border-ink px-4 py-1.5 text-xs font-bold transition-colors ${
+          className={`wonky border-2 border-ink px-4 py-1.5 text-xs font-bold transition-colors ${
             filter === "all" ? "bg-cta text-background" : "bg-surface text-ink-secondary hover:text-ink"
           }`}
         >
@@ -56,14 +56,13 @@ export function ArchiveBrowser({ games }: { games: NumberedGame[] }) {
           <button
             key={m.id}
             onClick={() => setFilter(m.id)}
-            className="rounded-full border-2 border-ink bg-surface px-3.5 py-1.5 transition-all"
-            style={
+            className={`wonky border-2 px-3.5 py-1.5 text-ink transition-all ${
               filter === m.id
-                ? { background: m.accent, color: m.contrast }
-                : { background: "rgb(var(--surface))", color: m.accent, opacity: 0.85 }
-            }
+                ? "card-ink-flat"
+                : "border-ink/25 bg-surface opacity-75 hover:opacity-100"
+            }`}
           >
-            <GameWordmark mode={m.id} className="text-sm" />
+            <GameWordmark mode={m.id} className="text-sm" alt={m.accent} />
           </button>
         ))}
         {filter !== "all" && (
