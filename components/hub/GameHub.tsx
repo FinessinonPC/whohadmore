@@ -186,7 +186,8 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
               >
                 <Link
                   href={mode.href(date)}
-                  className="card-ink group relative flex items-center gap-3.5 py-[15px] pl-5 pr-4 transition-transform duration-100 hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px]"
+                  className="card-pastel group relative flex items-center gap-3.5 py-[15px] pl-5 pr-4 transition-transform duration-100 hover:-translate-y-1 hover:scale-[1.01] active:translate-x-[2px] active:translate-y-[2px]"
+                  style={{ background: mode.pastel }}
                 >
                   <span className="min-w-0 flex-1">
                     <GameWordmark mode={mode.id} className="text-[26px] text-ink" alt={mode.accent} />

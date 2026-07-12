@@ -11,7 +11,11 @@ import { MINI_MAX_POINTS, MINI_REVEAL_CREDIT, miniScore, modeDef } from "@/lib/m
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 import type { MiniClue, MiniDay } from "@/lib/contentPacks";
 
-const ACCENT = modeDef("mini").accent;
+const ACCENT = modeDef("mini").accent; // clue numbers
+// Selection as pastel periwinkle - the pen stays ink, the paper blushes.
+const SELECT = "#AFBBF3"; // the focused cell
+const WASH = "#DFE4FB"; // the rest of the active word
+const PASTEL = modeDef("mini").pastel; // the clue bar's card face
 const KEY_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
 type Dir = "A" | "D";
@@ -401,22 +405,24 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                   }}
                   className="relative flex aspect-square items-center justify-center rounded-md border-[1.5px] border-ink/50 font-condensed text-xl font-semibold uppercase transition-colors lg:rounded-lg lg:text-4xl"
                   style={{
-                    background: isActive ? ACCENT : inWord ? `${ACCENT}33` : "rgb(var(--surface))",
+                    background: isActive ? SELECT : inWord ? WASH : "rgb(var(--surface))",
                     color: isActive
-                      ? "#FFFFFF"
+                      ? "#16181D"
                       : wrong.has(k)
                         ? "#FF3B30"
                         : right.has(k)
                           ? "#00C853"
                           : done && !done.revealed
                             ? "#00C853"
-                            : "rgb(var(--ink))",
+                            : inWord
+                              ? "#16181D"
+                              : "rgb(var(--ink))",
                   }}
                 >
                   {num && (
                     <span
                       className="absolute left-0.5 top-0 text-[8px] font-bold opacity-60 lg:left-1 lg:text-[11px]"
-                      style={{ color: isActive ? "#FFFFFF" : "rgb(var(--ink-2))" }}
+                      style={{ color: isActive || inWord ? "#16181D" : "rgb(var(--ink-2))" }}
                     >
                       {num}
                     </span>
@@ -464,8 +470,8 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
             </button>
             <button
               onClick={() => setDir((d) => (d === "A" ? "D" : "A"))}
-              className="min-h-[3rem] flex-1 rounded-xl border-2 border-ink px-3 py-2 text-center"
-              style={{ background: `${ACCENT}1E` }}
+              className="ink-fix wonky min-h-[3rem] flex-1 border-2 border-ink px-3 py-2 text-center"
+              style={{ background: PASTEL }}
             >
               <span
                 className={`text-[13px] font-bold leading-snug text-ink ${
@@ -560,8 +566,8 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                             setActive({ r: slot.row, c: slot.col });
                             setDir(d);
                           }}
-                          className="flex w-full items-start gap-2.5 rounded-lg px-3 py-2 text-left text-[15px] leading-snug transition-colors hover:bg-surface"
-                          style={isActive ? { background: `${ACCENT}22` } : undefined}
+                          className={`flex w-full items-start gap-2.5 rounded-lg px-3 py-2 text-left text-[15px] leading-snug transition-colors hover:bg-surface ${isActive ? "ink-fix" : ""}`}
+                          style={isActive ? { background: WASH } : undefined}
                         >
                           <span className="font-condensed font-bold" style={{ color: ACCENT }}>
                             {slot.num}

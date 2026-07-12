@@ -90,6 +90,27 @@
   .wonky {
     border-radius: 13px 7px 15px 6px / 7px 14px 6px 13px;
   }
+
+  /* A pastel game face: candy-colored card stock (background supplied per
+     game). The ink vars are pinned dark INSIDE the card so text, borders,
+     dashes and shadows stay printer's ink even on night stock - the pastel
+     reads identically in both themes, like a lit-up game piece. */
+  .card-pastel {
+    --ink: 22 24 29;
+    --ink-2: 84 88 74;
+    --shadow: 22 24 29;
+    color: rgb(var(--ink));
+    border: 3px solid rgb(var(--ink));
+    box-shadow: 5px 5px 0 rgb(var(--shadow));
+    border-radius: 24px 10px 26px 8px / 9px 25px 8px 27px;
+  }
+  /* Same dark-ink pinning for smaller pastel pieces: tiles, chips, clue bars. */
+  .ink-fix {
+    --ink: 22 24 29;
+    --ink-2: 84 88 74;
+    --shadow: 22 24 29;
+    color: rgb(var(--ink));
+  }
   /* Standalone solid shadows. */
   .ink-shadow {
     box-shadow: 5px 5px 0 rgb(var(--shadow));

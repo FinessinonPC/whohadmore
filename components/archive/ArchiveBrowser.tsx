@@ -58,9 +58,10 @@ export function ArchiveBrowser({ games }: { games: NumberedGame[] }) {
             onClick={() => setFilter(m.id)}
             className={`wonky border-2 px-3.5 py-1.5 text-ink transition-all ${
               filter === m.id
-                ? "card-ink-flat"
+                ? "ink-fix border-ink"
                 : "border-ink/25 bg-surface opacity-75 hover:opacity-100"
             }`}
+            style={filter === m.id ? { background: m.pastel } : undefined}
           >
             <GameWordmark mode={m.id} className="text-sm" alt={m.accent} />
           </button>

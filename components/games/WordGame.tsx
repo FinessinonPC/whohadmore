@@ -11,8 +11,10 @@ import { WORD_MAX_GUESSES, WORD_POINTS, wordLossScore, modeDef } from "@/lib/mod
 import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 import { isValidWord } from "@/lib/wordList";
 
-const ACCENT = modeDef("word").accent;
-const GREEN = "#00C853";
+// Verdict colors as chalky pastels - ink writes on them like everything else.
+const GREEN = "#A9DC95"; // placed right
+const YELLOW = modeDef("word").pastel; // in the word, wrong spot
+const INK = "#16181D";
 
 type Mark = "g" | "y" | "x";
 
@@ -139,8 +141,8 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
   }, [done, rows.length, score, date]);
 
   const tileStyle = (m: Mark | null): React.CSSProperties => {
-    if (m === "g") return { background: GREEN, borderColor: GREEN, color: "#0B0D10" };
-    if (m === "y") return { background: ACCENT, borderColor: ACCENT, color: "#0B0D10" };
+    if (m === "g") return { background: GREEN, borderColor: INK, color: INK };
+    if (m === "y") return { background: YELLOW, borderColor: INK, color: INK };
     if (m === "x") return { background: "rgb(var(--border))", borderColor: "rgb(var(--border))", opacity: 0.75 };
     return {};
   };
@@ -298,9 +300,9 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
                         className="card-ink-flat flex h-12 flex-1 items-center justify-center rounded-lg text-sm font-extrabold text-ink active:scale-95"
                         style={
                           st === "g"
-                            ? { background: GREEN, color: "#0B0D10" }
+                            ? { background: GREEN, borderColor: INK, color: INK }
                             : st === "y"
-                              ? { background: ACCENT, color: "#0B0D10" }
+                              ? { background: YELLOW, borderColor: INK, color: INK }
                               : st === "x"
                                 ? { opacity: 0.35 }
                                 : {}

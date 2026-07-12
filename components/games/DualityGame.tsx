@@ -14,9 +14,11 @@ import { feedbackCorrect, feedbackWrong } from "@/lib/feedback";
 import type { DualityDay } from "@/lib/contentPacks";
 
 const ACCENT = modeDef("duality").accent;
-// Difficulty colors for matched pairs, easy -> hard (the familiar scheme).
-const PAIR_COLORS = ["#FFC400", "#00C853", "#2E6BFF", "#A44BFF"];
-const PAIR_INK = ["#0B0D10", "#0B0D10", "#FFFFFF", "#FFFFFF"];
+const PASTEL = modeDef("duality").pastel;
+// Difficulty colors for matched pairs, easy -> hard: the familiar scheme,
+// mixed as chalky pastels so ink stays legible on every banner.
+const PAIR_COLORS = ["#F7E38C", "#B5DB8B", "#AECBF3", "#D5B8EE"];
+const PAIR_INK = ["#16181D", "#16181D", "#16181D", "#16181D"];
 
 /** Order-independent key for a pair of definitions, so a combo counts once. */
 const comboKey = (a: string, b: string) => [a, b].sort().join("|||");
@@ -136,7 +138,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
           {day.pairs.map((p, order) => (
             <div
               key={p.word}
-              className={`ink-shadow-sm wonky border-[3px] border-ink px-4 py-3 text-center ${order % 2 === 0 ? "tilt-l" : "tilt-r"}`}
+              className={`ink-fix ink-shadow-sm wonky border-[3px] border-ink px-4 py-3 text-center ${order % 2 === 0 ? "tilt-l" : "tilt-r"}`}
               style={{ background: PAIR_COLORS[order], color: PAIR_INK[order] }}
             >
               <p className="font-condensed text-2xl font-semibold uppercase tracking-wide leading-none">
@@ -173,7 +175,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
             key={pairIdx}
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            className={`ink-shadow-sm wonky border-[3px] border-ink px-4 py-3 text-center ${order % 2 === 0 ? "tilt-l" : "tilt-r"}`}
+            className={`ink-fix ink-shadow-sm wonky border-[3px] border-ink px-4 py-3 text-center ${order % 2 === 0 ? "tilt-l" : "tilt-r"}`}
             style={{ background: PAIR_COLORS[order], color: PAIR_INK[order] }}
           >
             <p className="font-condensed text-2xl font-semibold uppercase tracking-wide leading-none">
@@ -197,14 +199,10 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
                   onClick={() => toggle(d.text)}
                   animate={isShaking ? { x: [0, -8, 8, -6, 6, 0] } : { x: 0 }}
                   transition={isShaking ? { duration: 0.42 } : { duration: 0 }}
-                  className={`wonky flex min-h-[4.4rem] items-center justify-center border-2 border-ink px-3 py-3 text-center text-[13px] font-bold leading-snug transition-colors active:scale-95 sm:text-sm ${
-                    isShaking
-                      ? "text-white"
-                      : isSel
-                        ? "bg-cta text-background ink-shadow-sm"
-                        : "bg-card text-ink"
+                  className={`ink-fix wonky ink-shadow-sm flex min-h-[4.4rem] items-center justify-center border-2 border-ink px-3 py-3 text-center text-[13px] font-bold leading-snug transition-colors active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:text-sm ${
+                    isShaking ? "text-white" : isSel ? "bg-[#16181D] text-[#FFF9E8]" : "text-ink"
                   }`}
-                  style={isShaking ? { background: "#FF3B30" } : undefined}
+                  style={isShaking ? { background: "#FF3B30" } : isSel ? undefined : { background: PASTEL }}
                 >
                   {d.text}
                 </motion.button>

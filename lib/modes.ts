@@ -11,10 +11,13 @@ export interface ModeDef {
   /** Short product name (one word - the holistic naming scheme). */
   name: string;
   tagline: string;
-  /** The game's brand color - used as the solid card background on the hub. */
+  /** The game's brand color - the trick letter in the wordmark, small chips. */
   accent: string;
   /** Ink that passes contrast ON TOP of `accent` (dark for light accents). */
   contrast: string;
+  /** The game's pastel card stock - the squishy face of its hub card and
+   *  in-game pieces. Same lightness across the set so they read as one deck. */
+  pastel: string;
   maxPoints: number;
   status: "live" | "soon";
   href: (date: string) => string;
@@ -106,6 +109,7 @@ export const MODES: ModeDef[] = [
     tagline: "The classic higher-or-lower run. How far can you go?",
     accent: "#00C853",
     contrast: "#0B0D10",
+    pastel: "#BCE8C6", // soft mint
     maxPoints: 0, // open-ended (XP formula); shown as its own score
     status: "live",
     href: (date) => `/play/${date}`,
@@ -116,6 +120,7 @@ export const MODES: ModeDef[] = [
     tagline: "Eight definitions, four hidden pairs. Two meanings, one word.",
     accent: "#06B6D4",
     contrast: "#0B0D10",
+    pastel: "#BBDFF2", // soft sky
     maxPoints: DUALITY_MAX_SCORE,
     status: "live",
     href: (date) => `/duality/${date}`,
@@ -126,6 +131,7 @@ export const MODES: ModeDef[] = [
     tagline: "Six tries to find the five letters. You know this one.",
     accent: "#FFC400",
     contrast: "#0B0D10",
+    pastel: "#F8E6A2", // soft butter
     maxPoints: WORD_POINTS[0],
     status: "live",
     href: (date) => `/word/${date}`,
@@ -136,6 +142,7 @@ export const MODES: ModeDef[] = [
     tagline: "A bite-size crossword. Five by five, no mercy.",
     accent: "#2E6BFF",
     contrast: "#FFFFFF",
+    pastel: "#CBD1F6", // soft periwinkle
     maxPoints: MINI_MAX_POINTS,
     status: "live",
     href: (date) => `/mini/${date}`,

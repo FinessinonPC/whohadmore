@@ -93,7 +93,8 @@ export function NextGameCTA({ date, current }: { date: string; current: ModeId }
       <div className="flex flex-col gap-2.5">
         <Link
           href={def.href(date)}
-          className="card-ink tilt-l flex h-14 w-full items-center justify-center gap-2.5 rounded-xl text-base font-bold text-ink transition-all hover:-translate-y-0.5 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+          className="card-pastel tilt-l flex h-14 w-full items-center justify-center gap-2.5 text-base font-bold text-ink transition-all hover:-translate-y-0.5 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+          style={{ background: def.pastel }}
         >
           <span className="small-caps text-[10px] font-bold text-ink-secondary">Next up</span>
           <GameWordmark mode={next} className="text-2xl text-ink" alt={def.accent} />
