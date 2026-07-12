@@ -15,6 +15,7 @@ const ACCENT = modeDef("mini").accent; // clue numbers
 // Selection as pastel periwinkle - the pen stays ink, the paper blushes.
 const SELECT = "#AFBBF3"; // the focused cell
 const WASH = "#DFE4FB"; // the rest of the active word
+const LOCKED_BG = "rgba(31, 158, 75, 0.16)"; // soft green wash on locked-correct cells
 const PASTEL = modeDef("mini").pastel; // the clue bar's card face
 const KEY_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
@@ -49,7 +50,9 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
   });
   const [dir, setDir] = useState<Dir>("A");
   const [wrong, setWrong] = useState<Set<string>>(new Set());
-  const [right, setRight] = useState<Set<string>>(new Set());
+  // Cells confirmed correct by a Check are LOCKED - permanent, uneditable, and
+  // the cursor skips over them as you type.
+  const [locked, setLocked] = useState<Set<string>>(new Set());
   const [checks, setChecks] = useState(0); // times Check was used - the crutch
   const [wrongNudge, setWrongNudge] = useState(false); // full grid, but not all right
   const [done, setDone] = useState<null | { score: number; revealed: boolean; seconds: number }>(null);
@@ -133,44 +136,61 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
     }
   }, [slotOrder, dir, activeSlot, isSlotFilled]);
 
+  // Editing a cell clears only its red "wrong" mark; locked-correct cells are
+  // never touched (they can't be edited in the first place).
   const clearMarks = (r: number, c: number) => {
-    const strip = (prev: Set<string>) => {
+    setWrong((prev) => {
       const n = new Set(prev);
       n.delete(`${r},${c}`);
       return n;
-    };
-    setWrong(strip);
-    setRight(strip);
+    });
   };
+
+  const write = (r: number, c: number, ch: string) =>
+    setEntries((e) => e.map((row, ri) => row.map((cur, ci) => (ri === r && ci === c ? ch : cur))));
 
   const type = useCallback(
     (key: string) => {
       if (done || already) return;
       const { r, c } = active;
+      const isLocked = (rr: number, cc: number) => locked.has(`${rr},${cc}`);
+      const step = (rr: number, cc: number, back = false): [number, number] =>
+        dir === "A" ? [rr, cc + (back ? -1 : 1)] : [rr + (back ? -1 : 1), cc];
+
       if (key === "BACK") {
-        clearMarks(r, c);
-        if (entries[r][c]) {
-          setEntries((e) => e.map((row, ri) => row.map((ch, ci) => (ri === r && ci === c ? "" : ch))));
-        } else {
-          const pr = dir === "A" ? r : r - 1;
-          const pc = dir === "A" ? c - 1 : c;
-          if (open(pr, pc)) {
-            setActive({ r: pr, c: pc });
-            clearMarks(pr, pc);
-            setEntries((e) => e.map((row, ri) => row.map((ch, ci) => (ri === pr && ci === pc ? "" : ch))));
-          }
+        // Delete this cell if it's an editable letter; otherwise walk back to the
+        // previous editable (unlocked) cell and clear that, skipping locked ones.
+        if (open(r, c) && !isLocked(r, c) && entries[r][c]) {
+          write(r, c, "");
+          clearMarks(r, c);
+          return;
+        }
+        let [pr, pc] = step(r, c, true);
+        while (open(pr, pc) && isLocked(pr, pc)) [pr, pc] = step(pr, pc, true);
+        if (open(pr, pc)) {
+          setActive({ r: pr, c: pc });
+          write(pr, pc, "");
+          clearMarks(pr, pc);
         }
         return;
       }
+
       if (!/^[A-Z]$/.test(key)) return;
-      setEntries((e) => e.map((row, ri) => row.map((ch, ci) => (ri === r && ci === c ? key : ch))));
-      clearMarks(r, c);
-      const nr = dir === "A" ? r : r + 1;
-      const nc = dir === "A" ? c + 1 : c;
+      // Land on the first editable cell at or ahead of the cursor (skip locked).
+      let tr = r;
+      let tc = c;
+      while (open(tr, tc) && isLocked(tr, tc)) [tr, tc] = step(tr, tc);
+      if (!open(tr, tc)) return;
+      write(tr, tc, key);
+      clearMarks(tr, tc);
+      // Advance to the next editable cell, skipping locked-correct ones.
+      let [nr, nc] = step(tr, tc);
+      while (open(nr, nc) && isLocked(nr, nc)) [nr, nc] = step(nr, nc);
       if (open(nr, nc)) setActive({ r: nr, c: nc });
+      else if (tr !== r || tc !== c) setActive({ r: tr, c: tc });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [active, dir, done, already, entries, open]
+    [active, dir, done, already, entries, open, locked]
   );
 
   /** Arrow keys walk the grid: moving along the current direction steps to
@@ -274,8 +294,9 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entries, done, already, open]);
 
-  // Check is the crutch: it marks which filled letters are right/wrong and
-  // costs points, so a checked solve never scores full marks.
+  // Check is the crutch: it marks which filled letters are wrong (red) and
+  // LOCKS the ones that are right (they turn green and can't be edited), then
+  // costs a point - so a checked solve never scores full marks.
   const check = () => {
     if (!anyFilled || done) return;
     const bad = new Set<string>();
@@ -288,9 +309,10 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
         if (ch === rows[r][c]) good.add(`${r},${c}`);
         else bad.add(`${r},${c}`);
       }
-    feedbackWrong();
+    if (bad.size === 0) feedbackCorrect();
+    else feedbackWrong();
     setWrong(bad);
-    setRight(good);
+    setLocked((prev) => new Set([...prev, ...good]));
     setChecks((n) => n + 1);
   };
 
@@ -405,13 +427,19 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                   }}
                   className="relative flex aspect-square items-center justify-center rounded-md border-[1.5px] border-ink/50 font-condensed text-xl font-semibold uppercase transition-colors lg:rounded-lg lg:text-4xl"
                   style={{
-                    background: isActive ? SELECT : inWord ? WASH : "rgb(var(--surface))",
+                    background: isActive
+                      ? SELECT
+                      : locked.has(k)
+                        ? LOCKED_BG
+                        : inWord
+                          ? WASH
+                          : "rgb(var(--surface))",
                     color: isActive
                       ? "#16181D"
                       : wrong.has(k)
                         ? "#FF3B30"
-                        : right.has(k)
-                          ? "#00C853"
+                        : locked.has(k)
+                          ? "#1B9E4B"
                           : done && !done.revealed
                             ? "#00C853"
                             : inWord
@@ -538,7 +566,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                     ? "Type letters to check"
                     : checks > 0
                       ? "Check again"
-                      : "Check letters"}
+                      : "Check & lock in"}
                 </Button>
               </div>
             </div>
