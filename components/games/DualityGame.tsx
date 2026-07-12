@@ -77,53 +77,6 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
     return m;
   }, [board, date]);
 
-  // The link: a string drawn between the two currently-selected tiles, measured
-  // straight from the DOM so it connects them at any position or screen size.
-  // This is the "any two go together" rule shown instead of explained.
-  const boardRef = useRef<HTMLDivElement>(null);
-  const tileRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
-  const [link, setLink] = useState<null | { d: string; x1: number; y1: number; x2: number; y2: number }>(null);
-
-  useEffect(() => {
-    const compute = () => {
-      const cont = boardRef.current;
-      if (!cont || selected.length !== 2 || shake.length > 0) {
-        setLink(null);
-        return;
-      }
-      const a = tileRefs.current.get(selected[0]);
-      const b = tileRefs.current.get(selected[1]);
-      if (!a || !b) {
-        setLink(null);
-        return;
-      }
-      const box = cont.getBoundingClientRect();
-      const ra = a.getBoundingClientRect();
-      const rb = b.getBoundingClientRect();
-      const x1 = ra.left + ra.width / 2 - box.left;
-      const y1 = ra.top + ra.height / 2 - box.top;
-      const x2 = rb.left + rb.width / 2 - box.left;
-      const y2 = rb.top + rb.height / 2 - box.top;
-      // Bow the string a touch off the straight line so it reads hand-strung.
-      const mx = (x1 + x2) / 2;
-      const my = (y1 + y2) / 2;
-      const len = Math.hypot(x2 - x1, y2 - y1) || 1;
-      const nx = -(y2 - y1) / len;
-      const ny = (x2 - x1) / len;
-      const bow = 10;
-      setLink({ d: `M ${x1} ${y1} Q ${mx + nx * bow} ${my + ny * bow} ${x2} ${y2}`, x1, y1, x2, y2 });
-    };
-    compute();
-    const ro = new ResizeObserver(compute);
-    if (boardRef.current) ro.observe(boardRef.current);
-    window.addEventListener("resize", compute);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", compute);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, shake.length, remaining.length]);
-
   const toggle = (text: string) => {
     if (done || shake.length > 0) return;
     if (startRef.current === null) startRef.current = Date.now();
@@ -252,65 +205,41 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
 
         {/* the board - one scattered POOL of eight. Tiles are tossed at slight
             angles and offsets so there's no clean left/right edge to read as
-            "one from each side"; any two can pair, and the link line makes that
-            literal the instant you pick a second. */}
+            "one from each side"; any two can pair. */}
         {remaining.length > 0 && (
-          <div className="relative" ref={boardRef}>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-3.5 py-1">
-              {remaining.map((d) => {
-                const isSel = selected.includes(d.text);
-                const isShaking = shake.includes(d.text);
-                const j = jitter.get(d.text) ?? { rot: 0, dx: 0, dy: 0 };
-                return (
-                  <div
-                    key={d.text}
-                    style={{ transform: `translate(${j.dx}px, ${j.dy}px) rotate(${j.rot}deg)` }}
+          <div className="grid grid-cols-2 gap-x-3 gap-y-3.5 py-1">
+            {remaining.map((d) => {
+              const isSel = selected.includes(d.text);
+              const isShaking = shake.includes(d.text);
+              const j = jitter.get(d.text) ?? { rot: 0, dx: 0, dy: 0 };
+              return (
+                <div
+                  key={d.text}
+                  style={{ transform: `translate(${j.dx}px, ${j.dy}px) rotate(${j.rot}deg)` }}
+                >
+                  <motion.button
+                    onClick={() => toggle(d.text)}
+                    animate={isShaking ? { x: [0, -8, 8, -6, 6, 0] } : { x: 0, scale: isSel ? 1.04 : 1 }}
+                    transition={isShaking ? { duration: 0.42 } : { type: "spring", stiffness: 500, damping: 30 }}
+                    className={`ink-fix wonky flex min-h-[4.8rem] w-full items-center justify-center border-2 border-ink px-3 py-3 text-center text-sm font-bold leading-snug transition-colors active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:text-[15px] ${
+                      isSel ? "ink-shadow" : "ink-shadow-sm"
+                    } ${isShaking ? "" : isSel ? "" : "text-ink"}`}
+                    // Inline wins over the ink-fix utility: selected tiles read
+                    // cream-on-black (black = legible), ringed cyan so they pop
+                    // on the dark theme too, where a black fill would vanish.
+                    style={
+                      isShaking
+                        ? { background: "#FF3B30", color: "#FFFFFF" }
+                        : isSel
+                          ? { background: "#16181D", color: "#FFF9E8", borderColor: "#06B6D4" }
+                          : { background: PASTEL }
+                    }
                   >
-                    <motion.button
-                      ref={(el) => {
-                        if (el) tileRefs.current.set(d.text, el);
-                        else tileRefs.current.delete(d.text);
-                      }}
-                      onClick={() => toggle(d.text)}
-                      animate={isShaking ? { x: [0, -8, 8, -6, 6, 0] } : { x: 0, scale: isSel ? 1.04 : 1 }}
-                      transition={isShaking ? { duration: 0.42 } : { type: "spring", stiffness: 500, damping: 30 }}
-                      className={`ink-fix wonky flex min-h-[4.8rem] w-full items-center justify-center border-2 border-ink px-3 py-3 text-center text-sm font-bold leading-snug transition-colors active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:text-[15px] ${
-                        isSel ? "ink-shadow" : "ink-shadow-sm"
-                      } ${isShaking ? "" : isSel ? "" : "text-ink"}`}
-                      // Inline wins over the ink-fix utility: selected tiles read
-                      // cream-on-black (black = legible), ringed cyan so they pop
-                      // on the dark theme too, where a black fill would vanish.
-                      style={
-                        isShaking
-                          ? { background: "#FF3B30", color: "#FFFFFF" }
-                          : isSel
-                            ? { background: "#16181D", color: "#FFF9E8", borderColor: "#06B6D4" }
-                            : { background: PASTEL }
-                      }
-                    >
-                      {d.text}
-                    </motion.button>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* the string tying the two picks together, wherever they landed */}
-            {link && (
-              <svg className="pointer-events-none absolute inset-0 z-20 h-full w-full" aria-hidden>
-                <path
-                  d={link.d}
-                  fill="none"
-                  stroke="#16181D"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeDasharray="0.5 7"
-                  opacity="0.72"
-                />
-                <circle cx={link.x1} cy={link.y1} r="3.5" fill="#06B6D4" stroke="#FFF9E8" strokeWidth="1.5" />
-                <circle cx={link.x2} cy={link.y2} r="3.5" fill="#06B6D4" stroke="#FFF9E8" strokeWidth="1.5" />
-              </svg>
-            )}
+                    {d.text}
+                  </motion.button>
+                </div>
+              );
+            })}
           </div>
         )}
 
