@@ -146,7 +146,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
     // The finished puzzle, there to admire: all four pairs revealed, plus
     // the score this player banked.
     return (
-      <GameShell mode="duality" date={date}>
+      <GameShell mode="duality" date={date} endShare={{ game: "duality", date }}>
         <p className="text-center text-xs font-semibold text-ink-secondary">
           You played this one - here are the answers
         </p>
@@ -179,7 +179,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
   }
 
   return (
-    <GameShell mode="duality" date={date}>
+    <GameShell mode="duality" date={date} endShare={done ? { game: "duality", date } : undefined}>
       <p className="text-center text-xs font-semibold text-ink-secondary">
         Match the pairs - two meanings, one word
       </p>

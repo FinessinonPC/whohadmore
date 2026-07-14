@@ -10,6 +10,7 @@ import { LIVE_MODES, modeDef, type ModeId } from "@/lib/modes";
 import { useArchiveGate } from "@/hooks/useArchiveGate";
 import { ArchiveLock } from "./ArchiveLock";
 import { ShareResults } from "@/components/game/ShareResults";
+import { ResultsModal } from "@/components/game/ResultsModal";
 import { isAdminPreview } from "@/lib/adminClient";
 import { isJuly4th } from "@/lib/festive";
 import { Fireworks } from "@/components/game/Fireworks";
@@ -23,12 +24,15 @@ export function GameShell({
   mode,
   date,
   wide = false,
+  endShare,
   children,
 }: {
   mode: ModeId;
   date: string;
   /** Let the game use more width on desktop (e.g. the Mini's grid + clue list). */
   wide?: boolean;
+  /** When the game is finished, show a subtle corner Share button in the header. */
+  endShare?: { game: ModeId; date: string };
   children: React.ReactNode;
 }) {
   const def = modeDef(mode);
@@ -49,7 +53,10 @@ export function GameShell({
         <Link href="/" aria-label="Back to today's games">
           <BrandLockup />
         </Link>
-        <span className="text-ink">
+        <span className="flex items-center gap-2.5 text-ink">
+          {endShare && (
+            <ShareResults variant="icon" surface="game_end" game={endShare.game} date={endShare.date} />
+          )}
           <GameWordmark mode={mode} className="text-xl" alt={def.accent} />
         </span>
       </header>
@@ -74,6 +81,7 @@ export function GameShell({
 export function NextGameCTA({ date, current }: { date: string; current: ModeId }) {
   const [next, setNext] = useState<ModeId | null>(null);
   const [checked, setChecked] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const unplayed = LIVE_MODES.filter((m) => {
@@ -81,8 +89,23 @@ export function NextGameCTA({ date, current }: { date: string; current: ModeId }
       if (m.id === "chain") return !getLocalResult(date);
       return !getModeResult(m.id, date);
     });
-    setNext(unplayed[0]?.id ?? null);
+    const nextId = unplayed[0]?.id ?? null;
+    setNext(nextId);
     setChecked(true);
+
+    // Finishing the fourth game pops the results pop-up - once per day, per
+    // device (never during an admin preview).
+    if (nextId === null && !isAdminPreview()) {
+      const key = `whohadmore:resultsModal:${date}`;
+      try {
+        if (!localStorage.getItem(key)) {
+          localStorage.setItem(key, "1");
+          setShowModal(true);
+        }
+      } catch {
+        /* private mode - just skip the one-time guard */
+      }
+    }
   }, [date, current]);
 
   if (!checked) return <span className="block h-14" aria-hidden />;
@@ -110,23 +133,26 @@ export function NextGameCTA({ date, current }: { date: string; current: ModeId }
   }
 
   return (
-    <div className="flex flex-col gap-2.5">
-      <p className="text-center font-condensed text-lg font-semibold uppercase tracking-wide text-ink">
-        Card complete <span className="marker-gold">- nice.</span>
-      </p>
-      <ShareResults date={date} />
-      <Link
-        href="/leaderboard"
-        className="card-ink-flat flex h-12 w-full items-center justify-center rounded-xl text-sm font-bold text-ink transition-colors hover:bg-border/30"
-      >
-        See today&apos;s leaderboard
-      </Link>
-      <Link
-        href="/"
-        className="small-caps py-1 text-center text-[10px] font-bold text-ink-secondary transition-colors hover:text-ink"
-      >
-        Back to today&apos;s card
-      </Link>
-    </div>
+    <>
+      {showModal && <ResultsModal date={date} onClose={() => setShowModal(false)} />}
+      <div className="flex flex-col gap-2.5">
+        <p className="text-center font-condensed text-lg font-semibold uppercase tracking-wide text-ink">
+          Card complete <span className="marker-gold">- nice.</span>
+        </p>
+        <ShareResults date={date} surface="card_complete" />
+        <Link
+          href="/leaderboard"
+          className="card-ink-flat flex h-12 w-full items-center justify-center rounded-xl text-sm font-bold text-ink transition-colors hover:bg-border/30"
+        >
+          See today&apos;s leaderboard
+        </Link>
+        <Link
+          href="/"
+          className="small-caps py-1 text-center text-[10px] font-bold text-ink-secondary transition-colors hover:text-ink"
+        >
+          Back to today&apos;s card
+        </Link>
+      </div>
+    </>
   );
 }

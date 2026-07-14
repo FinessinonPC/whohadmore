@@ -220,7 +220,7 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
         {/* All four done - invite a share (the growth loop) */}
         {playedCount === LIVE_MODES.length && (
           <div className="mt-5">
-            <ShareResults date={date} />
+            <ShareResults date={date} surface="hub" />
           </div>
         )}
 
