@@ -98,6 +98,13 @@ function promptFor(mode: MinigameMode, skeleton: MiniSkeleton): string {
   return PROMPTS[mode];
 }
 
+/** Append the "already used" list so the model never repeats a word that has
+ *  appeared in any published day or the fallback pack. */
+function withUsedWords(base: string, used: string[]): string {
+  if (!used.length) return base;
+  return `${base}\n\nALREADY USED - do NOT reuse any of these ${used.length} words; choose new ones:\n${used.join(", ")}`;
+}
+
 /** Tolerant JSON extraction (same spirit as the chain game's AI panel). */
 function extractJson(raw: string): unknown | null {
   let text = raw.trim();
@@ -140,6 +147,17 @@ export function MinigamesPanel({ date }: { date: string }) {
   const [copied, setCopied] = useState(false);
   const [aiText, setAiText] = useState("");
 
+  // "Already used" words per mode (published days + the fallback pack), so the
+  // AI prompt can tell the model what to avoid - and the admin can copy the raw
+  // list any time.
+  const [usedWords, setUsedWords] = useState<Record<MinigameMode, string[]>>({
+    duality: [],
+    word: [],
+    mini: [],
+  });
+  const [usedCounts, setUsedCounts] = useState<Record<MinigameMode, { total: number; published: number }> | null>(null);
+  const [copiedBank, setCopiedBank] = useState<MinigameMode | null>(null);
+
   // Form state
   const [pairs, setPairs] = useState<{ word: string; a: string; b: string }[]>([]);
   const [answer, setAnswer] = useState("");
@@ -164,7 +182,10 @@ export function MinigamesPanel({ date }: { date: string }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await adminFetch(`/api/admin/minigame?date=${date}`);
+      const [res, usedRes] = await Promise.all([
+        adminFetch(`/api/admin/minigame?date=${date}`),
+        adminFetch(`/api/admin/used-words`),
+      ]);
       const data = (await res.json()) as {
         custom?: Record<string, unknown>;
         effective?: Effective;
@@ -177,6 +198,12 @@ export function MinigamesPanel({ date }: { date: string }) {
           ? "daily_minigames table not found - run supabase/migrations/0005_daily_minigames.sql to save custom days."
           : null
       );
+      const used = (await usedRes.json().catch(() => null)) as {
+        words?: Record<MinigameMode, string[]>;
+        counts?: Record<MinigameMode, { total: number; published: number }>;
+      } | null;
+      if (used?.words) setUsedWords(used.words);
+      if (used?.counts) setUsedCounts(used.counts);
     } catch {
       setCustom({});
     }
@@ -297,11 +324,22 @@ export function MinigamesPanel({ date }: { date: string }) {
   async function copyPrompt() {
     if (!sheetMode) return;
     try {
-      await navigator.clipboard.writeText(promptFor(sheetMode, skeleton));
+      await navigator.clipboard.writeText(withUsedWords(promptFor(sheetMode, skeleton), usedWords[sheetMode] ?? []));
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
       /* prompt is visible to copy manually */
+    }
+  }
+
+  /** Copy the raw "already used" word list for a mode, to paste into any tool. */
+  async function copyUsed(mode: MinigameMode) {
+    try {
+      await navigator.clipboard.writeText((usedWords[mode] ?? []).join(", "));
+      setCopiedBank(mode);
+      setTimeout(() => setCopiedBank(null), 1800);
+    } catch {
+      /* nothing to do */
     }
   }
 
@@ -381,6 +419,49 @@ export function MinigamesPanel({ date }: { date: string }) {
       <p className="mt-3 text-[11px] text-ink-secondary">
         Preview opens the page players see. Edits apply after saving.
       </p>
+
+      {/* Word bank: every word already used (published days + fallback pack),
+          so the same word never appears twice. Auto-fed to the AI prompt; also
+          copyable here to paste into any tool. Refreshes after each save. */}
+      <div className="mt-4 rounded-xl border border-border bg-background p-4">
+        <div className="flex items-baseline justify-between">
+          <h3 className="text-sm font-extrabold text-ink">Word bank</h3>
+          <span className="text-[11px] text-ink-secondary">Already used — never reuse</span>
+        </div>
+        <div className="mt-2.5 flex flex-col gap-2">
+          {MODE_META.map((m) => {
+            const c = usedCounts?.[m.id];
+            return (
+              <div key={m.id} className="flex items-center gap-3">
+                <span className="w-20 shrink-0" style={{ color: m.accent }}>
+                  <GameWordmark mode={m.id} className="text-base" />
+                </span>
+                <span className="min-w-0 flex-1 text-xs text-ink-secondary">
+                  {c ? (
+                    <>
+                      <span className="font-bold text-ink">{c.total}</span> words
+                      {c.published > 0 && <span> · {c.published} you published</span>}
+                    </>
+                  ) : (
+                    "…"
+                  )}
+                </span>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={!usedWords[m.id]?.length}
+                  onClick={() => void copyUsed(m.id)}
+                >
+                  {copiedBank === m.id ? "Copied" : "Copy list"}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-2.5 text-[11px] text-ink-secondary">
+          Counts include the built-in fallback pack. The AI prompt already tells the model to avoid these.
+        </p>
+      </div>
 
       <Sheet open={sheetMode !== null} onClose={() => setSheetMode(null)}>
         {sheetMode && (
@@ -521,13 +602,20 @@ export function MinigamesPanel({ date }: { date: string }) {
             ) : (
               <div className="mt-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-ink-secondary">Copy the prompt, paste the model&apos;s JSON.</p>
+                  <p className="text-sm text-ink-secondary">
+                    Copy the prompt, paste the model&apos;s JSON.
+                    {usedWords[sheetMode]?.length > 0 && (
+                      <span className="ml-1 text-ink-secondary/80">
+                        Includes {usedWords[sheetMode].length} used words to avoid.
+                      </span>
+                    )}
+                  </p>
                   <Button variant="ghost" size="sm" onClick={() => void copyPrompt()}>
                     {copied ? "Copied" : "Copy prompt"}
                   </Button>
                 </div>
                 <pre className="mt-3 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-surface p-3 text-[11px] leading-relaxed text-ink-secondary">
-                  {promptFor(sheetMode, skeleton)}
+                  {withUsedWords(promptFor(sheetMode, skeleton), usedWords[sheetMode] ?? [])}
                 </pre>
                 <textarea
                   value={aiText}
