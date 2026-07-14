@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/Button";
 import { BrandLockup } from "@/components/ui/Logo";
 import { GameWordmark } from "@/components/ui/GameWordmarks";
 import { NextGameCTA } from "@/components/games/GameShell";
-import { ShareResults } from "./ShareResults";
 import { CountUp } from "./CountUp";
 import { ChainTimeline } from "./ChainTimeline";
 import { Confetti } from "./Confetti";
@@ -86,10 +85,7 @@ export function ResultScreen({
             <BrandLockup />
           </Link>
         )}
-        <span className="flex items-center gap-2.5 text-ink">
-          {mode !== "preview" && (
-            <ShareResults variant="icon" surface="game_end" game="chain" date={date} />
-          )}
+        <span className="text-ink">
           <GameWordmark mode="chain" className="text-xl" alt={modeDef("chain").accent} />
         </span>
       </header>

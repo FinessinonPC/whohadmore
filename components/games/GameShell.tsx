@@ -24,15 +24,12 @@ export function GameShell({
   mode,
   date,
   wide = false,
-  endShare,
   children,
 }: {
   mode: ModeId;
   date: string;
   /** Let the game use more width on desktop (e.g. the Mini's grid + clue list). */
   wide?: boolean;
-  /** When the game is finished, show a subtle corner Share button in the header. */
-  endShare?: { game: ModeId; date: string };
   children: React.ReactNode;
 }) {
   const def = modeDef(mode);
@@ -53,10 +50,7 @@ export function GameShell({
         <Link href="/" aria-label="Back to today's games">
           <BrandLockup />
         </Link>
-        <span className="flex items-center gap-2.5 text-ink">
-          {endShare && (
-            <ShareResults variant="icon" surface="game_end" game={endShare.game} date={endShare.date} />
-          )}
+        <span className="text-ink">
           <GameWordmark mode={mode} className="text-xl" alt={def.accent} />
         </span>
       </header>

@@ -347,7 +347,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
   if (already && !done) {
     // The solved grid, there to admire, plus the score this player banked.
     return (
-      <GameShell mode="mini" date={date} endShare={{ game: "mini", date }}>
+      <GameShell mode="mini" date={date}>
         <p className="text-center text-xs font-semibold text-ink-secondary">
           You played this one - here&apos;s the finished grid
         </p>
@@ -389,7 +389,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
   }
 
   return (
-    <GameShell mode="mini" date={date} wide endShare={done ? { game: "mini", date } : undefined}>
+    <GameShell mode="mini" date={date} wide>
       <div className="flex flex-1 flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-10">
         {/* LEFT: timer, grid, and play controls */}
         <div className="flex w-full flex-1 flex-col lg:max-w-[460px]">

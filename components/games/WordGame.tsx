@@ -163,7 +163,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
         (r) => typeof r === "string" && r.length === 5
       );
     return (
-      <GameShell mode="word" date={date} endShare={{ game: "word", date }}>
+      <GameShell mode="word" date={date}>
         <p className="text-center text-xs font-semibold text-ink-secondary">
           You played this one - here&apos;s how it went
         </p>
@@ -206,7 +206,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
   }
 
   return (
-    <GameShell mode="word" date={date} endShare={revealDone ? { game: "word", date } : undefined}>
+    <GameShell mode="word" date={date}>
       <div className="flex flex-1 flex-col">
         {/* board */}
         <motion.div
