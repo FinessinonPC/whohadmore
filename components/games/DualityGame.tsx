@@ -120,6 +120,9 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
       maxScore: max,
       detail: [found.length, mistakes],
       completedAt: new Date().toISOString(),
+      seconds: Math.round(elapsed),
+      moves: mistakes,
+      won: solved,
     });
     void fetch("/api/modes/complete", {
       method: "POST",
@@ -130,9 +133,12 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
         mode: "duality",
         score,
         clean: solved && mistakes === 0,
+        seconds: Math.round(elapsed),
+        moves: mistakes, // wrong lock-ins - drives the profile's avg mistakes
+        won: solved,
       }),
     }).catch(() => {});
-  }, [done, score, max, date, found.length, mistakes, solved]);
+  }, [done, score, max, date, found.length, mistakes, solved, elapsed]);
 
   if (checking) {
     return (

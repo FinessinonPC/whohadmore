@@ -128,12 +128,26 @@ export async function POST(req: Request) {
   // carries the streak bonus; the competitive boards don't.
   const totalScore = (profile.total_score ?? 0) + chainDailyScore(reached, rounds);
 
-  const merged = Array.from(
-    new Set([
-      ...profile.achievements,
-      ...earnedAchievementIds({ daysPlayed, currentStreak, level, clearedThisGame: cleared }),
-    ])
-  );
+  const earned = earnedAchievementIds({ daysPlayed, currentStreak, level, clearedThisGame: cleared });
+
+  // Century Club: 100 recorded games across chain + the quick games. Counted
+  // here too (not just in /api/modes/complete) so a chain-only player can
+  // still cross the line. Best-effort - a failed count never blocks the update.
+  try {
+    const { count: chainCount } = await supabase
+      .from("game_results")
+      .select("id", { count: "exact", head: true })
+      .eq("session_id", session_id);
+    const { count: modeCount } = await supabase
+      .from("game_mode_results")
+      .select("id", { count: "exact", head: true })
+      .eq("session_id", session_id);
+    if ((chainCount ?? 0) + (modeCount ?? 0) >= 100) earned.push("century");
+  } catch {
+    /* decorative */
+  }
+
+  const merged = Array.from(new Set([...profile.achievements, ...earned]));
   const newAchievements = merged.filter((a) => !profile.achievements.includes(a));
 
   const { data: updated } = await supabase

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { TopNav } from "@/components/ui/TopNav";
 import { GameStats } from "@/components/profile/GameStats";
+import { DangerZone } from "@/components/profile/DangerZone";
 import { SignUpFlow } from "@/components/auth/SignUpFlow";
 import { useProfile } from "@/hooks/useProfile";
 import { ACHIEVEMENTS, effectiveStreak, levelInfo, rankTitle, streakMultiplier } from "@/lib/leaderboard";
@@ -12,7 +13,7 @@ import { previousISODate, todayISO } from "@/lib/date";
 
 /** The player's own profile: level, streak multiplier, and lifetime stats. */
 export function ProfileView() {
-  const { profile, rank, claim, reload, loading } = useProfile();
+  const { profile, rank, claim, reload, loading, deleteAccount } = useProfile();
 
   const xp = profile?.xp ?? 0;
   const { level, into, needed } = levelInfo(xp);
@@ -90,6 +91,7 @@ export function ProfileView() {
         <>
           <GameStats />
           <Achievements earned={profile?.achievements ?? []} />
+          <DangerZone username={profile?.username ?? ""} onDelete={deleteAccount} />
         </>
       )}
     </main>

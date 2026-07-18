@@ -60,5 +60,31 @@ export function useProfile() {
     [load]
   );
 
-  return { ...state, reload: load, claim };
+  /** Permanently delete the account server-side, then wipe this device's
+   *  storage and reload from scratch (fresh anonymous session, caches gone). */
+  const deleteAccount = useCallback(async (): Promise<{ ok: boolean; error?: string }> => {
+    try {
+      const res = await fetch("/api/profile", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: getSessionId() }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        return { ok: false, error: data.error ?? "Couldn't delete your account - try again." };
+      }
+      cache = null;
+      try {
+        window.localStorage.clear(); // session id, results, and any auth tokens
+      } catch {
+        /* storage disabled - server data is gone regardless */
+      }
+      window.location.href = "/"; // full reload: fresh session, caches dropped
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Couldn't reach the server - try again." };
+    }
+  }, []);
+
+  return { ...state, reload: load, claim, deleteAccount };
 }

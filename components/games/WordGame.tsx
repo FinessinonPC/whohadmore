@@ -132,13 +132,22 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
       detail: [rows.length],
       completedAt: new Date().toISOString(),
       state: { rows }, // the finished board, for the come-back-and-admire view
+      moves: rows.length,
+      won,
     });
     void fetch("/api/modes/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ session_id: getSessionId(), play_date: date, mode: "word", score }),
+      body: JSON.stringify({
+        session_id: getSessionId(),
+        play_date: date,
+        mode: "word",
+        score,
+        moves: rows.length, // guesses used - drives the profile's avg + distribution
+        won,
+      }),
     }).catch(() => {});
-  }, [done, rows.length, score, date]);
+  }, [done, rows.length, score, date, won]);
 
   const tileStyle = (m: Mark | null): React.CSSProperties => {
     if (m === "g") return { background: GREEN, borderColor: INK, color: INK };

@@ -190,6 +190,11 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: "duality_perfect", label: "Mind Reader", description: "Solve Duality without a single mistake.", icon: "🧠" },
   { id: "word_ace", label: "Third Try's a Charm", description: "Solve Word in three guesses or fewer.", icon: "✍️" },
   { id: "mini_clean", label: "Ink Only", description: "Solve the Mini without using Check.", icon: "🖋️" },
+  // Skill achievements - need the per-game detail recorded with each result.
+  { id: "word_two", label: "Mind Meld", description: "Solve Word in two guesses or fewer.", icon: "🔮" },
+  { id: "mini_speed", label: "Speed Solver", description: "Finish the Mini in under a minute.", icon: "⏱️" },
+  { id: "thousand_club", label: "Perfect Thousand", description: "Score a perfect 1,000 in any game.", icon: "💯" },
+  { id: "century", label: "Century Club", description: "Play 100 games in total.", icon: "🏅" },
 ];
 
 const ACHIEVEMENT_BY_ID = new Map(ACHIEVEMENTS.map((a) => [a.id, a]));
@@ -211,7 +216,9 @@ export interface AchievementContext {
 export function earnedAchievementIds(ctx: AchievementContext): string[] {
   const earned: string[] = [];
   if (ctx.daysPlayed >= 1) earned.push("first_game");
-  if (ctx.clearedThisGame) earned.push("perfect");
+  // A full Chain clear is exactly 1,000 daily points, so it's also the
+  // perfect-score badge.
+  if (ctx.clearedThisGame) earned.push("perfect", "thousand_club");
   if (ctx.currentStreak >= 7) earned.push("streak7");
   if (ctx.currentStreak >= 30) earned.push("streak30");
   if (ctx.level >= 10) earned.push("level10");

@@ -254,6 +254,9 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
       maxScore: MINI_MAX_POINTS,
       detail: [checks],
       completedAt: new Date().toISOString(),
+      seconds: Math.floor(seconds),
+      moves: checks,
+      won: !revealed,
     });
     void fetch("/api/modes/complete", {
       method: "POST",
@@ -264,6 +267,9 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
         mode: "mini",
         score,
         clean: !revealed && checks === 0,
+        seconds: Math.floor(seconds), // solve time - drives the profile's avg/best
+        moves: checks,
+        won: !revealed,
       }),
     }).catch(() => {});
   };

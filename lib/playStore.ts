@@ -65,6 +65,31 @@ export function saveLocalResult(date: string, result: StoredResult): void {
   }
 }
 
+/** Every Chain result saved on THIS device, keyed by date - used by the
+ *  profile's stats alongside the server's cross-device history. */
+export function getAllLocalResults(): Record<string, StoredResult> {
+  if (typeof window === "undefined") return {};
+  const out: Record<string, StoredResult> = {};
+  const prefix = "whohadmore:result:";
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (!k || !k.startsWith(prefix)) continue;
+      const date = k.slice(prefix.length);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+      try {
+        const parsed = JSON.parse(window.localStorage.getItem(k) ?? "") as StoredResult;
+        if (parsed && typeof parsed.reached === "number") out[date] = parsed;
+      } catch {
+        /* one bad entry never hides the rest */
+      }
+    }
+  } catch {
+    return out;
+  }
+  return out;
+}
+
 /** Clear a saved result so the date can be replayed. (Testing helper for now.) */
 export function clearLocalResult(date: string): void {
   if (typeof window === "undefined") return;

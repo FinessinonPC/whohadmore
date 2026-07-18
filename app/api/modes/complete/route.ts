@@ -13,6 +13,13 @@ const MODE_MAX: Record<string, number> = {
   mini: 1000,
 };
 
+/** Clamp an optional numeric detail field; undefined/garbage becomes null. */
+function cleanNumber(v: unknown, max: number): number | null {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n < 0 || n > max) return null;
+  return n;
+}
+
 // POST /api/modes/complete - record a finished extra-mode game (rank/pinpoint).
 // First play counts: duplicate submissions for the same session+date+mode are
 // ignored. Best-effort by design - if the game_mode_results table hasn't been
@@ -25,6 +32,9 @@ export async function POST(req: Request) {
       mode?: string;
       score?: number;
       clean?: boolean; // solved with no mistakes/checks - drives "perfect" badges
+      seconds?: number; // solve time (duality/mini)
+      moves?: number; // word: guesses · duality: mistakes · mini: checks
+      won?: boolean; // word: solved · duality: all pairs · mini: no reveal
     };
     const { session_id, play_date, mode, score, clean } = body;
 
@@ -47,6 +57,8 @@ export async function POST(req: Request) {
 
     const supabase = getServiceSupabase();
 
+    // First play counts - a second submission for the same day+mode is ignored
+    // (and reported as such), so scores can't be farmed by replaying.
     const { data: existing } = await supabase
       .from("game_mode_results")
       .select("id")
@@ -59,17 +71,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, recorded: false });
     }
 
-    const { error } = await supabase
+    const seconds = cleanNumber(body.seconds, 86400);
+    const moves = cleanNumber(body.moves, 100);
+    const won = typeof body.won === "boolean" ? body.won : null;
+
+    const baseRow = { play_date, session_id, mode, score: Math.round(score) };
+    const upsertOpts = { onConflict: "play_date,session_id,mode", ignoreDuplicates: true } as const;
+
+    // Try the detail-rich row first; if migration 0007 hasn't been run the
+    // unknown columns make PostgREST reject it, so retry score-only - recording
+    // the play always beats recording the trivia about it.
+    let { error } = await supabase
       .from("game_mode_results")
       .upsert(
-        {
-          play_date,
-          session_id,
-          mode,
-          score: Math.round(score),
-        },
-        { onConflict: "play_date,session_id,mode", ignoreDuplicates: true }
+        { ...baseRow, seconds, moves: moves === null ? null : Math.round(moves), won },
+        upsertOpts
       );
+    if (error) {
+      ({ error } = await supabase.from("game_mode_results").upsert(baseRow, upsertOpts));
+    }
     if (error) {
       console.error("[modes] record failed (is game_mode_results created?):", error.message);
       return NextResponse.json({ ok: true, recorded: false });
@@ -86,7 +106,10 @@ export async function POST(req: Request) {
         const earned: string[] = [];
         if (mode === "duality" && clean) earned.push("duality_perfect");
         if (mode === "word" && score >= 800) earned.push("word_ace");
+        if (mode === "word" && won && moves !== null && moves <= 2) earned.push("word_two");
         if (mode === "mini" && clean) earned.push("mini_clean");
+        if (mode === "mini" && won && seconds !== null && seconds < 60) earned.push("mini_speed");
+        if (score >= 1000) earned.push("thousand_club");
 
         // All four in one day: the three quick games recorded + a chain result.
         const { count: modeCount } = await supabase
@@ -102,6 +125,17 @@ export async function POST(req: Request) {
             .eq("play_date", play_date);
           if ((chainCount ?? 0) > 0) earned.push("all_rounder");
         }
+
+        // Century Club: 100 recorded games across every mode, chain included.
+        const { count: allModes } = await supabase
+          .from("game_mode_results")
+          .select("id", { count: "exact", head: true })
+          .eq("session_id", session_id);
+        const { count: allChain } = await supabase
+          .from("game_results")
+          .select("id", { count: "exact", head: true })
+          .eq("session_id", session_id);
+        if ((allModes ?? 0) + (allChain ?? 0) >= 100) earned.push("century");
 
         const have = profile.achievements ?? [];
         const merged = Array.from(new Set([...have, ...earned]));
