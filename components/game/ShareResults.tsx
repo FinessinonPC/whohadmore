@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { track } from "@vercel/analytics";
+import { trackEvent } from "@/lib/clientTrack";
 import { LIVE_MODES } from "@/lib/modes";
 import { formatDisplayDate } from "@/lib/date";
 import { useArchiveScores } from "@/hooks/useArchiveScores";
@@ -70,11 +70,7 @@ export function ShareResults({ date, className, variant = "bar", surface = "card
 
   async function share() {
     const text = shareText(date, scoreFor);
-    try {
-      track("share_click", { surface, game: game ?? "all" });
-    } catch {
-      /* analytics is best-effort - never block the share on it */
-    }
+    trackEvent("share_click", { surface, game: game ?? "all", date });
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
         await navigator.share({ title: "WhoHadMore", text });

@@ -40,12 +40,14 @@ export async function DELETE(req: Request) {
     .maybeSingle<{ id: string; email: string | null }>();
 
   // Order matters: game rows first, profile last, so a failure partway can be
-  // retried by simply deleting again. Feedback votes are session-keyed too.
-  const tables = ["feedback", "game_mode_results", "game_results"] as const;
+  // retried by simply deleting again. Feedback votes and analytics events are
+  // session-keyed too.
+  const optional = new Set(["feedback", "analytics_events"]); // tables that may not be migrated yet
+  const tables = ["feedback", "analytics_events", "game_mode_results", "game_results"] as const;
   for (const table of tables) {
     const { error } = await supabase.from(table).delete().eq("session_id", session_id);
-    // A missing optional table (feedback) shouldn't block account deletion.
-    if (error && table !== "feedback") {
+    // A missing optional table shouldn't block account deletion.
+    if (error && !optional.has(table)) {
       console.error(`[delete] ${table} wipe failed:`, error.message);
       return NextResponse.json({ error: "Couldn't delete your data - try again." }, { status: 500 });
     }

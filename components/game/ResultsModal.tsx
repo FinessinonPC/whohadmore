@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { track } from "@vercel/analytics";
+import { trackEvent } from "@/lib/clientTrack";
 import { LIVE_MODES } from "@/lib/modes";
 import { useArchiveScores } from "@/hooks/useArchiveScores";
 import { getLocalResult, getSessionId } from "@/lib/playStore";
@@ -36,12 +36,8 @@ export function ResultsModal({ date, onClose }: { date: string; onClose: () => v
   const [rank, setRank] = useState<RankInfo | null>(null);
 
   useEffect(() => {
-    try {
-      track("results_modal_shown");
-    } catch {
-      /* best-effort */
-    }
-  }, []);
+    trackEvent("results_modal_shown", { date });
+  }, [date]);
 
   // Rank on the SAME scale the leaderboard ranks on (dailyScore for Chain +
   // the quick-game points), merging a synthetic "you" row so it appears
@@ -174,13 +170,7 @@ export function ResultsModal({ date, onClose }: { date: string; onClose: () => v
         {/* past-cards nudge -> sign-up for signed-out players */}
         <Link
           href="/archive"
-          onClick={() => {
-            try {
-              track("past_card_click", { surface: "results_modal" });
-            } catch {
-              /* best-effort */
-            }
-          }}
+          onClick={() => trackEvent("past_card_click", { surface: "results_modal", date })}
           className="wonky mt-2.5 flex items-center gap-3 border-2 border-ink bg-[#F8E6A2] px-4 py-3 text-ink ink-shadow-sm transition-transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
         >
           <span className="min-w-0 flex-1">
