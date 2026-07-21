@@ -2,15 +2,8 @@ import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import { isValidISODate, monthPeriod, previousISODate, todayISO } from "@/lib/date";
-import {
-  dailyScore,
-  earnedAchievementIds,
-  heartsFor,
-  levelFromXp,
-  modeXp,
-  pointsForGame,
-  type Profile,
-} from "@/lib/leaderboard";
+import { heartsFor, pointsForGame, type Profile } from "@/lib/leaderboard";
+import { computeRollup } from "@/lib/profileRollup";
 
 interface LastGame {
   play_date: string;
@@ -24,20 +17,6 @@ export const dynamic = "force-dynamic";
 
 const USERNAME_RE = /^[A-Za-z0-9 _-]{2,20}$/;
 const UNIQUE_VIOLATION = "23505";
-
-function computeStreak(dates: Set<string>, today: string): number {
-  let cursor = dates.has(today)
-    ? today
-    : dates.has(previousISODate(today))
-      ? previousISODate(today)
-      : null;
-  let streak = 0;
-  while (cursor && dates.has(cursor)) {
-    streak += 1;
-    cursor = previousISODate(cursor);
-  }
-  return streak;
-}
 
 export async function POST(req: Request) {
   if (!isSupabaseConfigured()) {
@@ -116,7 +95,7 @@ export async function POST(req: Request) {
       .maybeSingle<{ id: string }>();
     if (!already) {
       const time = Number.isFinite(lastGame.time_seconds) ? lastGame.time_seconds! : 0;
-      await supabase.from("game_results").insert({
+      const row = {
         play_date: lastGame.play_date,
         session_id,
         score: lastGame.reached,
@@ -125,80 +104,34 @@ export async function POST(req: Request) {
         time_seconds: time,
         points: pointsForGame(lastGame.reached, lastGame.rounds, 0),
         stars: heartsFor(lastGame.lives ?? 0),
-      });
+      };
+      // Store the round count when migration 0009 is live; retry bare if not.
+      const { error: rowErr } = await supabase
+        .from("game_results")
+        .insert({ ...row, rounds: lastGame.rounds > 0 ? Math.round(lastGame.rounds) : null });
+      if (rowErr) await supabase.from("game_results").insert(row);
     }
   }
 
-  const { data: results } = await supabase
-    .from("game_results")
-    .select("play_date, points, stars, score, time_seconds, lives_remaining")
-    .eq("session_id", session_id)
-    .returns<
-      {
-        play_date: string;
-        points: number | null;
-        stars: number | null;
-        score: number | null;
-        time_seconds: number | null;
-        lives_remaining: number | null;
-      }[]
-    >();
-
-  const rows = results ?? [];
-  
-  const { data: modeResults } = await supabase
-    .from("game_mode_results")
-    .select("score")
-    .eq("session_id", session_id)
-    .returns<{ score: number | null }[]>();
-  const modeRows = modeResults ?? [];
-  
-  const dates = new Set(rows.map((r) => r.play_date));
-  // XP = Chain's stored (streak-boosted) points + each quick game's flat XP, so
-  // claiming a username preserves the XP earned from every game played.
-  const xp =
-    rows.reduce((s, r) => s + (r.points ?? 0), 0) +
-    modeRows.reduce((s, r) => s + modeXp(r.score ?? 0), 0);
-  const totalStars = rows.reduce((s, r) => s + (r.stars ?? 0), 0);
-  // Streak-free all-time score = sum of each game's daily score.
-  let totalScore = rows.reduce(
-    (s, r) =>
-      s + dailyScore(r.score ?? 0, r.stars ?? heartsFor(r.lives_remaining ?? 0), r.time_seconds ?? 0),
-    0
-  );
-  totalScore += modeRows.reduce((s, r) => s + (r.score ?? 0), 0);
-  
-  const monthlyScore = rows
-    .filter((r) => r.play_date.startsWith(period))
-    .reduce((s, r) => s + (r.points ?? 0), 0);
-  const daysPlayed = dates.size;
-  const streak = computeStreak(dates, today);
-  const lastPlayed = rows.length
-    ? rows.map((r) => r.play_date).sort().slice(-1)[0]
-    : null;
-
-  const achievements = earnedAchievementIds({
-    daysPlayed,
-    currentStreak: streak,
-    level: levelFromXp(xp),
-    clearedThisGame: false,
-  });
+  // One shared rollup tallies the whole history - chain + quick games, live
+  // and archive - exactly the way every game-complete keeps it up to date.
+  const roll = await computeRollup(supabase, session_id, today, period);
 
   const { data: created, error } = await supabase
     .from("profiles")
     .insert({
       session_id,
       username,
-      xp,
-      total_score: totalScore,
-      total_stars: totalStars,
-      days_played: daysPlayed,
-      current_streak: streak,
-      longest_streak: streak,
-      last_played_date: lastPlayed,
-      monthly_score: monthlyScore,
+      xp: roll.xp,
+      total_score: roll.totalScore,
+      total_stars: roll.totalStars,
+      days_played: roll.daysPlayed,
+      current_streak: roll.currentStreak,
+      longest_streak: Math.max(roll.longestRun, roll.currentStreak),
+      last_played_date: roll.lastPlayed,
+      monthly_score: roll.monthlyScore,
       monthly_period: period,
-      achievements,
+      achievements: roll.achievements,
     })
     .select("*")
     .single<Profile>();

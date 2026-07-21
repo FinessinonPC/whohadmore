@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSupabase, getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
-import { monthPeriod, previousISODate, todayISO } from "@/lib/date";
-import {
-  dailyScore,
-  earnedAchievementIds,
-  heartsFor,
-  levelFromXp,
-  modeXp,
-  type Profile,
-} from "@/lib/leaderboard";
+import { monthPeriod, todayISO } from "@/lib/date";
+import { type Profile } from "@/lib/leaderboard";
+import { applyRollup, computeRollup } from "@/lib/profileRollup";
 
 export const dynamic = "force-dynamic";
 
@@ -20,65 +14,6 @@ interface Body {
   access_token?: string;
   session_id?: string;
   username?: string;
-}
-
-interface ResultRow {
-  play_date: string;
-  points: number | null;
-  stars: number | null;
-  score: number | null;
-  time_seconds: number | null;
-  lives_remaining: number | null;
-}
-
-const RESULT_COLUMNS = "play_date, points, stars, score, time_seconds, lives_remaining";
-
-function computeStreak(dates: Set<string>, today: string): number {
-  let cursor = dates.has(today)
-    ? today
-    : dates.has(previousISODate(today))
-      ? previousISODate(today)
-      : null;
-  let streak = 0;
-  while (cursor && dates.has(cursor)) {
-    streak += 1;
-    cursor = previousISODate(cursor);
-  }
-  return streak;
-}
-
-/** Roll a session's full result history up into profile stats. Idempotent: the
- *  same rows always produce the same totals (points/stars are stored per game). */
-function aggregate(rows: ResultRow[], modeRows: { score: number | null }[], today: string, period: string) {
-  const dates = new Set(rows.map((r) => r.play_date));
-  // XP = Chain's stored (streak-boosted) points + each quick game's flat XP, so
-  // the rolled-up total matches what was credited live on every game played.
-  const xp =
-    rows.reduce((s, r) => s + (r.points ?? 0), 0) +
-    modeRows.reduce((s, r) => s + modeXp(r.score ?? 0), 0);
-  const totalStars = rows.reduce((s, r) => s + (r.stars ?? 0), 0);
-  let totalScore = rows.reduce(
-    (s, r) =>
-      s + dailyScore(r.score ?? 0, r.stars ?? heartsFor(r.lives_remaining ?? 0), r.time_seconds ?? 0),
-    0
-  );
-  totalScore += modeRows.reduce((s, r) => s + (r.score ?? 0), 0);
-  
-  const monthlyScore = rows
-    .filter((r) => r.play_date.startsWith(period))
-    .reduce((s, r) => s + (r.points ?? 0), 0);
-  const daysPlayed = dates.size;
-  const streak = computeStreak(dates, today);
-  const lastPlayed = rows.length ? rows.map((r) => r.play_date).sort().slice(-1)[0] : null;
-  // "Perfect" is awarded during live play (backfill can't know each game's
-  // round count). Streak/level/first-game achievements resolve from the totals.
-  const achievements = earnedAchievementIds({
-    daysPlayed,
-    currentStreak: streak,
-    level: levelFromXp(xp),
-    clearedThisGame: false,
-  });
-  return { xp, totalStars, totalScore, monthlyScore, daysPlayed, streak, lastPlayed, achievements };
 }
 
 // POST /api/profile/auth
@@ -156,8 +91,7 @@ export async function POST(req: Request) {
 
     // Do the SAME for the quick games (Duality/Word/Mini) so their scores follow
     // the player into their account instead of being stranded on the anonymous
-    // session - otherwise the profile's per-game stats look empty after sign-in.
-    // Keyed by (play_date, mode) to respect the table's unique constraint.
+    // session. Keyed by (play_date, mode) to respect the table's unique constraint.
     const { data: canonModes } = await supabase
       .from("game_mode_results")
       .select("play_date, mode")
@@ -181,44 +115,10 @@ export async function POST(req: Request) {
       await supabase.from("game_mode_results").update({ session_id: canonical }).in("id", modeMove);
     }
 
-    // Recompute the rolled-up stats from the account's full history. This
-    // credits the freshly merged plays.
-    const { data: allRows } = await supabase
-      .from("game_results")
-      .select(RESULT_COLUMNS)
-      .eq("session_id", canonical)
-      .returns<ResultRow[]>();
-    const rows = allRows ?? [];
-    if (rows.length === 0) {
-      return NextResponse.json({ profile: existing, loggedIn: true });
-    }
-
-    const { data: allModes } = await supabase
-      .from("game_mode_results")
-      .select("score")
-      .eq("session_id", canonical)
-      .returns<{ score: number | null }[]>();
-    const modeRows = allModes ?? [];
-
-    const agg = aggregate(rows, modeRows, today, period);
-    const { data: updated } = await supabase
-      .from("profiles")
-      .update({
-        xp: agg.xp,
-        total_score: agg.totalScore,
-        total_stars: agg.totalStars,
-        days_played: agg.daysPlayed,
-        current_streak: agg.streak,
-        longest_streak: Math.max(existing.longest_streak, agg.streak),
-        last_played_date: agg.lastPlayed,
-        monthly_score: agg.monthlyScore,
-        monthly_period: period,
-        achievements: Array.from(new Set([...existing.achievements, ...agg.achievements])),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", existing.id)
-      .select("*")
-      .single<Profile>();
+    // One shared rollup rebuilds the account's stats from its full merged
+    // history (chain + quick games, live and archive) - the same math every
+    // game-complete runs, so nothing earned on this device is lost.
+    const { profile: updated } = await applyRollup(supabase, canonical, today, period);
 
     return NextResponse.json({ profile: updated ?? existing, loggedIn: true });
   }
@@ -234,18 +134,9 @@ export async function POST(req: Request) {
     );
   }
 
-  // Backfill stats from this device's play history so the first game counts.
-  const { data: results } = await supabase
-    .from("game_results")
-    .select(RESULT_COLUMNS)
-    .eq("session_id", session_id)
-    .returns<ResultRow[]>();
-  const { data: modeResults } = await supabase
-    .from("game_mode_results")
-    .select("score")
-    .eq("session_id", session_id)
-    .returns<{ score: number | null }[]>();
-  const agg = aggregate(results ?? [], modeResults ?? [], today, period);
+  // Backfill stats from this device's play history so every game already
+  // played (chain + quick games) counts from the first moment.
+  const roll = await computeRollup(supabase, session_id, today, period);
 
   const { data: created, error } = await supabase
     .from("profiles")
@@ -253,16 +144,16 @@ export async function POST(req: Request) {
       session_id,
       username,
       email,
-      xp: agg.xp,
-      total_score: agg.totalScore,
-      total_stars: agg.totalStars,
-      days_played: agg.daysPlayed,
-      current_streak: agg.streak,
-      longest_streak: agg.streak,
-      last_played_date: agg.lastPlayed,
-      monthly_score: agg.monthlyScore,
+      xp: roll.xp,
+      total_score: roll.totalScore,
+      total_stars: roll.totalStars,
+      days_played: roll.daysPlayed,
+      current_streak: roll.currentStreak,
+      longest_streak: Math.max(roll.longestRun, roll.currentStreak),
+      last_played_date: roll.lastPlayed,
+      monthly_score: roll.monthlyScore,
       monthly_period: period,
-      achievements: agg.achievements,
+      achievements: roll.achievements,
     })
     .select("*")
     .single<Profile>();

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
-import { isValidISODate } from "@/lib/date";
-import { levelFromXp, modeXp } from "@/lib/leaderboard";
+import { isValidISODate, monthPeriod, todayISO } from "@/lib/date";
+import { applyRollup } from "@/lib/profileRollup";
 
 export const dynamic = "force-dynamic";
 
@@ -96,65 +96,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, recorded: false });
     }
 
-    // Collection achievements and score update - best-effort, never blocks recording.
+    // Profile update - best-effort, never blocks recording. The shared rollup
+    // recomputes XP, total score, days, streaks, monthly, and history-derived
+    // achievements from ALL recorded games (archive included), so a quick game
+    // counts everywhere Chain does. Skill badges that need this request's
+    // context (clean/won/moves before the detail columns exist) ride along.
     try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, achievements, total_score, xp")
-        .eq("session_id", session_id)
-        .maybeSingle<{ id: string; achievements: string[] | null; total_score: number | null; xp: number | null }>();
-      if (profile) {
-        const earned: string[] = [];
-        if (mode === "duality" && clean) earned.push("duality_perfect");
-        if (mode === "word" && score >= 800) earned.push("word_ace");
-        if (mode === "word" && won && moves !== null && moves <= 2) earned.push("word_two");
-        if (mode === "mini" && clean) earned.push("mini_clean");
-        if (mode === "mini" && won && seconds !== null && seconds < 60) earned.push("mini_speed");
-        if (score >= 1000) earned.push("thousand_club");
+      const earned: string[] = [];
+      if (mode === "duality" && clean) earned.push("duality_perfect");
+      if (mode === "word" && score >= 800) earned.push("word_ace");
+      if (mode === "word" && won && moves !== null && moves <= 2) earned.push("word_two");
+      if (mode === "mini" && clean) earned.push("mini_clean");
+      if (mode === "mini" && won && seconds !== null && seconds < 60) earned.push("mini_speed");
+      if (score >= 1000) earned.push("thousand_club");
 
-        // All four in one day: the three quick games recorded + a chain result.
-        const { count: modeCount } = await supabase
-          .from("game_mode_results")
-          .select("id", { count: "exact", head: true })
-          .eq("session_id", session_id)
-          .eq("play_date", play_date);
-        if ((modeCount ?? 0) >= 3) {
-          const { count: chainCount } = await supabase
-            .from("game_results")
-            .select("id", { count: "exact", head: true })
-            .eq("session_id", session_id)
-            .eq("play_date", play_date);
-          if ((chainCount ?? 0) > 0) earned.push("all_rounder");
-        }
-
-        // Century Club: 100 recorded games across every mode, chain included.
-        const { count: allModes } = await supabase
-          .from("game_mode_results")
-          .select("id", { count: "exact", head: true })
-          .eq("session_id", session_id);
-        const { count: allChain } = await supabase
-          .from("game_results")
-          .select("id", { count: "exact", head: true })
-          .eq("session_id", session_id);
-        if ((allModes ?? 0) + (allChain ?? 0) >= 100) earned.push("century");
-
-        // Every quick game now levels you up, just like Chain. XP is added on
-        // this first (and only) recorded play, so it can't be farmed by
-        // replaying, and it accrues for archive days too (no "today" gate).
-        const newXp = (profile.xp ?? 0) + modeXp(score);
-        if (levelFromXp(newXp) >= 10) earned.push("level10");
-
-        const have = profile.achievements ?? [];
-        const merged = Array.from(new Set([...have, ...earned]));
-        const newTotal = (profile.total_score ?? 0) + Math.round(score);
-
-        await supabase
-          .from("profiles")
-          .update({ achievements: merged, total_score: newTotal, xp: newXp })
-          .eq("id", profile.id);
-      }
+      const today = todayISO();
+      await applyRollup(supabase, session_id, today, monthPeriod(today), {
+        extraAchievements: earned,
+      });
     } catch {
-      /* achievements are decorative - recording already succeeded */
+      /* profile rollup is derived state - recording already succeeded */
     }
 
     return NextResponse.json({ ok: true, recorded: true });
