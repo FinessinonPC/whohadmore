@@ -7,6 +7,7 @@ import {
   earnedAchievementIds,
   heartsFor,
   levelFromXp,
+  modeXp,
   type Profile,
 } from "@/lib/leaderboard";
 
@@ -50,7 +51,11 @@ function computeStreak(dates: Set<string>, today: string): number {
  *  same rows always produce the same totals (points/stars are stored per game). */
 function aggregate(rows: ResultRow[], modeRows: { score: number | null }[], today: string, period: string) {
   const dates = new Set(rows.map((r) => r.play_date));
-  const xp = rows.reduce((s, r) => s + (r.points ?? 0), 0);
+  // XP = Chain's stored (streak-boosted) points + each quick game's flat XP, so
+  // the rolled-up total matches what was credited live on every game played.
+  const xp =
+    rows.reduce((s, r) => s + (r.points ?? 0), 0) +
+    modeRows.reduce((s, r) => s + modeXp(r.score ?? 0), 0);
   const totalStars = rows.reduce((s, r) => s + (r.stars ?? 0), 0);
   let totalScore = rows.reduce(
     (s, r) =>

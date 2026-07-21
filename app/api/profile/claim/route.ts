@@ -7,6 +7,7 @@ import {
   earnedAchievementIds,
   heartsFor,
   levelFromXp,
+  modeXp,
   pointsForGame,
   type Profile,
 } from "@/lib/leaderboard";
@@ -153,7 +154,11 @@ export async function POST(req: Request) {
   const modeRows = modeResults ?? [];
   
   const dates = new Set(rows.map((r) => r.play_date));
-  const xp = rows.reduce((s, r) => s + (r.points ?? 0), 0);
+  // XP = Chain's stored (streak-boosted) points + each quick game's flat XP, so
+  // claiming a username preserves the XP earned from every game played.
+  const xp =
+    rows.reduce((s, r) => s + (r.points ?? 0), 0) +
+    modeRows.reduce((s, r) => s + modeXp(r.score ?? 0), 0);
   const totalStars = rows.reduce((s, r) => s + (r.stars ?? 0), 0);
   // Streak-free all-time score = sum of each game's daily score.
   let totalScore = rows.reduce(

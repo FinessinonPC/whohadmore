@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import { isValidISODate } from "@/lib/date";
+import { levelFromXp, modeXp } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
 
@@ -99,9 +100,9 @@ export async function POST(req: Request) {
     try {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, achievements, total_score")
+        .select("id, achievements, total_score, xp")
         .eq("session_id", session_id)
-        .maybeSingle<{ id: string; achievements: string[] | null; total_score: number | null }>();
+        .maybeSingle<{ id: string; achievements: string[] | null; total_score: number | null; xp: number | null }>();
       if (profile) {
         const earned: string[] = [];
         if (mode === "duality" && clean) earned.push("duality_perfect");
@@ -137,13 +138,19 @@ export async function POST(req: Request) {
           .eq("session_id", session_id);
         if ((allModes ?? 0) + (allChain ?? 0) >= 100) earned.push("century");
 
+        // Every quick game now levels you up, just like Chain. XP is added on
+        // this first (and only) recorded play, so it can't be farmed by
+        // replaying, and it accrues for archive days too (no "today" gate).
+        const newXp = (profile.xp ?? 0) + modeXp(score);
+        if (levelFromXp(newXp) >= 10) earned.push("level10");
+
         const have = profile.achievements ?? [];
         const merged = Array.from(new Set([...have, ...earned]));
         const newTotal = (profile.total_score ?? 0) + Math.round(score);
-        
+
         await supabase
           .from("profiles")
-          .update({ achievements: merged, total_score: newTotal })
+          .update({ achievements: merged, total_score: newTotal, xp: newXp })
           .eq("id", profile.id);
       }
     } catch {
