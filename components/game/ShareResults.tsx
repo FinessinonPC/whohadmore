@@ -21,7 +21,7 @@ function shareText(date: string, scoreFor: ReturnType<typeof useArchiveScores>):
   const origin =
     typeof window !== "undefined"
       ? window.location.origin.replace(/^https?:\/\//, "")
-      : "whohadmore.com";
+      : "www.whohadmore.com";
   const games = lines
     .filter((l) => l.played)
     .map((l) => `${l.name} ${l.score.toLocaleString()}`)
