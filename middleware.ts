@@ -18,6 +18,24 @@ export function middleware(request: NextRequest) {
   // Set the CSP header on the response
   response.headers.set('Content-Security-Policy', cspHeader);
 
+  // --- SEO: keep only the core pages on www.whohadmore.com in Google ---
+  // 1) Any *.vercel.app host (preview builds AND the project's production alias)
+  //    is a duplicate of www - noindex it so it never competes with the brand.
+  // 2) The per-day game pages (/play, /day, /word, /mini, /duality/<date> and the
+  //    bare /YYYY-MM-DD alias) are a long tail of mostly sign-in-gated URLs. We
+  //    no longer want them in search - only the main site (home, about, archive,
+  //    leaderboard, categories) should show. `follow` still lets Google walk the
+  //    links, so no crawl signal is lost.
+  const host = request.headers.get('host') ?? '';
+  const path = request.nextUrl.pathname;
+  const nonCanonicalHost = host.endsWith('.vercel.app');
+  const gamePage =
+    /^\/(play|day|word|mini|duality)\/[^/]+/.test(path) ||
+    /^\/\d{4}-\d{2}-\d{2}(\/|$)/.test(path);
+  if (nonCanonicalHost || gamePage) {
+    response.headers.set('X-Robots-Tag', 'noindex, follow');
+  }
+
   return response;
 }
 

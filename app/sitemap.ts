@@ -1,17 +1,19 @@
 import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/site";
-import { getServerSupabase } from "@/lib/supabase";
-import { isSupabaseConfigured } from "@/lib/mockGame";
-import { todayISO } from "@/lib/date";
 import { CATEGORIES } from "@/lib/categories";
 
-export const revalidate = 3600; // refresh hourly so new games appear
+export const revalidate = 3600;
 
+// Only the durable, ungated pages belong in search. The per-day game pages
+// (/play/<date> and friends) are intentionally left out and marked noindex in
+// middleware.ts - they're a long tail of mostly sign-in-gated URLs we don't want
+// competing with the main site. Google should show www.whohadmore.com's core
+// pages, not a scatter of individual games.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getSiteUrl();
   const now = new Date();
 
-  const items: MetadataRoute.Sitemap = [
+  return [
     { url: base, lastModified: now, changeFrequency: "daily", priority: 1 },
     { url: `${base}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/archive`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
@@ -24,30 +26,4 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     })),
   ];
-
-  // Every published game is its own crawlable page (good long-tail SEO).
-  if (isSupabaseConfigured()) {
-    try {
-      const { data } = await getServerSupabase()
-        .from("daily_games")
-        .select("play_date")
-        .eq("published", true)
-        .lte("play_date", todayISO())
-        .order("play_date", { ascending: false })
-        .limit(2000)
-        .returns<{ play_date: string }[]>();
-      (data ?? []).forEach((g) =>
-        items.push({
-          url: `${base}/play/${g.play_date}`,
-          lastModified: new Date(g.play_date),
-          changeFrequency: "yearly",
-          priority: 0.5,
-        })
-      );
-    } catch {
-      /* sitemap still returns the static routes */
-    }
-  }
-
-  return items;
 }
