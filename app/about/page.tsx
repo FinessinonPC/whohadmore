@@ -57,7 +57,7 @@ const FAQ_LD = {
 };
 
 const GAME_BLURBS: Record<string, string> = {
-  chain: "Higher or lower. Two cards, one stat - call it right and keep the run going as far as you can.",
+  chain: "Higher or lower. Two cards, one stat. Call it right and keep the run going as far as you can.",
   duality: "Eight clues hide four pairs. Each pair is a single word wearing two unrelated meanings.",
   word: "Six tries at the five-letter word. Green is placed, yellow is close. You already know this one.",
   mini: "A five-by-five crossword, sized for a coffee break. Fill the grid, beat the clock in your head.",
@@ -113,7 +113,7 @@ export default function AboutPage() {
           <br className="hidden sm:block" /> One daily score.
         </h2>
         <p className="mt-2 font-condensed text-lg text-ink-secondary">
-          A puzzle worth showing up for &mdash; and the quiet pull of tomorrow&apos;s.
+          A puzzle worth showing up for, and the quiet pull of tomorrow&apos;s.
         </p>
 
         <div className="mt-6 text-[17px] leading-relaxed text-ink-secondary">
@@ -125,8 +125,8 @@ export default function AboutPage() {
               E
             </span>
             very midnight, four fresh games drop. Each one takes about a minute, and together they
-            make your score for the day. There&apos;s no feed to fall into and nothing to install &mdash;
-            you open the page, you play, you get on with your morning.
+            make your score for the day. There&apos;s no feed to fall into and nothing to install.
+            You open the page, you play, you get on with your morning.
           </p>
           <p className="mt-4">
             That&apos;s the whole idea: a small, honest ritual you can actually finish, then compare
@@ -174,7 +174,7 @@ export default function AboutPage() {
         <h2 className="font-display text-2xl font-semibold text-ink">One score, one board</h2>
         <p className="mt-3 text-[17px] leading-relaxed text-ink-secondary">
           Every game is worth up to <span className="marker-gold font-semibold text-ink">1,000</span>{" "}
-          points. Add them up and that&apos;s your day &mdash; the number the leaderboard ranks. Play a
+          points. Add them up and that&apos;s your day: the number the leaderboard ranks. Play a
           single game or all four; whatever you finish counts. Claim a free username and your streak,
           XP and badges carry from day to day, on any device.
         </p>
@@ -199,7 +199,7 @@ export default function AboutPage() {
       <section className="py-16 text-center">
         <p className="mx-auto max-w-md font-condensed text-[26px] leading-[1.3] text-ink">
           No feed. No notifications. No clock in the corner.
-          <span className="text-ink-secondary"> Just today&apos;s card &mdash; and, tomorrow, a fresh one.</span>
+          <span className="text-ink-secondary"> Just today&apos;s card. And tomorrow, a fresh one.</span>
         </p>
       </section>
 
@@ -211,11 +211,11 @@ export default function AboutPage() {
           <Link href="/archive" className="font-semibold text-ink underline decoration-2 underline-offset-2">
             archive
           </Link>{" "}
-          keeps every past edition &mdash; all four games and that day&apos;s final board &mdash; and it
+          keeps every past edition, all four games and that day&apos;s final board, and it
           still earns XP and points toward your totals. A free account opens it up.
         </p>
         <p className="mt-8 text-right font-condensed text-xl text-ink">
-          &mdash; made for people who like a good puzzle
+          Made for people who like a good puzzle.
         </p>
       </section>
 
