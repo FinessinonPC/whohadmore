@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Reorder } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { CardEditor } from "./CardEditor";
@@ -255,21 +254,18 @@ export function DayEditor({ date }: DayEditorProps) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-6">
-      {/* Top bar */}
-      <header className="flex items-center justify-between">
-        <Link href="/admin" className="text-sm font-semibold text-ink-secondary hover:text-ink">
-          ‹ Calendar
-        </Link>
-        <div className="flex items-center gap-3">
-          <Badge tone={savedPublished ? "live" : "draft"}>
-            {savedPublished ? "Published" : "Draft"}
-          </Badge>
-          <span className="text-sm font-semibold text-ink">
-            {formatDisplayDate(date)}
-          </span>
-        </div>
-      </header>
+    <main className="mx-auto w-full max-w-5xl px-4 pb-6 pt-10">
+      {/* The chain section, self-contained: heading + its own live status. The
+          page's nav bar is at the very top now, not buried here above the fields. */}
+      <h2 className="font-condensed text-2xl font-semibold uppercase tracking-wide text-ink">
+        Chain editor
+      </h2>
+      <div className="mt-3 flex items-center gap-3">
+        <Badge tone={savedPublished ? "live" : "draft"}>
+          {savedPublished ? "Published" : "Draft"}
+        </Badge>
+        <span className="text-sm font-semibold text-ink">{formatDisplayDate(date)}</span>
+      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[1fr,360px]">
         {/* LEFT - editor */}

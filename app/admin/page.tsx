@@ -18,12 +18,20 @@ export default function AdminPage() {
               Plan and publish the daily games.
             </p>
           </div>
-          <Link
-            href="/"
-            className="rounded-full border border-border bg-surface px-4 py-1.5 text-xs font-semibold text-ink"
-          >
-            View site
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/admin/analytics"
+              className="rounded-full border border-ink bg-ink px-4 py-1.5 text-xs font-semibold text-background"
+            >
+              Analytics
+            </Link>
+            <Link
+              href="/"
+              className="rounded-full border border-border bg-surface px-4 py-1.5 text-xs font-semibold text-ink"
+            >
+              View site
+            </Link>
+          </div>
         </header>
 
         <GameCalendar />

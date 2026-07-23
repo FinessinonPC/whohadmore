@@ -28,9 +28,13 @@ export async function POST(req: Request) {
   if (!isValidISODate(payload.play_date)) {
     return NextResponse.json({ error: "Invalid play_date" }, { status: 400 });
   }
-  if (!payload.topic_label?.trim() || !payload.stat_label?.trim()) {
+  // Only PUBLISHING requires a complete chain - a draft can be saved with
+  // whatever's filled in so far (topic, a few cards, nothing) so work in
+  // progress is never lost. This also lets a day exist for its quick games
+  // before the chain is written.
+  if (payload.published && (!payload.topic_label?.trim() || !payload.stat_label?.trim())) {
     return NextResponse.json(
-      { error: "Topic label and stat label are required" },
+      { error: "Add a topic label and stat label before publishing." },
       { status: 400 }
     );
   }
@@ -43,9 +47,9 @@ export async function POST(req: Request) {
     .upsert(
       {
         play_date: payload.play_date,
-        topic_label: payload.topic_label.trim(),
+        topic_label: (payload.topic_label ?? "").trim(),
         topic_category: payload.topic_category,
-        stat_label: payload.stat_label.trim(),
+        stat_label: (payload.stat_label ?? "").trim(),
         stat_unit: payload.stat_unit?.trim() || null,
         published: Boolean(payload.published),
       },
