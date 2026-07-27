@@ -55,7 +55,12 @@ export default async function HomePage() {
 
   return (
     <>
-      <GameHub game={game} date={date} gameNumber={gameNumber} />
+      {/* The games own the first screen. Wrapping the hub in a full-viewport
+          block keeps the SEO copy below the fold on every device - it's there
+          for crawlers and curious readers, not competing with the game. */}
+      <div className="flex min-h-fold flex-col">
+        <GameHub game={game} date={date} gameNumber={gameNumber} />
+      </div>
       <SiteSeoFooter />
     </>
   );

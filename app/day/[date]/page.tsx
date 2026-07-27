@@ -45,7 +45,9 @@ export default async function DayPage({
 
   return (
     <>
-      <GameHub game={game} date={date} gameNumber={gameNumber} />
+      <div className="flex min-h-fold flex-col">
+        <GameHub game={game} date={date} gameNumber={gameNumber} />
+      </div>
       {game && <GameSeoFooter game={game} date={date} />}
     </>
   );

@@ -62,6 +62,19 @@
 }
 
 @layer utilities {
+  /* Fills the first screen on EVERY device, so anything after it starts below
+   * the fold. Uses lvh (LARGE viewport height = the tallest the viewport can
+   * ever get, i.e. mobile browser chrome collapsed) rather than svh/dvh: with
+   * svh the block matches the chrome-visible height, so the moment Safari's
+   * bars retract the viewport grows and the next section peeks into view
+   * without the user scrolling. dvh resizes live and causes layout jump. lvh
+   * is the only one that guarantees "below the fold" in every chrome state.
+   * The vh line is the fallback for browsers without viewport-unit variants. */
+  .min-h-fold {
+    min-height: 100vh;
+    min-height: 100lvh;
+  }
+
   /* Small-caps topic labels, NYT-style. */
   .small-caps {
     letter-spacing: 0.12em;
