@@ -11,6 +11,110 @@ import { ImageResponse } from "next/og";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
+/**
+ * The evergreen card: a word instead of a number.
+ *
+ * The puzzle-number card is right for the homepage, where the hook is "which
+ * day is it". The evergreen pages (/games/<id>, /games, /about, /faq) never
+ * change day to day, so they get a stable card naming the thing being shared -
+ * which also means it caches forever and never needs busting.
+ */
+export function titleCard(title: string, subline: string, accent = "#FFFFFF"): ImageResponse {
+  const black = readFileSync(join(process.cwd(), "app/Inter-Black.ttf"));
+  const bold = readFileSync(join(process.cwd(), "app/Inter-Bold.ttf"));
+
+  // Long names need to step down so they never overflow the card.
+  const heroSize = title.length > 14 ? 108 : title.length > 9 ? 132 : 168;
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#0B0D10",
+          fontFamily: "Inter",
+          position: "relative",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            opacity: 0.14,
+            background:
+              "repeating-linear-gradient(115deg, #00C853 0px, #00C853 80px, #06B6D4 80px, #06B6D4 160px, #FFC400 160px, #FFC400 240px, #2E6BFF 240px, #2E6BFF 320px)",
+          }}
+        />
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+            padding: "0 70px",
+          }}
+        >
+          <svg width="80" height="80" viewBox="0 0 100 100" style={{ marginBottom: 20 }}>
+            <g transform="rotate(-6 50 50)">
+              <rect x="18" y="22" width="68" height="68" rx="15" fill="#000000" opacity="0.45" />
+              <rect x="14" y="18" width="68" height="68" rx="15" fill="#F6F1E3" stroke="#16181D" strokeWidth="6.5" />
+              <path
+                d="M 28 66 L 25 38 L 39 49 L 48 33 L 57 49 L 71 38 L 68 66 Z"
+                fill="#FFB300"
+                stroke="#16181D"
+                strokeWidth="4.5"
+                strokeLinejoin="round"
+              />
+            </g>
+          </svg>
+          <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: "0.18em", color: "#9AA098" }}>
+            WHOHADMORE
+          </div>
+          <div
+            style={{
+              marginTop: 16,
+              fontSize: heroSize,
+              fontWeight: 900,
+              lineHeight: 1,
+              color: accent,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            {title}
+          </div>
+          <div
+            style={{
+              marginTop: 26,
+              fontSize: 30,
+              fontWeight: 700,
+              color: "#9AA098",
+              maxWidth: 950,
+              lineHeight: 1.3,
+            }}
+          >
+            {subline}
+          </div>
+        </div>
+      </div>
+    ),
+    {
+      ...OG_SIZE,
+      fonts: [
+        { name: "Inter", data: black, weight: 900, style: "normal" },
+        { name: "Inter", data: bold, weight: 700, style: "normal" },
+      ],
+    }
+  );
+}
+
 export function puzzleNumberCard(gameNumber: number | null, subline: string): ImageResponse {
   const black = readFileSync(join(process.cwd(), "app/Inter-Black.ttf"));
   const bold = readFileSync(join(process.cwd(), "app/Inter-Bold.ttf"));
