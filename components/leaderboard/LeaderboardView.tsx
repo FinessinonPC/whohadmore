@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { TopNav } from "@/components/ui/TopNav";
+import { SiteHeader } from "@/components/ui/SiteHeader";
 import { useProfile } from "@/hooks/useProfile";
 import { getSessionId } from "@/lib/playStore";
 import { type DailyRow, type LeaderboardRow } from "@/lib/leaderboard";
@@ -38,8 +38,9 @@ export function LeaderboardView({
   }, [profile]);
 
   return (
-    <main className="mx-auto w-full max-w-xl px-4 pb-16 pt-5 sm:max-w-2xl">
-      <TopNav />
+    <>
+      <SiteHeader />
+      <main className="mx-auto w-full max-w-xl px-4 pb-16 pt-5 sm:max-w-2xl">
 
       <h1 className="mt-8 font-condensed text-4xl font-semibold uppercase tracking-wide text-ink">
         Leaderboard
@@ -120,6 +121,7 @@ export function LeaderboardView({
         )}
       </section>
     </main>
+    </>
   );
 }
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { TopNav } from "@/components/ui/TopNav";
+import { SiteHeader } from "@/components/ui/SiteHeader";
 import { getSiteUrl } from "@/lib/site";
 
 export const dynamic = "force-static";
@@ -88,8 +88,9 @@ export default function FaqPage() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-5 pb-16 pt-5">
-      <TopNav />
+    <>
+      <SiteHeader />
+      <main className="mx-auto w-full max-w-2xl px-5 pb-16 pt-5">
 
       <header className="mt-8">
         <h1 className="font-display text-4xl font-semibold leading-tight text-ink">
@@ -129,5 +130,6 @@ export default function FaqPage() {
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     </main>
+    </>
   );
 }

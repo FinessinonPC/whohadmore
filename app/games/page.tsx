@@ -1,10 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { TopNav } from "@/components/ui/TopNav";
+import { SiteHeader } from "@/components/ui/SiteHeader";
 import { GameWordmark } from "@/components/ui/GameWordmarks";
 import { GAME_SEO } from "@/lib/gameSeo";
 import { modeDef } from "@/lib/modes";
 import { getSiteUrl } from "@/lib/site";
+import { todayISO } from "@/lib/date";
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
@@ -21,6 +22,7 @@ export const metadata: Metadata = {
 
 export default function GamesIndexPage() {
   const base = getSiteUrl();
+  const today = todayISO();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -36,9 +38,9 @@ export default function GamesIndexPage() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-5 pb-16 pt-5">
-      <TopNav />
-
+    <>
+      <SiteHeader />
+      <main className="mx-auto w-full max-w-2xl px-5 pb-16 pt-2">
       <header className="mt-8">
         <h1 className="font-display text-4xl font-semibold leading-tight text-ink">
           Four free daily games
@@ -66,7 +68,7 @@ export default function GamesIndexPage() {
                 <Link href={`/games/${g.id}`} className="text-ink underline decoration-2 underline-offset-4">
                   How to play {def.name}
                 </Link>
-                <Link href={def.href("today").replace("/today", "")} className="text-ink-secondary hover:text-ink">
+                <Link href={def.href(today)} className="text-ink-secondary hover:text-ink">
                   Play now &rarr;
                 </Link>
               </div>
@@ -90,6 +92,7 @@ export default function GamesIndexPage() {
       </section>
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-    </main>
+      </main>
+    </>
   );
 }

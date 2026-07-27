@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { BrandLockup } from "@/components/ui/Logo";
+import { SiteHeader } from "@/components/ui/SiteHeader";
 import { GameWordmark } from "@/components/ui/GameWordmarks";
 import { LIVE_MODES } from "@/lib/modes";
 
@@ -74,15 +74,9 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <main className="mx-auto w-full max-w-2xl px-5 py-10">
-      <header className="mb-10 flex items-center justify-between">
-        <Link href="/">
-          <BrandLockup />
-        </Link>
-        <Link href="/" className="rounded-full bg-cta px-4 py-1.5 text-xs font-semibold text-background">
-          Play
-        </Link>
-      </header>
+    <>
+      <SiteHeader />
+      <main className="mx-auto w-full max-w-2xl px-5 pb-16 pt-2">
 
       <article className="space-y-8 text-[15px] leading-relaxed text-ink-secondary">
         <div>
@@ -153,5 +147,6 @@ export default function AboutPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }}
       />
     </main>
+    </>
   );
 }

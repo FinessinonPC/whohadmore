@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
-import { TopNav } from "@/components/ui/TopNav";
+import { SiteHeader } from "@/components/ui/SiteHeader";
 import { GameStats } from "@/components/profile/GameStats";
 import { DangerZone } from "@/components/profile/DangerZone";
 import { SignUpFlow } from "@/components/auth/SignUpFlow";
@@ -27,8 +27,9 @@ export function ProfileView() {
   const hasName = Boolean(profile?.username);
 
   return (
-    <main className="mx-auto w-full max-w-xl px-4 pb-16 pt-5 sm:max-w-2xl">
-      <TopNav />
+    <>
+      <SiteHeader />
+      <main className="mx-auto w-full max-w-xl px-4 pb-16 pt-5 sm:max-w-2xl">
 
       <h1 className="mt-8 text-4xl font-extrabold tracking-tight text-ink">Profile</h1>
       <p className="mt-1 text-[15px] text-ink-secondary">Your level, streak, and lifetime stats across every game.</p>
@@ -95,6 +96,7 @@ export function ProfileView() {
         </>
       )}
     </main>
+    </>
   );
 }
 

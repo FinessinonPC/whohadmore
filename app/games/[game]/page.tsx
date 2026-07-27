@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { TopNav } from "@/components/ui/TopNav";
+import { SiteHeader } from "@/components/ui/SiteHeader";
 import { GameWordmark } from "@/components/ui/GameWordmarks";
 import { GAME_SEO, gameSeo } from "@/lib/gameSeo";
 import { LIVE_MODES, modeDef } from "@/lib/modes";
@@ -95,8 +95,9 @@ export default async function GameLandingPage({
   };
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-5 pb-16 pt-5">
-      <TopNav />
+    <>
+      <SiteHeader />
+      <main className="mx-auto w-full max-w-2xl px-5 pb-16 pt-5">
 
       {/* breadcrumb */}
       <nav aria-label="Breadcrumb" className="mt-6 text-[11px] font-semibold text-ink-secondary">
@@ -221,5 +222,6 @@ export default async function GameLandingPage({
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     </main>
+    </>
   );
 }

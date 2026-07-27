@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { TopNav } from "@/components/ui/TopNav";
+import { SiteHeader } from "@/components/ui/SiteHeader";
 import { GameWordmark } from "@/components/ui/GameWordmarks";
 import { formatDisplayDate } from "@/lib/date";
 import { getLocalResult, getProgress, getSessionId } from "@/lib/playStore";
@@ -108,20 +108,24 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
 
   if (!game || game.cards.length < 2) {
     return (
-      <main className="mx-auto flex min-h-dvh max-w-game flex-col items-center justify-center gap-3 px-6 text-center">
+      <>
+        <SiteHeader />
+        <main className="mx-auto flex min-h-[60vh] max-w-game flex-col items-center justify-center gap-3 px-6 text-center">
         <h1 className="text-xl font-extrabold text-ink">No game today</h1>
         <p className="text-sm text-ink-secondary">Check back soon - a new game drops daily.</p>
         <Link href="/archive" className="wonky mt-2 border-2 border-ink bg-card px-5 py-2 text-sm font-semibold text-ink">
           Browse the archive
-        </Link>
-      </main>
+          </Link>
+        </main>
+      </>
     );
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-game flex-col px-4 pb-12 pt-5">
+    <>
+      <SiteHeader />
+      <main className="mx-auto flex w-full max-w-game flex-col px-4 pb-12 pt-2">
       {isJuly4th(date) && <Fireworks />}
-      <TopNav />
 
       {isJuly4th(date) && (
         <div className="relative z-[46] mx-auto mt-2 rounded-full border border-[#FF3B30]/25 bg-gradient-to-r from-[#FF3B30]/12 via-transparent to-[#2E6BFF]/12 px-5 py-1.5 text-sm font-bold text-ink">
@@ -244,5 +248,6 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
         )}
       </div>
     </main>
+    </>
   );
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { TopNav } from "@/components/ui/TopNav";
+import { SiteHeader } from "@/components/ui/SiteHeader";
 import { ArchiveList } from "@/components/archive/ArchiveList";
 import { getCategorySeo } from "@/lib/categories";
 import { getPublishedGamesWithNumbers } from "@/lib/games";
@@ -88,8 +88,9 @@ export default async function CategoryPage({
   };
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 pb-16 pt-5 sm:max-w-4xl">
-      <TopNav />
+    <>
+      <SiteHeader />
+      <main className="mx-auto w-full max-w-2xl px-4 pb-16 pt-5 sm:max-w-4xl">
 
       <nav className="mt-6 text-xs text-ink-secondary">
         <Link href="/category" className="font-semibold underline underline-offset-2 hover:text-ink">
@@ -142,5 +143,6 @@ export default async function CategoryPage({
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     </main>
+    </>
   );
 }

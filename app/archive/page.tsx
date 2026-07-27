@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArchiveBrowser } from "@/components/archive/ArchiveBrowser";
-import { TopNav } from "@/components/ui/TopNav";
+import { SiteHeader } from "@/components/ui/SiteHeader";
 import { getPublishedGamesWithNumbers } from "@/lib/games";
 import { getSiteUrl } from "@/lib/site";
 import { todayISO } from "@/lib/date";
@@ -33,8 +33,9 @@ export default async function ArchivePage() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 pb-16 pt-5 sm:max-w-4xl">
-      <TopNav />
+    <>
+      <SiteHeader />
+      <main className="mx-auto w-full max-w-2xl px-4 pb-16 pt-5 sm:max-w-4xl">
 
       <ArchiveAuthGate>
         <div className="mb-6 mt-8">
@@ -54,5 +55,6 @@ export default async function ArchivePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }}
       />
     </main>
+    </>
   );
 }
