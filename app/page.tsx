@@ -9,23 +9,40 @@ export const dynamic = "force-dynamic";
 const DESCRIPTION =
   "WhoHadMore is a free set of quick daily puzzles - Chain, Duality, Word, and the Mini crossword - with one combined score and a daily leaderboard. New games every midnight.";
 
-export const metadata: Metadata = {
-  title: { absolute: "WhoHadMore - 4 Quick Daily Puzzles" },
-  description: DESCRIPTION,
-  alternates: { canonical: "/" },
-  openGraph: {
-    type: "website",
-    url: "/",
-    siteName: "WhoHadMore",
-    title: "WhoHadMore - 4 Quick Daily Puzzles",
+// The share card's URL must change when the DAY changes. Next's file-based
+// opengraph-image emits a build-time content hash (/opengraph-image?ab61...),
+// which is identical every day - so iMessage, WhatsApp, Slack and friends fetch
+// it once, cache it by URL, and keep showing a stale puzzle number until the
+// next deploy. Stamping today's date into the query string gives every day a
+// distinct URL, which busts those caches exactly once per day.
+export async function generateMetadata(): Promise<Metadata> {
+  const date = todayISO();
+  const image = {
+    url: `/opengraph-image?d=${date}`,
+    width: 1200,
+    height: 630,
+    alt: "WhoHadMore - today's daily puzzles",
+  };
+  return {
+    title: { absolute: "WhoHadMore - 4 Quick Daily Puzzles" },
     description: DESCRIPTION,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "WhoHadMore - 4 Quick Daily Puzzles",
-    description: DESCRIPTION,
-  },
-};
+    alternates: { canonical: "/" },
+    openGraph: {
+      type: "website",
+      url: "/",
+      siteName: "WhoHadMore",
+      title: "WhoHadMore - 4 Quick Daily Puzzles",
+      description: DESCRIPTION,
+      images: [image],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "WhoHadMore - 4 Quick Daily Puzzles",
+      description: DESCRIPTION,
+      images: [image],
+    },
+  };
+}
 
 // The homepage is the daily hub: today's topic, three ways to play it, one
 // combined total. Content lives at the root for SEO.
