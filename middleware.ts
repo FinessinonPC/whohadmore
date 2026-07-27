@@ -18,21 +18,24 @@ export function middleware(request: NextRequest) {
   // Set the CSP header on the response
   response.headers.set('Content-Security-Policy', cspHeader);
 
-  // --- SEO: keep only the core pages on www.whohadmore.com in Google ---
+  // --- SEO: one indexable host, one indexable URL per day ---
   // 1) Any *.vercel.app host (preview builds AND the project's production alias)
   //    is a duplicate of www - noindex it so it never competes with the brand.
-  // 2) The per-day game pages (/play, /day, /word, /mini, /duality/<date> and the
-  //    bare /YYYY-MM-DD alias) are a long tail of mostly sign-in-gated URLs. We
-  //    no longer want them in search - only the main site (home, about, archive,
-  //    leaderboard, categories) should show. `follow` still lets Google walk the
-  //    links, so no crawl signal is lost.
+  // 2) Per-day URLs: /day/<date> is the CANONICAL archive page for a day. It
+  //    server-renders real content (topic, how-to-play, the day's entities,
+  //    internal links), so it stays indexable and compounds - one durable page
+  //    per day is the long tail this site actually has.
+  //    The single-game routes (/play, /word, /mini, /duality/<date>) and the
+  //    bare /YYYY-MM-DD alias all render the SAME day with far less text, so
+  //    they stay noindexed to avoid competing duplicates. `follow` keeps every
+  //    link crawlable, so no crawl signal is lost.
   const host = request.headers.get('host') ?? '';
   const path = request.nextUrl.pathname;
   const nonCanonicalHost = host.endsWith('.vercel.app');
-  const gamePage =
-    /^\/(play|day|word|mini|duality)\/[^/]+/.test(path) ||
+  const duplicateDayUrl =
+    /^\/(play|word|mini|duality)\/[^/]+/.test(path) ||
     /^\/\d{4}-\d{2}-\d{2}(\/|$)/.test(path);
-  if (nonCanonicalHost || gamePage) {
+  if (nonCanonicalHost || duplicateDayUrl) {
     response.headers.set('X-Robots-Tag', 'noindex, follow');
   }
 

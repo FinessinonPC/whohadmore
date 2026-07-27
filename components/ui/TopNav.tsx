@@ -18,6 +18,12 @@ export function TopNav() {
       </Link>
       <div className="flex items-center gap-3">
         <Link
+          href="/games"
+          className="small-caps hidden text-[10.5px] font-bold text-ink-secondary transition-colors hover:text-ink sm:inline"
+        >
+          Games
+        </Link>
+        <Link
           href="/archive"
           className="small-caps hidden text-[10.5px] font-bold text-ink-secondary transition-colors hover:text-ink sm:inline"
         >

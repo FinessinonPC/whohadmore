@@ -36,6 +36,16 @@ const marker = Permanent_Marker({
   weight: "400",
 });
 
+// Owned brand profiles, emitted as schema.org `sameAs`. Every real, verified
+// profile here is another signal that "WhoHadMore" is an entity, not a phrase -
+// this is the single highest-leverage thing for brand-term recognition.
+// ADD PROFILES AS YOU CREATE THEM (X, Instagram, Reddit, GitHub, itch.io...).
+const SOCIAL_PROFILES: string[] = [
+  // "https://x.com/whohadmore",
+  // "https://www.instagram.com/whohadmore",
+  // "https://www.reddit.com/user/whohadmore",
+];
+
 const description =
   "A free set of 4 quick daily puzzles: Chain, Duality, Word, and Mini.";
 
@@ -76,6 +86,11 @@ export default function RootLayout({
         "@id": `${siteUrl}/#website`,
         url: siteUrl,
         name: "WhoHadMore",
+        // "whohadmore" tokenizes as the question "who had more", which is also
+        // the generic description of the whole higher-or-lower genre. Declaring
+        // the spellings explicitly is what teaches Google this string is a
+        // brand entity rather than a phrase.
+        alternateName: ["Who Had More", "whohadmore", "WhoHadMore Games"],
         description: "A free set of 4 quick daily puzzles: Chain, Duality, Word, and Mini.",
         publisher: { "@id": `${siteUrl}/#org` },
       },
@@ -83,8 +98,14 @@ export default function RootLayout({
         "@type": "Organization",
         "@id": `${siteUrl}/#org`,
         name: "WhoHadMore",
+        alternateName: ["Who Had More", "whohadmore"],
         url: siteUrl,
         logo: `${siteUrl}/icon.svg`,
+        description:
+          "WhoHadMore publishes four free daily puzzle games: Chain, Duality, Word and a Mini crossword.",
+        // Owned profiles. Each verified profile is a corroborating signal that
+        // the brand is a real entity - omitted entirely until there's one to name.
+        ...(SOCIAL_PROFILES.length ? { sameAs: SOCIAL_PROFILES } : {}),
       },
       {
         "@type": "WebApplication",
