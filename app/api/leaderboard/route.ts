@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
-import { levelFromXp, type LeaderboardRow } from "@/lib/leaderboard";
+import { levelFromPoints, type LeaderboardRow } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/leaderboard  ->  { rows } - top players all-time, by total score
-// (streak-free). Level still comes from XP, which does carry the streak bonus.
+// Level comes from the same all-time points total - one currency, one track.
 export async function GET() {
   if (!isSupabaseConfigured()) {
     return NextResponse.json({ rows: [] });
@@ -16,7 +16,7 @@ export async function GET() {
 
   const { data } = await supabase
     .from("profiles")
-    .select("username, total_stars, current_streak, xp, total_score")
+    .select("username, total_stars, current_streak, total_score")
     .gt("total_score", 0)
     .not("username", "is", null)
     .order("total_score", { ascending: false })
@@ -26,7 +26,6 @@ export async function GET() {
         username: string;
         total_stars: number;
         current_streak: number;
-        xp: number;
         total_score: number;
       }[]
     >();
@@ -37,7 +36,7 @@ export async function GET() {
     score: r.total_score,
     total_stars: r.total_stars,
     current_streak: r.current_streak,
-    level: levelFromXp(r.xp),
+    level: levelFromPoints(r.total_score),
   }));
 
   return NextResponse.json({ rows });

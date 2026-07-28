@@ -8,15 +8,28 @@ import { GameStats } from "@/components/profile/GameStats";
 import { DangerZone } from "@/components/profile/DangerZone";
 import { SignUpFlow } from "@/components/auth/SignUpFlow";
 import { useProfile } from "@/hooks/useProfile";
-import { ACHIEVEMENTS, effectiveStreak, levelInfo, rankTitle, streakMultiplier } from "@/lib/leaderboard";
+import {
+  ACHIEVEMENTS,
+  RANK_STEPS,
+  effectiveStreak,
+  levelInfo,
+  rankTitle,
+  totalPointsToReach,
+} from "@/lib/leaderboard";
 import { previousISODate, todayISO } from "@/lib/date";
 
-/** The player's own profile: level, streak multiplier, and lifetime stats. */
+/**
+ * The player's own profile. ONE currency: the points you score are the points
+ * that level you up, so the ring, the bar and the leaderboard all read from
+ * total_score. Streaks live here as a habit badge - they're something you hold,
+ * not a multiplier on what you score.
+ */
 export function ProfileView() {
   const { profile, rank, claim, reload, loading, deleteAccount } = useProfile();
 
-  const xp = profile?.xp ?? 0;
-  const { level, into, needed } = levelInfo(xp);
+  const points = profile?.total_score ?? 0;
+  const { level, into, needed } = levelInfo(points);
+  const toNext = Math.max(0, needed - into);
   const today = todayISO();
   const streak = effectiveStreak(
     profile?.current_streak ?? 0,
@@ -51,31 +64,60 @@ export function ProfileView() {
               </div>
             </div>
 
-            {/* XP bar - XP is the leveling track, separate from daily points */}
+            {/* The one number. Points score your day, rank you on the board, AND
+                fill this bar - there's nothing else to keep track of. */}
             <div className="mt-5">
-              <div className="mb-1.5 flex items-center justify-between text-xs font-semibold text-ink-secondary">
-                <span><span className="text-ink">{into}</span> / {needed} XP</span>
+              <div className="mb-1.5 flex items-baseline justify-between text-xs font-semibold text-ink-secondary">
+                <span>
+                  <span className="tabular text-ink">{into.toLocaleString()}</span> / {needed.toLocaleString()} pts
+                </span>
                 <span>Level {level + 1}</span>
               </div>
-              <div className="h-3.5 w-full overflow-hidden rounded-full bg-background">
+              <div className="h-3.5 w-full overflow-hidden rounded-full border-2 border-ink bg-background">
                 <motion.div
-                  className="h-full rounded-full bg-[#FFB300]"
+                  className="h-full bg-[#FFB300]"
                   initial={{ width: 0 }}
                   animate={{ width: `${needed > 0 ? (into / needed) * 100 : 0}%` }}
                   transition={{ type: "spring", damping: 24, stiffness: 180 }}
                 />
               </div>
               <p className="mt-1.5 text-[11px] text-ink-secondary">
-                XP levels you up over time. It&apos;s separate from your daily points.
+                {toNext.toLocaleString()} more points to Level {level + 1} - about{" "}
+                {gamesToGo(toNext)}.
               </p>
             </div>
 
-            {/* Habit stats - streaks front and center, NYT-style */}
-            <div className="mt-6 grid grid-cols-3 divide-x divide-border">
-              <StatCell value={streak} label="Streak" accent="#FF7A00" note={streak > 0 ? `×${streakMultiplier(streak).toFixed(2)} XP` : undefined} />
+            {/* Career total, front and centre - it's the level track now. */}
+            <div className="card-ink-flat mt-5 flex items-stretch divide-x divide-border">
+              <div className="flex-1 px-3 py-2.5 text-center">
+                <p className="tabular font-condensed text-3xl font-semibold leading-none text-ink">
+                  {points.toLocaleString()}
+                </p>
+                <p className="small-caps mt-1 text-[9px] text-ink-secondary">Career points</p>
+              </div>
+              <div className="flex-1 px-3 py-2.5 text-center">
+                <p className="tabular font-condensed text-3xl font-semibold leading-none text-ink">
+                  {(profile?.monthly_score ?? 0).toLocaleString()}
+                </p>
+                <p className="small-caps mt-1 text-[9px] text-ink-secondary">This month</p>
+              </div>
+            </div>
+
+            {/* Habit stats. The streak is a badge you hold, not a bonus you
+                score - so it's labelled as one, with no multiplier attached. */}
+            <div className="mt-5 grid grid-cols-3 divide-x divide-border">
+              <StatCell
+                value={streak}
+                label="Streak"
+                accent="#FF7A00"
+                note={streak > 0 ? `day${streak === 1 ? "" : "s"} in a row` : "play today"}
+              />
               <StatCell value={profile?.longest_streak ?? 0} label="Max streak" />
               <StatCell value={profile?.days_played ?? 0} label="Days" />
             </div>
+            <p className="mt-2 text-center text-[11px] text-ink-secondary">
+              Streaks earn badges, not points - the board ranks how you play, not how often.
+            </p>
 
             <div className="mt-4 text-center">
               <UsernameEditor current={profile?.username ?? ""} onSave={claim} />
@@ -91,12 +133,70 @@ export function ProfileView() {
       {hasName && (
         <>
           <GameStats />
+          <RankLadder level={level} points={points} />
           <Achievements earned={profile?.achievements ?? []} />
           <DangerZone username={profile?.username ?? ""} onDelete={deleteAccount} />
         </>
       )}
     </main>
     </>
+  );
+}
+
+// A decent game lands around 600 points, so that's the yardstick for turning
+// "1,850 points to go" into something a player can picture.
+const POINTS_PER_GAME = 600;
+
+function gamesToGo(points: number): string {
+  const n = Math.max(1, Math.round(points / POINTS_PER_GAME));
+  return `${n} more game${n === 1 ? "" : "s"}`;
+}
+
+/** The rank ladder: where you are, what's next, and what it costs. Ranks are
+ *  the long-horizon carrot - levels come fast at first, titles don't. */
+function RankLadder({ level, points }: { level: number; points: number }) {
+  const next = RANK_STEPS.find((r) => r.min > level);
+  return (
+    <section className="mt-4 card-ink rounded-2xl p-6">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-sm font-extrabold text-ink">Ranks</h2>
+        <span className="text-xs font-semibold text-ink-secondary">
+          {next ? `${(totalPointsToReach(next.min) - points).toLocaleString()} pts to ${next.title}` : "Top rank"}
+        </span>
+      </div>
+      <div className="mt-3 flex flex-col gap-1.5">
+        {RANK_STEPS.map((r) => {
+          const held = level >= r.min;
+          const isNext = next?.min === r.min;
+          return (
+            <div
+              key={r.title}
+              className={`wonky flex items-center gap-3 border px-3 py-2 ${
+                held
+                  ? "border-ink bg-[#FFB300]/15"
+                  : isNext
+                    ? "border-ink border-dashed bg-background"
+                    : "border-border bg-background"
+              }`}
+            >
+              <span
+                className={`tabular w-11 shrink-0 font-condensed text-sm font-semibold ${
+                  held ? "text-ink" : "text-ink-secondary"
+                }`}
+              >
+                Lv {r.min}
+              </span>
+              <span className={`min-w-0 flex-1 truncate text-[13px] font-bold ${held ? "text-ink" : "text-ink-secondary"}`}>
+                {r.title}
+              </span>
+              <span className="tabular shrink-0 text-[11px] font-semibold text-ink-secondary">
+                {totalPointsToReach(r.min).toLocaleString()} pts
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

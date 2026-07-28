@@ -87,7 +87,7 @@ const CHAIN: GameSeo = {
     },
     {
       q: "Can I play previous Chain puzzles?",
-      a: "Yes. Every past day lives in the archive with its full set of games and that day's leaderboard, and archive plays still earn points and XP toward your totals.",
+      a: "Yes. Every past day lives in the archive with its full set of games and that day's leaderboard, and archive plays still earn points toward your career total and your level.",
     },
     {
       q: "What topics does Chain cover?",

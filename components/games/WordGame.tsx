@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
+import { recordModeResult } from "@/lib/recordGame";
 import { isAdminPreview } from "@/lib/adminClient";
 import { useModeGuard } from "@/hooks/useModeGuard";
 import { WORD_MAX_GUESSES, WORD_POINTS, wordLossScore, modeDef } from "@/lib/modes";
@@ -135,18 +136,14 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
       moves: rows.length,
       won,
     });
-    void fetch("/api/modes/complete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        session_id: getSessionId(),
-        play_date: date,
-        mode: "word",
-        score,
-        moves: rows.length, // guesses used - drives the profile's avg + distribution
-        won,
-      }),
-    }).catch(() => {});
+    recordModeResult({
+      session_id: getSessionId(),
+      play_date: date,
+      mode: "word",
+      score,
+      moves: rows.length, // guesses used - drives the profile's avg + distribution
+      won,
+    });
   }, [done, rows.length, score, date, won]);
 
   const tileStyle = (m: Mark | null): React.CSSProperties => {

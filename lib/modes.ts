@@ -110,7 +110,7 @@ export const MODES: ModeDef[] = [
     accent: "#00C853",
     contrast: "#0B0D10",
     pastel: "#BCE8C6", // soft mint
-    maxPoints: 0, // open-ended (XP formula); shown as its own score
+    maxPoints: 0, // open-ended (points formula); shown as its own score
     status: "live",
     href: (date) => `/play/${date}`,
   },

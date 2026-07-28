@@ -102,7 +102,7 @@ export async function POST(req: Request) {
         lives_remaining: Number.isFinite(lastGame.lives) ? lastGame.lives : null,
         completed: true,
         time_seconds: time,
-        points: pointsForGame(lastGame.reached, lastGame.rounds, 0),
+        points: pointsForGame(lastGame.reached, lastGame.rounds),
         stars: heartsFor(lastGame.lives ?? 0),
       };
       // Store the round count when migration 0009 is live; retry bare if not.
@@ -122,7 +122,8 @@ export async function POST(req: Request) {
     .insert({
       session_id,
       username,
-      xp: roll.xp,
+      // Legacy column, kept mirrored to the one true total. See profileRollup.
+      xp: roll.totalScore,
       total_score: roll.totalScore,
       total_stars: roll.totalStars,
       days_played: roll.daysPlayed,

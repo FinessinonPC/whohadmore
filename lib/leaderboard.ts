@@ -25,7 +25,7 @@ export interface Profile {
 export interface LeaderboardRow {
   rank: number;
   username: string;
-  score: number; // all-time score (total XP accumulated)
+  score: number; // all-time points - also what drives your level
   total_stars: number;
   current_streak: number;
   level: number;
@@ -43,31 +43,68 @@ export interface DailyRow {
 }
 
 // --- Levels ------------------------------------------------------------------
-// Rising curve: early levels come quickly (rewarding), later ones take longer.
-// XP to go from level L to L+1 = 200 + (L-1)*100  (L1->2: 200, L2->3: 300, …).
+// ONE currency: your all-time points are what level you up. (There used to be a
+// separate XP track - two numbers that both went up for different reasons, which
+// nobody could keep straight. Points are what the leaderboard ranks, what the
+// scorecard shows, and now what the level ring fills.)
+//
+// Curve: cost to go from level L to L+1 = 700 * L^1.35, rounded to 50.
+// Front-loaded on purpose - the first level lands inside the first session, and
+// each one after costs a little more, so early play feels generous and later
+// levels stay worth something. A full card is ~4,000 points; someone playing
+// one or two games a day earns ~1,500.
+//
+//   full card:  L2 day 1 · L5 ~3d · L10 ~2wk · L17 ~2mo · L25 ~4.5mo
+//   1-2 games:  L2 day 1 · L5 ~1wk · L10 ~6wk · L17 ~5mo · L25 ~1yr
 
-export function xpForLevel(level: number): number {
-  return 200 + (Math.max(1, level) - 1) * 100;
+const LEVEL_BASE = 700;
+const LEVEL_EXP = 1.35;
+
+/** Points needed to go from `level` to `level + 1`. */
+export function pointsForLevel(level: number): number {
+  const l = Math.max(1, Math.floor(level));
+  return Math.round((LEVEL_BASE * Math.pow(l, LEVEL_EXP)) / 50) * 50;
 }
 
 export interface LevelInfo {
   level: number;
-  into: number; // XP into the current level
-  needed: number; // XP needed to finish the current level
+  into: number; // points earned into the current level
+  needed: number; // points required to finish the current level
 }
 
-export function levelInfo(xp: number): LevelInfo {
+/** Where a lifetime points total sits on the curve. */
+export function levelInfo(points: number): LevelInfo {
   let level = 1;
-  let remaining = Math.max(0, Math.floor(xp));
-  while (remaining >= xpForLevel(level)) {
-    remaining -= xpForLevel(level);
+  let remaining = Math.max(0, Math.floor(points));
+  // Guard against a runaway loop on absurd inputs; 200 is far beyond reach.
+  while (level < 200 && remaining >= pointsForLevel(level)) {
+    remaining -= pointsForLevel(level);
     level += 1;
   }
-  return { level, into: remaining, needed: xpForLevel(level) };
+  return { level, into: remaining, needed: pointsForLevel(level) };
 }
 
-export function levelFromXp(xp: number): number {
-  return levelInfo(xp).level;
+export function levelFromPoints(points: number): number {
+  return levelInfo(points).level;
+}
+
+/** Total lifetime points required to REACH a given level (for "next level" copy). */
+export function totalPointsToReach(level: number): number {
+  let sum = 0;
+  for (let l = 1; l < Math.max(1, level); l++) sum += pointsForLevel(l);
+  return sum;
+}
+
+/** Everything the client needs to throw the level-up party, computed server-side
+ *  so the celebration can never disagree with the stored profile. */
+export interface LevelUp {
+  from: number;
+  to: number;
+  title: string; // rank title at the new level
+  titleChanged: boolean; // true when the rank name itself changed too
+  totalScore: number;
+  into: number; // points banked into the new level
+  needed: number; // points to finish the new level
 }
 
 const RANKS: { min: number; title: string }[] = [
@@ -83,17 +120,17 @@ export function rankTitle(level: number): string {
   return RANKS.find((r) => level >= r.min)?.title ?? "Wanderer";
 }
 
+/** The same ranks bottom-up, for rendering the ladder on the profile. */
+export const RANK_STEPS: readonly { min: number; title: string }[] = [...RANKS].reverse();
+
 // --- Per-game scoring --------------------------------------------------------
-// XP is based on HOW FAR the player made it (rounds reached). The collectible
-// stat is HEARTS - the lives you finish a game with (0–3) - summed over time.
 
 /** Hearts banked from a game = lives remaining at the end (0–3). */
 export function heartsFor(lives: number): number {
   return Math.max(0, Math.min(3, Math.floor(Number.isFinite(lives) ? lives : 0)));
 }
 
-// XP weights. Distance is the bulk; clearing adds a bonus; speed is a smaller
-// component that breaks ties between players who get equally far.
+// Chain's per-game weights. Distance is the bulk; clearing adds a bonus.
 const DISTANCE_XP = 10; // per round reached
 const CLEAR_BONUS = 50; // for going the full distance
 const SPEED_XP = 6; // max per round, scaled by how fast you decided
@@ -112,18 +149,16 @@ export function speedBonus(reached: number, timeSeconds: number): number {
   return Math.round(Math.max(0, reached) * SPEED_XP * speedFactor(timeSeconds, reached));
 }
 
-/** Base XP: how many you got right + a bonus for a full clear. Chain has no
- *  time component, so XP is purely about correct calls. */
+/** How many calls you got right, plus a bonus for a full clear. */
 export function basePoints(reached: number, rounds: number): number {
   const distance = Math.max(0, reached) * DISTANCE_XP; // per correct answer
   const clear = rounds > 0 && reached >= rounds ? CLEAR_BONUS : 0;
   return distance + clear;
 }
 
-/** Gentle streak boost: +3% per consecutive day, capped at +60%. */
-export function streakMultiplier(streak: number): number {
-  return Math.min(1.6, 1 + 0.03 * Math.max(0, streak));
-}
+// Streaks are a badge and an achievement, NOT a scoring bonus. Keeping them out
+// of the score means the leaderboard ranks play, not attendance - someone with a
+// long streak can't out-rank a better player on tenure alone.
 
 /** The streak as it stands *right now*, for display. The stored value is only
  *  reconciled on the next play, so a player who missed a day would otherwise see
@@ -140,21 +175,9 @@ export function effectiveStreak(
   return 0;
 }
 
-export function pointsForGame(reached: number, rounds: number, streak: number): number {
-  return Math.round(basePoints(reached, rounds) * streakMultiplier(streak));
-}
-
-// --- Quick-game XP -----------------------------------------------------------
-// Chain earns XP from how far you got (basePoints, up to ~150 before streak).
-// The quick games (Duality/Word/Mini) earn XP from their 0–1000 daily score on
-// the SAME 0–150 band, so every game you play levels you up and no single game
-// dominates. Flat by design: the streak multiplier stays a Chain-play reward,
-// which also keeps this a pure function of the stored score - so recomputing a
-// profile from history always reproduces the exact XP that was credited live.
-export const MODE_XP_MAX = 150;
-export function modeXp(score: number): number {
-  const s = Math.max(0, Math.min(1000, Math.round(score)));
-  return Math.round((s / 1000) * MODE_XP_MAX);
+/** Chain's stored per-game points. No streak multiplier - see the note above. */
+export function pointsForGame(reached: number, rounds: number): number {
+  return basePoints(reached, rounds);
 }
 
 // --- Daily score -------------------------------------------------------------

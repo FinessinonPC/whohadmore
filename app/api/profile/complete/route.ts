@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
-import { isValidISODate, monthPeriod, previousISODate, todayISO } from "@/lib/date";
+import { isValidISODate, monthPeriod, todayISO } from "@/lib/date";
 import { pointsForGame, type Profile } from "@/lib/leaderboard";
 import { applyRollup } from "@/lib/profileRollup";
 
@@ -30,13 +30,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  // No backend configured (demo mode): still report the (streak-free) XP for
-  // display. `demo: true` makes this state visible - in this mode nothing is
-  // recorded, so the daily leaderboard will be empty no matter what.
+  // No backend configured (demo mode): still report the points for display.
+  // `demo: true` makes this state visible - in this mode nothing is recorded,
+  // so the daily leaderboard will be empty no matter what.
   if (!isSupabaseConfigured()) {
     return NextResponse.json({
       profile: null,
-      pointsEarned: pointsForGame(reached, rounds, 0),
+      pointsEarned: pointsForGame(reached, rounds),
       demo: true,
     });
   }
@@ -48,7 +48,6 @@ export async function POST(req: Request) {
   const supabase = getServiceSupabase();
   const today = todayISO();
   const period = monthPeriod(today);
-  const isToday = play_date === today;
 
   // Has this session already completed this date? (idempotent stats)
   const { data: existing } = await supabase
@@ -69,20 +68,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ profile: profile ?? null, pointsEarned: 0, alreadyPlayed: true });
   }
 
-  // The streak multiplier rewards the streak as it stands when the game is
-  // played (today's play may extend it; archive plays use the current one).
-  // The result is baked into the row's stored points, which is what makes
-  // recomputing XP from history reproduce live play exactly.
-  let streakForPoints = profile?.current_streak ?? 0;
-  if (profile && isToday) {
-    streakForPoints =
-      profile.last_played_date === previousISODate(play_date)
-        ? profile.current_streak + 1
-        : profile.last_played_date === play_date
-          ? profile.current_streak
-          : 1;
-  }
-  const pts = pointsForGame(reached, rounds, streakForPoints);
+  // Points depend only on how the game was played - no streak multiplier, so
+  // the stored value is reproducible from the row alone.
+  const pts = pointsForGame(reached, rounds);
 
   // Record the result - the row every other number is derived from. Store the
   // round count so recomputes score this game exactly as played; if migration
@@ -118,13 +106,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ profile: null, pointsEarned: pts });
   }
 
-  // One shared rollup recomputes XP, totals, days, streaks, monthly, and
+  // One shared rollup recomputes totals, level, days, streaks, monthly, and
   // achievements from the full history - live play and sign-in can't drift.
-  const { profile: updated, newAchievements } = await applyRollup(supabase, session_id, today, period);
+  const { profile: updated, newAchievements, levelUp } = await applyRollup(
+    supabase,
+    session_id,
+    today,
+    period
+  );
 
   return NextResponse.json({
     profile: updated ?? profile,
     pointsEarned: pts,
     newAchievements,
+    levelUp,
   });
 }

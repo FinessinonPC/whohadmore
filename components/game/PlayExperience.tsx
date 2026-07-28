@@ -18,6 +18,7 @@ import {
 } from "@/lib/playStore";
 import { msUntilNextGameMidnight } from "@/lib/date";
 import { pointsForGame } from "@/lib/leaderboard";
+import { recordChainResult } from "@/lib/recordGame";
 import { maxScore } from "@/lib/gameLogic";
 import { usePlayedResults } from "@/hooks/usePlayedResults";
 import type { GameResultSummary } from "@/hooks/useGame";
@@ -94,9 +95,9 @@ export function PlayExperience({
 
   const handleComplete = useCallback(
     (summary: GameResultSummary) => {
-      // XP shown is the streak-free baseline (instant + works offline). The
-      // leaderboard total credits the streak multiplier server-side.
-      const xpEarned = pointsForGame(summary.reached, summary.rounds, 0);
+      // Points for this run, computed on-device so the end screen works
+      // offline. The server derives the same number from the recorded row.
+      const xpEarned = pointsForGame(summary.reached, summary.rounds);
       const stored: StoredResult = {
         reached: summary.reached,
         rounds: summary.rounds,
@@ -112,18 +113,13 @@ export function PlayExperience({
 
       // Record the result + update stats (best-effort; the route is idempotent
       // per session+date). Identity is the anonymous session_id. Fire-and-forget
-      // - the minimal end screen doesn't wait on or display anything from this.
-      void fetch("/api/profile/complete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: getSessionId(),
-          play_date: date,
-          reached: summary.reached,
-          rounds: summary.rounds,
-        }),
-      }).catch(() => {
-        /* never block the end screen on result tracking */
+      // - the end screen doesn't wait on it - but if this run crossed a level
+      // the celebration is queued when the response lands.
+      recordChainResult({
+        session_id: getSessionId(),
+        play_date: date,
+        reached: summary.reached,
+        rounds: summary.rounds,
       });
     },
     [date]

@@ -79,7 +79,7 @@ export function SiteSeoFooter() {
           Every game is worth up to 1,000 points, and whatever you finish adds up to a single daily
           total that ranks on the day&apos;s leaderboard. You don&apos;t have to play all four - one
           game still counts. Everything runs in your browser with no download, and an account is
-          free and optional: it saves your streak, XP and stats across devices.
+          free and optional: it saves your streak, level and stats across devices.
         </p>
 
         {/* Internal links into the evergreen pages - where the topical content lives */}

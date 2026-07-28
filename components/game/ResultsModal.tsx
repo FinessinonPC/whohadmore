@@ -171,7 +171,7 @@ export function ResultsModal({ date, onClose }: { date: string; onClose: () => v
         <Link
           href="/archive"
           onClick={() => trackEvent("past_card_click", { surface: "results_modal", date })}
-          className="wonky mt-2.5 flex items-center gap-3 border-2 border-ink bg-[#F8E6A2] px-4 py-3 text-ink ink-shadow-sm transition-transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+          className="ink-fix wonky mt-2.5 flex items-center gap-3 border-2 border-ink bg-[#F8E6A2] px-4 py-3 text-ink ink-shadow-sm transition-transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
         >
           <span className="min-w-0 flex-1">
             <span className="block text-[15px] font-bold leading-tight">Play a past card →</span>

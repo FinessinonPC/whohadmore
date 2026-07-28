@@ -7,7 +7,13 @@ export const dynamic = "force-dynamic";
 
 // The only events we accept - a tight allowlist so the table can't be spammed
 // with arbitrary strings.
-const EVENTS = new Set(["share_click", "results_modal_shown", "past_card_click"]);
+const EVENTS = new Set([
+  "share_click",
+  "results_modal_shown",
+  "past_card_click",
+  "level_up_shown",
+  "level_up_profile_click",
+]);
 
 const clean = (v: unknown, max = 40): string | null =>
   typeof v === "string" && v.length > 0 && v.length <= max ? v : null;

@@ -32,15 +32,15 @@ const FAQS: Faq[] = [
   },
   {
     q: "Do I need an account to play?",
-    a: "No. You can play every day's games without signing up. A free account saves your streak, XP, achievements and per-game stats across devices, and puts your name on the leaderboard instead of an anonymous label.",
+    a: "No. You can play every day's games without signing up. A free account saves your streak, level, achievements and per-game stats across devices, and puts your name on the leaderboard instead of an anonymous label.",
   },
   {
     q: "How does scoring work?",
     a: "Every game is worth up to 1,000 points. Whatever you finish adds up to your total for that day, and the daily leaderboard ranks players by that combined number. You don't have to play all four - a single game still counts.",
   },
   {
-    q: "What is the difference between points and XP?",
-    a: "Points are your score for a given day and what the leaderboards rank. XP is a separate lifetime track that levels up your profile over time and carries a small bonus for playing on consecutive days.",
+    q: "How do levels work?",
+    a: "There is one currency: points. The points you score each day add to a career total, and that total is what levels you up. Early levels come quickly and later ones cost more, so the first few land in your first week of play. Streaks do not change your score - they earn badges instead.",
   },
   {
     q: "When do new puzzles come out?",
@@ -48,15 +48,15 @@ const FAQS: Faq[] = [
   },
   {
     q: "Can I play puzzles from previous days?",
-    a: "Yes. Every past day lives in the archive with its full set of games and that day's final leaderboard. Archive plays still earn points and XP toward your totals. Signing in with a free account unlocks the archive.",
+    a: "Yes. Every past day lives in the archive with its full set of games and that day's final leaderboard. Archive plays still earn points toward your career total and your level. Signing in with a free account unlocks the archive.",
   },
   {
     q: "How do streaks work?",
-    a: "Playing on consecutive days builds a streak, which adds a small XP bonus that grows the longer it runs. Any game counts toward keeping a streak alive - you don't have to finish all four.",
+    a: "Playing on consecutive days builds a streak, which earns badges at 7 and 30 days. Streaks do not multiply your score - the leaderboard ranks how you play, not how often. Any game counts toward keeping a streak alive; you don't have to finish all four.",
   },
   {
     q: "What happens if I miss a day?",
-    a: "Nothing is lost except the streak itself. Your points, XP and achievements stay exactly as they were, and the day you missed is still playable from the archive.",
+    a: "Nothing is lost except the streak itself. Your points, level and achievements stay exactly as they were, and the day you missed is still playable from the archive.",
   },
   {
     q: "Can I delete my account?",

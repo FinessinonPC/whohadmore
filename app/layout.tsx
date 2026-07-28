@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Oswald, Patrick_Hand, Permanent_Marker } from "next/font/google";
 import { getSiteUrl } from "@/lib/site";
 import { Analytics } from "@vercel/analytics/next";
+import { LevelUpHost } from "@/components/game/LevelUpModal";
 import "./globals.css";
 
 // The scorecard is filled in BY HAND: Patrick Hand (a real person's print) is
@@ -134,6 +135,8 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteLd) }}
         />
         {children}
+        {/* One celebration host for the whole app - any game can trigger it. */}
+        <LevelUpHost />
         <Analytics />
       </body>
     </html>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
+import { recordModeResult } from "@/lib/recordGame";
 import { isAdminPreview } from "@/lib/adminClient";
 import { useModeGuard } from "@/hooks/useModeGuard";
 import { MINI_MAX_POINTS, MINI_REVEAL_CREDIT, miniScore, modeDef } from "@/lib/modes";
@@ -258,20 +259,16 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
       moves: checks,
       won: !revealed,
     });
-    void fetch("/api/modes/complete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        session_id: getSessionId(),
-        play_date: date,
-        mode: "mini",
-        score,
-        clean: !revealed && checks === 0,
-        seconds: Math.floor(seconds), // solve time - drives the profile's avg/best
-        moves: checks,
-        won: !revealed,
-      }),
-    }).catch(() => {});
+    recordModeResult({
+      session_id: getSessionId(),
+      play_date: date,
+      mode: "mini",
+      score,
+      clean: !revealed && checks === 0,
+      seconds: Math.floor(seconds), // solve time - drives the profile's avg/best
+      moves: checks,
+      won: !revealed,
+    });
   };
 
   const anyFilled = entries.some((row, r) => row.some((ch, c) => open(r, c) && ch !== ""));

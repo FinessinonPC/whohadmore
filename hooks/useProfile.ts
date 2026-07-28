@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getSessionId } from "@/lib/playStore";
-import type { Profile } from "@/lib/leaderboard";
+import { primeLevelSeen } from "@/lib/levelUp";
+import { levelFromPoints, type Profile } from "@/lib/leaderboard";
 
 export interface LastGame {
   play_date: string;
@@ -33,6 +34,10 @@ export function useProfile() {
       const res = await fetch(`/api/profile?session_id=${getSessionId()}`);
       const data = (await res.json()) as { profile: Profile | null; rank: number | null };
       cache = { profile: data.profile ?? null, rank: data.rank ?? null };
+      // Whatever level they already hold is history, not news - record it so an
+      // established account never gets a celebration for a level it earned
+      // before this device ever saw it.
+      if (cache.profile) primeLevelSeen(levelFromPoints(cache.profile.total_score ?? 0));
       setState({ profile: cache.profile, rank: cache.rank, loading: false });
     } catch {
       setState((s) => ({ ...s, loading: false }));

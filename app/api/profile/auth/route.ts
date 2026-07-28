@@ -144,7 +144,8 @@ export async function POST(req: Request) {
       session_id,
       username,
       email,
-      xp: roll.xp,
+      // Legacy column, kept mirrored to the one true total. See profileRollup.
+      xp: roll.totalScore,
       total_score: roll.totalScore,
       total_stars: roll.totalStars,
       days_played: roll.daysPlayed,

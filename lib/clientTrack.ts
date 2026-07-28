@@ -9,7 +9,12 @@ import { getSessionId } from "@/lib/playStore";
  * fire-and-forget - analytics must never block or break the game.
  */
 export function trackEvent(
-  event: "share_click" | "results_modal_shown" | "past_card_click",
+  event:
+    | "share_click"
+    | "results_modal_shown"
+    | "past_card_click"
+    | "level_up_shown"
+    | "level_up_profile_click",
   props: { surface?: string; game?: string; date?: string } = {}
 ): void {
   try {

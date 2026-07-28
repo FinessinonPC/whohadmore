@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LeaderboardView } from "@/components/leaderboard/LeaderboardView";
 import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
-import { levelFromXp, type LeaderboardRow } from "@/lib/leaderboard";
+import { levelFromPoints, type LeaderboardRow } from "@/lib/leaderboard";
 import { getDailyLeaderboard } from "@/lib/dailyLeaderboard";
 import { todayISO } from "@/lib/date";
 
@@ -20,13 +20,13 @@ async function getAllTimeRows(): Promise<LeaderboardRow[]> {
   const supabase = getServiceSupabase();
   const { data } = await supabase
     .from("profiles")
-    .select("username, total_stars, current_streak, xp, total_score")
+    .select("username, total_stars, current_streak, total_score")
     .gt("total_score", 0)
     .not("username", "is", null)
     .order("total_score", { ascending: false })
     .limit(50)
     .returns<
-      { username: string; total_stars: number; current_streak: number; xp: number; total_score: number }[]
+      { username: string; total_stars: number; current_streak: number; total_score: number }[]
     >();
 
   return (data ?? []).map((r, i) => ({
@@ -35,7 +35,7 @@ async function getAllTimeRows(): Promise<LeaderboardRow[]> {
     score: r.total_score,
     total_stars: r.total_stars,
     current_streak: r.current_streak,
-    level: levelFromXp(r.xp),
+    level: levelFromPoints(r.total_score),
   }));
 }
 

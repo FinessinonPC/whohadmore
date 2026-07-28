@@ -39,8 +39,8 @@ export function GameStats() {
     <section className="mt-4 card-ink rounded-2xl p-6">
       <h2 className="text-sm font-extrabold text-ink">Across every game</h2>
       <p className="mt-0.5 text-[11px] leading-snug text-ink-secondary">
-        Points are how you score each day - up to 1,000 a game. (Separate from XP, which
-        levels you up over time.)
+        Points are how you score each day - up to 1,000 a game. They&apos;re also what
+        levels you up, so every game you play counts twice.
       </p>
       <div className="mt-3 grid grid-cols-3 gap-3 text-center">
         <Big value={totalPlayed.toLocaleString()} label="Games played" />

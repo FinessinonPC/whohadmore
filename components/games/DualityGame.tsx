@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
+import { recordModeResult } from "@/lib/recordGame";
 import { isAdminPreview } from "@/lib/adminClient";
 import { useModeGuard } from "@/hooks/useModeGuard";
 import { DUALITY_MAX_MISTAKES, DUALITY_MAX_SCORE, DUALITY_PAIRS, dualityScore, modeDef } from "@/lib/modes";
@@ -124,20 +125,16 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
       moves: mistakes,
       won: solved,
     });
-    void fetch("/api/modes/complete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        session_id: getSessionId(),
-        play_date: date,
-        mode: "duality",
-        score,
-        clean: solved && mistakes === 0,
-        seconds: Math.round(elapsed),
-        moves: mistakes, // wrong lock-ins - drives the profile's avg mistakes
-        won: solved,
-      }),
-    }).catch(() => {});
+    recordModeResult({
+      session_id: getSessionId(),
+      play_date: date,
+      mode: "duality",
+      score,
+      clean: solved && mistakes === 0,
+      seconds: Math.round(elapsed),
+      moves: mistakes, // wrong lock-ins - drives the profile's avg mistakes
+      won: solved,
+    });
   }, [done, score, max, date, found.length, mistakes, solved, elapsed]);
 
   if (checking) {

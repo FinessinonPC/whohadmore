@@ -116,8 +116,11 @@ accent-tinted square. New game = new icon following these exact rules.
   `pickRankCards`) - ordering/judging ties is unfair.
 - **Score budget**: every game (Chain included) maxes at **1000 points** on the
   same scale, so no mode dominates the combined daily total. Duality and Mini
-  fold in a speed bonus so scores vary rather than clumping on a few tiers. XP
-  (leveling) is a separate currency from these daily points.
+  fold in a speed bonus so scores vary rather than clumping on a few tiers.
+  There is exactly ONE currency: those same points accumulate into
+  `total_score`, which is what the leaderboard ranks AND what levels a player
+  up (`levelInfo` in `lib/leaderboard.ts`). Streaks earn badges only - never a
+  score multiplier, so the board ranks play, not attendance.
 - **One-screen rule**: a game session is ≤60 seconds, no scrolling mid-play
   on a 390px phone. Intro copy is one sentence, on the board itself.
 - **Already-played state**: score + "come back tomorrow" + NextGameCTA.

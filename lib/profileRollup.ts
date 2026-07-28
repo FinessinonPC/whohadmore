@@ -1,6 +1,6 @@
 // ============================================================================
-// THE single source of truth for a player's rolled-up profile: XP, all-time
-// points, days played, streaks, monthly score, and achievements - computed
+// THE single source of truth for a player's rolled-up profile: all-time
+// points, level, days played, streaks, monthly score, and achievements - computed
 // from the full game history (Chain + the quick games, live days AND archive).
 //
 // Every write path calls this after recording a game (and sign-in/claim call
@@ -9,12 +9,12 @@
 // the SAME math by construction.
 //
 // Scoring rules (the one true set):
-//   XP           = Σ chain rows' stored points (streak-boosted at play time)
-//                + Σ modeXp(quick-game score)          … 0–150 per game
 //   total_score  = Σ chainDailyScore(correct, rounds)  … 0–1000 per chain day
 //                + Σ quick-game scores                 … 0–1000 per game
+//                This ONE number is the score, the leaderboard rank, AND the
+//                level track. Streaks are a badge; they never touch it.
 //   a "day played" = any recorded game that date; streaks run over those days
-//   monthly      = this month's XP-earning (chain points + quick-game XP)
+//   monthly      = the same sum, restricted to the current month
 // ============================================================================
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -22,14 +22,16 @@ import { previousISODate } from "@/lib/date";
 import {
   chainDailyScore,
   earnedAchievementIds,
-  levelFromXp,
-  modeXp,
+  levelFromPoints,
+  levelInfo,
+  rankTitle,
+  type LevelUp,
 } from "@/lib/leaderboard";
 
 export interface ChainHistoryRow {
   play_date: string;
   score: number | null; // correct calls
-  points: number | null; // XP credited at play time (streak included)
+  points: number | null; // points credited at play time (legacy; not used in the rollup)
   stars: number | null;
   rounds?: number | null; // stored from migration 0009 on; older rows resolve via cards
 }
@@ -44,8 +46,9 @@ export interface ModeHistoryRow {
 }
 
 export interface Rollup {
-  xp: number;
   totalScore: number;
+  /** Level derived from totalScore - the single progression track. */
+  level: number;
   totalStars: number;
   daysPlayed: number;
   currentStreak: number; // consecutive played days ending today/yesterday
@@ -99,9 +102,6 @@ export function rollupFrom(
   };
 
   const chainDaily = chain.map((r) => chainDailyScore(r.score ?? 0, roundsFor(r)));
-  const xp =
-    chain.reduce((s, r) => s + (r.points ?? 0), 0) +
-    modes.reduce((s, r) => s + modeXp(r.score ?? 0), 0);
   const totalScore =
     chainDaily.reduce((s, p) => s + p, 0) + modes.reduce((s, r) => s + (r.score ?? 0), 0);
   const totalStars = chain.reduce((s, r) => s + (r.stars ?? 0), 0);
@@ -116,9 +116,12 @@ export function rollupFrom(
   const longestRun = longestRunOf(sorted);
   const lastPlayed = sorted.length ? sorted[sorted.length - 1] : null;
 
+  // This month's points, on the same scale as total_score.
   const monthlyScore =
-    chain.filter((r) => r.play_date.startsWith(period)).reduce((s, r) => s + (r.points ?? 0), 0) +
-    modes.filter((r) => r.play_date.startsWith(period)).reduce((s, r) => s + modeXp(r.score ?? 0), 0);
+    chain
+      .filter((r) => r.play_date.startsWith(period))
+      .reduce((s, r) => s + chainDailyScore(r.score ?? 0, roundsFor(r)), 0) +
+    modes.filter((r) => r.play_date.startsWith(period)).reduce((s, r) => s + (r.score ?? 0), 0);
 
   // --- Achievements, derived from history wherever the data allows ----------
   const anyChainClear = chain.some((r) => (r.score ?? 0) >= roundsFor(r) && roundsFor(r) > 0);
@@ -127,7 +130,7 @@ export function rollupFrom(
       daysPlayed,
       // Streak badges reward *reaching* a streak - the historical best counts.
       currentStreak: longestRun,
-      level: levelFromXp(xp),
+      level: levelFromPoints(totalScore),
       clearedThisGame: anyChainClear,
     })
   );
@@ -156,8 +159,8 @@ export function rollupFrom(
   if (gamesRecorded >= 100) earned.add("century");
 
   return {
-    xp,
     totalScore,
+    level: levelFromPoints(totalScore),
     totalStars,
     daysPlayed,
     currentStreak,
@@ -234,6 +237,11 @@ export async function computeRollup(
  * Recompute a profile from history and write it. Merges achievements (stored ∪
  * derived ∪ any live-request extras) and never lowers longest_streak. Quietly
  * does nothing for sessions without a profile (anonymous players).
+ *
+ * Also reports whether this write crossed a level boundary, by comparing the
+ * level implied by the STORED total against the recomputed one. Because both
+ * sides read from the same curve, a recompute that changes nothing can never
+ * fire a spurious celebration.
  */
 export async function applyRollup(
   supabase: SupabaseClient,
@@ -241,13 +249,22 @@ export async function applyRollup(
   today: string,
   period: string,
   opts: { extraAchievements?: string[] } = {}
-): Promise<{ profile: Record<string, unknown> | null; newAchievements: string[] }> {
+): Promise<{
+  profile: Record<string, unknown> | null;
+  newAchievements: string[];
+  levelUp: LevelUp | null;
+}> {
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
     .eq("session_id", session_id)
-    .maybeSingle<{ id: string; achievements: string[] | null; longest_streak: number | null }>();
-  if (!profile) return { profile: null, newAchievements: [] };
+    .maybeSingle<{
+      id: string;
+      achievements: string[] | null;
+      longest_streak: number | null;
+      total_score: number | null;
+    }>();
+  if (!profile) return { profile: null, newAchievements: [], levelUp: null };
 
   const roll = await computeRollup(supabase, session_id, today, period);
   const have = profile.achievements ?? [];
@@ -258,7 +275,9 @@ export async function applyRollup(
   const { data: updated } = await supabase
     .from("profiles")
     .update({
-      xp: roll.xp,
+      // `xp` is a legacy column - levels come from total_score now. Kept in
+      // sync (not dropped) so an older cached client can't read a stale value.
+      xp: roll.totalScore,
       total_score: roll.totalScore,
       total_stars: roll.totalStars,
       days_played: roll.daysPlayed,
@@ -274,8 +293,23 @@ export async function applyRollup(
     .select("*")
     .single();
 
+  const before = levelFromPoints(profile.total_score ?? 0);
+  const after = levelInfo(roll.totalScore);
+
   return {
     profile: updated ?? null,
     newAchievements: merged.filter((a) => !have.includes(a)),
+    levelUp:
+      after.level > before
+        ? {
+            from: before,
+            to: after.level,
+            title: rankTitle(after.level),
+            titleChanged: rankTitle(after.level) !== rankTitle(before),
+            totalScore: roll.totalScore,
+            into: after.into,
+            needed: after.needed,
+          }
+        : null,
   };
 }

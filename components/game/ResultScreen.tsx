@@ -45,7 +45,7 @@ function headline(correct: number, rounds: number): string {
 /**
  * Chain's end state, minimal and matching the other games: brand header, the
  * points you scored (how many you got right), and the Next up hand-off into the
- * rest of today's games. No hearts, no leaderboard, no XP.
+ * rest of today's games. No hearts, no leaderboard, no points.
  */
 export function ResultScreen({
   reached,

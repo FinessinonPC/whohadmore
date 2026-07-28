@@ -34,7 +34,7 @@ const FAQ_LD = {
       name: "Is WhoHadMore free?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Everything is free and plays in your browser on phone or desktop, with no download. A free account saves your streak, XP and badges and unlocks the archive of past days.",
+        text: "Yes. Everything is free and plays in your browser on phone or desktop, with no download. A free account saves your streak, level and badges and unlocks the archive of past days.",
       },
     },
     {
@@ -50,7 +50,7 @@ const FAQ_LD = {
       name: "Can I play past days?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes - every past day lives in the archive with all of its games and that day's leaderboard, and it still earns XP and points toward your totals. Sign in with a free account to play them.",
+        text: "Yes - every past day lives in the archive with all of its games and that day's leaderboard, and it still earns points toward your career total and your level. Sign in with a free account to play them.",
       },
     },
   ],
@@ -165,8 +165,9 @@ export default function AboutPage() {
         <p className="mt-3 text-[17px] leading-relaxed text-ink-secondary">
           Every game is worth up to <span className="marker-gold font-semibold text-ink">1,000</span>{" "}
           points. Add them up and that&apos;s your day: the number the leaderboard ranks. Play a
-          single game or all four; whatever you finish counts. Claim a free username and your streak,
-          XP and badges carry from day to day, on any device.
+          single game or all four; whatever you finish counts. Those same points build a career
+          total that levels you up, and a free username carries your level, streak and badges from
+          day to day, on any device.
         </p>
         <dl className="mt-6 grid grid-cols-3 border-y-2 border-ink">
           {[
@@ -202,7 +203,7 @@ export default function AboutPage() {
             archive
           </Link>{" "}
           keeps every past edition, all four games and that day&apos;s final board, and it
-          still earns XP and points toward your totals. A free account opens it up.
+          still earns points toward your career total. A free account opens it up.
         </p>
         <p className="mt-8 text-right font-condensed text-xl text-ink">
           Made for people who like a good puzzle.

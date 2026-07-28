@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import { isValidISODate, monthPeriod, todayISO } from "@/lib/date";
+import { type LevelUp } from "@/lib/leaderboard";
 import { applyRollup } from "@/lib/profileRollup";
 
 export const dynamic = "force-dynamic";
@@ -97,10 +98,11 @@ export async function POST(req: Request) {
     }
 
     // Profile update - best-effort, never blocks recording. The shared rollup
-    // recomputes XP, total score, days, streaks, monthly, and history-derived
+    // recomputes total score, level, days, streaks, monthly, and history-derived
     // achievements from ALL recorded games (archive included), so a quick game
     // counts everywhere Chain does. Skill badges that need this request's
     // context (clean/won/moves before the detail columns exist) ride along.
+    let levelUp: LevelUp | null = null;
     try {
       const earned: string[] = [];
       if (mode === "duality" && clean) earned.push("duality_perfect");
@@ -111,14 +113,14 @@ export async function POST(req: Request) {
       if (score >= 1000) earned.push("thousand_club");
 
       const today = todayISO();
-      await applyRollup(supabase, session_id, today, monthPeriod(today), {
+      ({ levelUp } = await applyRollup(supabase, session_id, today, monthPeriod(today), {
         extraAchievements: earned,
-      });
+      }));
     } catch {
       /* profile rollup is derived state - recording already succeeded */
     }
 
-    return NextResponse.json({ ok: true, recorded: true });
+    return NextResponse.json({ ok: true, recorded: true, levelUp });
   } catch {
     return NextResponse.json({ ok: false, error: "bad_request" }, { status: 400 });
   }
