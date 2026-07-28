@@ -9,7 +9,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
-import { dailyScore, heartsFor, type DailyRow } from "@/lib/leaderboard";
+import { chainDailyScore, heartsFor, type DailyRow } from "@/lib/leaderboard";
 import { hashSeed } from "@/lib/seed";
 
 // A stable, unique-ish display name for a profile-less player, derived from
@@ -124,7 +124,10 @@ export async function getDailyLeaderboard(
           reached,
           hearts,
           timeSeconds,
-          score: dailyScore(reached, hearts, timeSeconds ?? 0) + (modeSum.get(r.session_id) ?? 0),
+          // Chain scores exactly what the player's card showed (correct/rounds
+          // x 1000) - the same formula the all-time rollup uses - plus the
+          // day's quick-game scores.
+          score: chainDailyScore(reached, rounds > 0 ? rounds : 10) + (modeSum.get(r.session_id) ?? 0),
         };
       })
       .sort((a, b) => (b.score !== a.score ? b.score - a.score : (a.timeSeconds ?? 1e9) - (b.timeSeconds ?? 1e9)))

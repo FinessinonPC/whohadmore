@@ -144,6 +144,19 @@ export function pointsForGame(reached: number, rounds: number, streak: number): 
   return Math.round(basePoints(reached, rounds) * streakMultiplier(streak));
 }
 
+// --- Quick-game XP -----------------------------------------------------------
+// Chain earns XP from how far you got (basePoints, up to ~150 before streak).
+// The quick games (Duality/Word/Mini) earn XP from their 0–1000 daily score on
+// the SAME 0–150 band, so every game you play levels you up and no single game
+// dominates. Flat by design: the streak multiplier stays a Chain-play reward,
+// which also keeps this a pure function of the stored score - so recomputing a
+// profile from history always reproduces the exact XP that was credited live.
+export const MODE_XP_MAX = 150;
+export function modeXp(score: number): number {
+  const s = Math.max(0, Math.min(1000, Math.round(score)));
+  return Math.round((s / 1000) * MODE_XP_MAX);
+}
+
 // --- Daily score -------------------------------------------------------------
 // The daily leaderboard ranks on one number. Weighted, in order: how many you
 // got right (the bulk), then the hearts you kept, then how fast you decided.
