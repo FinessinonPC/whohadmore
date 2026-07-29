@@ -114,14 +114,28 @@ export async function GET(req: Request) {
   const period = monthPeriod(today);
   const roll = await computeRollup(supabase, session_id, today, period);
 
+  // Same raise-only rule the stored row follows (see the ratchet in
+  // profileRollup): a recompute sums whatever rows exist right now, so while
+  // any history is missing it can come out low. Projecting the raw recompute
+  // would show the player a lower total than the database is holding - the
+  // leaderboard would say one thing and their own profile another. Points
+  // earned cannot be un-earned, so this only ever reads UP.
+  const atLeast = (computed: number, stored: number | null | undefined) =>
+    Math.max(computed, typeof stored === "number" ? stored : 0);
+
   let fresh: Profile = {
     ...profile,
-    total_score: roll.totalScore,
-    total_stars: roll.totalStars,
-    days_played: roll.daysPlayed,
+    total_score: atLeast(roll.totalScore, profile.total_score),
+    total_stars: atLeast(roll.totalStars, profile.total_stars),
+    days_played: atLeast(roll.daysPlayed, profile.days_played),
     current_streak: roll.currentStreak,
     longest_streak: Math.max(profile.longest_streak ?? 0, roll.longestRun, roll.currentStreak),
-    monthly_score: roll.monthlyScore,
+    // Only ratchet monthly against THIS month's stored value; a previous
+    // month's number must not be carried forward.
+    monthly_score:
+      profile.monthly_period === period
+        ? atLeast(roll.monthlyScore, profile.monthly_score)
+        : roll.monthlyScore,
     monthly_period: period,
   };
 
