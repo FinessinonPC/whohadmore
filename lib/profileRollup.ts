@@ -272,15 +272,31 @@ export async function applyRollup(
     new Set([...have, ...roll.achievements, ...(opts.extraAchievements ?? [])])
   );
 
+  // A player's lifetime tallies are append-only: points earned cannot be
+  // un-earned and days played cannot be un-played, so a recompute may only ever
+  // RAISE them.
+  //
+  // This is a ratchet against data loss. These numbers are derived from the game
+  // rows, so anything that removes rows - a bad migration, a failed session
+  // merge, a restore gone wrong - would otherwise be amplified: every profile
+  // load would quietly rewrite that player's total down to match the damage,
+  // destroying the last surviving record of what they had. Holding the stored
+  // value while it is higher means the rows can be repaired afterwards and
+  // nothing is lost in between. It self-corrects too: once the rows are back,
+  // the computed value catches up and the ratchet stops applying.
+  const ratchet = (computed: number, stored: unknown): number =>
+    Math.max(computed, typeof stored === "number" ? stored : 0);
+  const prev = profile as unknown as Record<string, unknown>;
+
   const { data: updated } = await supabase
     .from("profiles")
     .update({
       // `xp` is a legacy column - levels come from total_score now. Kept in
       // sync (not dropped) so an older cached client can't read a stale value.
-      xp: roll.totalScore,
-      total_score: roll.totalScore,
-      total_stars: roll.totalStars,
-      days_played: roll.daysPlayed,
+      xp: ratchet(roll.totalScore, prev.total_score),
+      total_score: ratchet(roll.totalScore, prev.total_score),
+      total_stars: ratchet(roll.totalStars, prev.total_stars),
+      days_played: ratchet(roll.daysPlayed, prev.days_played),
       current_streak: roll.currentStreak,
       longest_streak: Math.max(profile.longest_streak ?? 0, roll.longestRun, roll.currentStreak),
       last_played_date: roll.lastPlayed,
@@ -294,7 +310,7 @@ export async function applyRollup(
     .single();
 
   const before = levelFromPoints(profile.total_score ?? 0);
-  const after = levelInfo(roll.totalScore);
+  const after = levelInfo(ratchet(roll.totalScore, prev.total_score));
 
   return {
     profile: updated ?? null,
