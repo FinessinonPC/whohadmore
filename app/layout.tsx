@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Oswald, Patrick_Hand, Permanent_Marker } from "next/font/google";
 import { getSiteUrl } from "@/lib/site";
 import { Analytics } from "@vercel/analytics/next";
+import { RestoreLocalChain } from "@/components/game/RestoreLocalChain";
 import "./globals.css";
 
 // The scorecard is filled in BY HAND: Patrick Hand (a real person's print) is
@@ -113,6 +114,8 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteLd) }}
         />
         {children}
+        {/* Puts back any Chain result this device has that the server doesn't. */}
+        <RestoreLocalChain />
         <Analytics />
       </body>
     </html>
