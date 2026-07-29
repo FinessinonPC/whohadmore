@@ -138,6 +138,35 @@
   .tilt-l2 { rotate: -1.4deg; }
   .tilt-r2 { rotate: 1.2deg; }
 
+  /* --- Old stock ------------------------------------------------------------
+     Archived cards print on a cooler, greyer paper than today's. Nothing else
+     changes - same ink, same pastels, same layout - but the ground shifts just
+     enough that you never have to read a date to know you're in the past. Only
+     --bg moves, so cards, ink and shadows are untouched. */
+  .stock-archive {
+    --bg: 223 219 206;
+    background: rgb(var(--bg));
+  }
+  .dark .stock-archive {
+    --bg: 15 16 19;
+  }
+
+  /* "Archive · Jul 20" - the same dashed stamp as the date, in ink not red, so
+     it marks the page without competing with the game's own wordmark. */
+  .stamp-archive {
+    display: inline-block;
+    border: 2px dashed rgb(var(--ink) / 0.45);
+    color: rgb(var(--ink-2));
+    border-radius: 10px 5px 11px 4px / 5px 10px 4px 11px;
+    padding: 2px 8px;
+    rotate: -1.5deg;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
   /* The crooked red date stamp. */
   .stamp-red {
     display: inline-block;

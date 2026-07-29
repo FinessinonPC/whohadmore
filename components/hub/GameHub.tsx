@@ -18,6 +18,7 @@ import { CardReceipt } from "@/components/hub/CardReceipt";
 import { RunTicket } from "@/components/hub/RunTicket";
 import { NextCardInRun, WhatsNextToday } from "@/components/hub/WhatsNext";
 import { addRunCard } from "@/lib/runStore";
+import { clearCardCookie, readCardCookie, writeCardCookie } from "@/lib/cardCookie";
 import { ShareResults } from "@/components/game/ShareResults";
 import { todayISO } from "@/lib/date";
 import { themeFor } from "@/lib/weekly";
@@ -29,6 +30,10 @@ interface GameHubProps {
   game: FullGame | null;
   date: string;
   gameNumber: number;
+  /** Scores the server already knew about from the finished-card cookie, so a
+   *  finished card renders finished in the first byte of HTML instead of
+   *  showing the ledger until hydration catches up. */
+  initialScores?: Record<string, number> | null;
 }
 
 interface TileState {
@@ -65,15 +70,24 @@ function StarStamp({ className = "" }: { className?: string }) {
  * hand-drawn manila card whose wordmark is the hero - color lives only in
  * the lettering. No icons in boxes, no marketing copy: the cards ARE the page.
  */
-export function GameHub({ game, date, gameNumber }: GameHubProps) {
+export function GameHub({ game, date, gameNumber, initialScores }: GameHubProps) {
   // Tiles are stamped with the date they were computed for. A run navigates
   // /day/A -> /day/B on the same route, so React reuses this component and the
   // previous card's scores would otherwise survive one render into the next
   // card - long enough to flash "Card complete" over a card nobody has played.
-  const [tileState, setTiles] = useState<{ date: string; map: Record<string, TileState> }>({
-    date: "",
-    map: {},
-  });
+  const [tileState, setTiles] = useState<{ date: string; map: Record<string, TileState> }>(() =>
+    initialScores
+      ? {
+          date,
+          map: Object.fromEntries(
+            LIVE_MODES.map((m) => {
+              const score = initialScores[m.id] ?? 0;
+              return [m.id, { played: true, label: `${score}`, score }];
+            })
+          ),
+        }
+      : { date: "", map: {} }
+  );
   const tiles = tileState.date === date ? tileState.map : {};
   // Server truth (account / session), so scores persist across sign-out/in and
   // devices - not just this device's localStorage.
@@ -111,6 +125,14 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
       }
     }
     setTiles({ date, map: next });
+
+    // Leave (or withdraw) the note for the server's next render of this card.
+    const finished = LIVE_MODES.every((m) => next[m.id]?.played);
+    if (finished) {
+      writeCardCookie(date, Object.fromEntries(LIVE_MODES.map((m) => [m.id, next[m.id].score])));
+    } else if (readCardCookie()?.date === date) {
+      clearCardCookie();
+    }
   }, [date, serverChain, serverModes]);
 
   const playedCount = LIVE_MODES.filter((m) => tiles[m.id]?.played).length;
@@ -145,7 +167,7 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto flex w-full max-w-game flex-col px-4 pb-12 pt-2">
+      <main className={`mx-auto flex w-full max-w-game flex-col px-4 pb-12 pt-2 ${isToday ? "" : "stock-archive"}`}>
       {isJuly4th(date) && <Fireworks />}
 
       {isJuly4th(date) && (

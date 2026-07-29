@@ -5,6 +5,7 @@ import { GameSeoFooter } from "@/components/seo/GameSeoFooter";
 import { getFullGame, getGameNumber } from "@/lib/games";
 import { formatDisplayDate, isValidISODate, todayISO } from "@/lib/date";
 import { requireDateAccess } from "@/lib/access";
+import { finishedCardScores } from "@/lib/finishedCard";
 
 export const dynamic = "force-dynamic";
 
@@ -41,12 +42,16 @@ export default async function DayPage({
   if (date === today) redirect("/");
   await requireDateAccess(date);
 
-  const [game, gameNumber] = await Promise.all([getFullGame(date), getGameNumber(date)]);
+  const [game, gameNumber, finished] = await Promise.all([
+    getFullGame(date),
+    getGameNumber(date),
+    finishedCardScores(date),
+  ]);
 
   return (
     <>
       <div className="flex min-h-fold flex-col">
-        <GameHub game={game} date={date} gameNumber={gameNumber} />
+        <GameHub game={game} date={date} gameNumber={gameNumber} initialScores={finished} />
       </div>
       {game && <GameSeoFooter game={game} date={date} />}
     </>

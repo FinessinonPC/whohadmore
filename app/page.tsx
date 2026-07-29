@@ -3,6 +3,7 @@ import { GameHub } from "@/components/hub/GameHub";
 import { SiteSeoFooter } from "@/components/seo/SiteSeoFooter";
 import { getFullGame, getGameNumber } from "@/lib/games";
 import { todayISO } from "@/lib/date";
+import { finishedCardScores } from "@/lib/finishedCard";
 
 export const dynamic = "force-dynamic";
 
@@ -48,9 +49,10 @@ export async function generateMetadata(): Promise<Metadata> {
 // combined total. Content lives at the root for SEO.
 export default async function HomePage() {
   const date = todayISO();
-  const [game, gameNumber] = await Promise.all([
+  const [game, gameNumber, finished] = await Promise.all([
     getFullGame(date),
     getGameNumber(date),
+    finishedCardScores(date),
   ]);
 
   return (
@@ -59,7 +61,7 @@ export default async function HomePage() {
           block keeps the SEO copy below the fold on every device - it's there
           for crawlers and curious readers, not competing with the game. */}
       <div className="flex min-h-fold flex-col">
-        <GameHub game={game} date={date} gameNumber={gameNumber} />
+        <GameHub game={game} date={date} gameNumber={gameNumber} initialScores={finished} />
       </div>
       <SiteSeoFooter />
     </>
