@@ -33,12 +33,29 @@ export function BrandMark({ className = "", size }: MarkProps) {
   );
 }
 
-/** Glyph + condensed uppercase wordmark used in page headers. */
-export function BrandLockup({ className = "" }: { className?: string }) {
+/**
+ * Glyph + condensed uppercase wordmark used in page headers.
+ *
+ * `compact` drops the wordmark on phones, leaving the mark alone. Only the top
+ * nav uses it: the wordmark is 114px of a 375px bar, and that space buys a
+ * visible Past cards link - which is the thing we actually want tapped. The
+ * game screens keep the full lockup, where it doubles as the way back out.
+ */
+export function BrandLockup({
+  className = "",
+  compact = false,
+}: {
+  className?: string;
+  compact?: boolean;
+}) {
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
       <BrandMark className="h-[27px] w-[27px]" />
-      <span className="text-[17px] font-display font-bold uppercase tracking-wide text-ink mt-0.5">
+      <span
+        className={`text-[17px] font-display font-bold uppercase tracking-wide text-ink mt-0.5 ${
+          compact ? "hidden sm:inline" : ""
+        }`}
+      >
         WHOHADMORE
       </span>
     </span>
