@@ -18,6 +18,25 @@ export interface StoredResult {
   completedAt: string; // ISO timestamp
 }
 
+/**
+ * Mirror the session id into a cookie.
+ *
+ * The id lives in localStorage, which the server cannot read - so a page had no
+ * way to know whose card it was rendering and had to wait for the browser to
+ * ask. Copying it to a cookie lets the server resolve the card itself and send
+ * the right layout in the first byte, instead of sending the unfinished one and
+ * letting the browser swap it a moment later. No new information is exposed:
+ * this same id is a query parameter on every /api call the page already makes.
+ */
+function syncSessionCookie(id: string): void {
+  if (typeof document === "undefined" || !id) return;
+  try {
+    document.cookie = `whm_sid=${id}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+  } catch {
+    /* cookies disabled - the client resolves the card itself, as before */
+  }
+}
+
 /** Stable anonymous id, persisted across sessions. (Swapped for user_id later.) */
 export function getSessionId(): string {
   if (typeof window === "undefined") return "";
@@ -27,6 +46,7 @@ export function getSessionId(): string {
       id = crypto.randomUUID();
       window.localStorage.setItem(SESSION_KEY, id);
     }
+    syncSessionCookie(id);
     return id;
   } catch {
     // If an extension or privacy setting blocks localStorage, return a temporary session
@@ -44,6 +64,7 @@ export function setSessionId(id: string): void {
   } catch {
     /* non-fatal */
   }
+  syncSessionCookie(id);
 }
 
 export function getLocalResult(date: string): StoredResult | null {

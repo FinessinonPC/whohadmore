@@ -49,11 +49,10 @@ export async function generateMetadata(): Promise<Metadata> {
 // combined total. Content lives at the root for SEO.
 export default async function HomePage() {
   const date = todayISO();
-  const [game, gameNumber, finished] = await Promise.all([
-    getFullGame(date),
-    getGameNumber(date),
-    finishedCardScores(date),
-  ]);
+  const [game, gameNumber] = await Promise.all([getFullGame(date), getGameNumber(date)]);
+  // Resolve the card server-side so a finished card renders finished in the
+  // first byte, instead of the browser correcting the page a moment later.
+  const finished = await finishedCardScores(date, Math.max(1, (game?.cards.length ?? 0) - 1));
 
   return (
     <>

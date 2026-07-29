@@ -19,7 +19,6 @@ import { CardReceipt } from "@/components/hub/CardReceipt";
 import { RunTicket } from "@/components/hub/RunTicket";
 import { NextCardInRun, WhatsNextToday } from "@/components/hub/WhatsNext";
 import { addRunCard } from "@/lib/runStore";
-import { clearCardCookie, readCardCookie, writeCardCookie } from "@/lib/cardCookie";
 import { ShareResults } from "@/components/game/ShareResults";
 import { todayISO } from "@/lib/date";
 import { themeFor } from "@/lib/weekly";
@@ -102,27 +101,35 @@ export function GameHub({ game, date, gameNumber, initialScores }: GameHubProps)
       .catch(() => {});
   }, []);
 
-  // A LAYOUT effect, not a plain one: this decides which of the two layouts to
+  // A LAYOUT effect, not a plain one: this decides WHICH of the two layouts to
   // render, and a plain effect runs after the paint - so on a client-side
   // navigation the ledger would flash before being replaced by the receipt.
   // Running before the paint means the browser only ever draws the right one.
+  //
+  // Knowledge here only ever GROWS. `initialScores` is the server's answer for
+  // this session, and the two client fetches arrive later; on a device whose
+  // history lives only on the server (a new phone, or the minute after signing
+  // in) localStorage is empty, so recomputing purely from it would take a
+  // finished card and un-finish it until the fetches landed - the same flash,
+  // caused by the fix for it. So the server's answer is the floor.
   useIsomorphicLayoutEffect(() => {
     const next: Record<string, TileState> = {};
     const chainServer = serverChain[date];
     const modeServer = serverModes[date] ?? {};
+    const floor = initialScores ?? {};
     for (const m of LIVE_MODES) {
       if (m.id === "chain") {
         const chain = getLocalResult(date) ?? chainServer ?? null;
-        const prog = getProgress(date);
-        if (chain) {
-          const pts = chainDailyScore(chain.reached, chain.rounds);
+        const pts = chain ? chainDailyScore(chain.reached, chain.rounds) : floor.chain;
+        if (typeof pts === "number") {
           next.chain = { played: true, label: `${pts}`, score: pts };
         } else {
+          const prog = getProgress(date);
           next.chain = { played: false, label: prog && prog.roundsPlayed > 0 ? "Resume" : "Play", score: 0 };
         }
       } else {
         const local = getModeResult(m.id, date);
-        const score = local ? local.score : modeServer[m.id];
+        const score = local ? local.score : (modeServer[m.id] ?? floor[m.id]);
         next[m.id] =
           typeof score === "number"
             ? { played: true, label: `${score}`, score }
@@ -130,15 +137,7 @@ export function GameHub({ game, date, gameNumber, initialScores }: GameHubProps)
       }
     }
     setTiles({ date, map: next });
-
-    // Leave (or withdraw) the note for the server's next render of this card.
-    const finished = LIVE_MODES.every((m) => next[m.id]?.played);
-    if (finished) {
-      writeCardCookie(date, Object.fromEntries(LIVE_MODES.map((m) => [m.id, next[m.id].score])));
-    } else if (readCardCookie()?.date === date) {
-      clearCardCookie();
-    }
-  }, [date, serverChain, serverModes]);
+  }, [date, serverChain, serverModes, initialScores]);
 
   const playedCount = LIVE_MODES.filter((m) => tiles[m.id]?.played).length;
   const total = LIVE_MODES.reduce((a, m) => a + (tiles[m.id]?.score ?? 0), 0);

@@ -42,11 +42,8 @@ export default async function DayPage({
   if (date === today) redirect("/");
   await requireDateAccess(date);
 
-  const [game, gameNumber, finished] = await Promise.all([
-    getFullGame(date),
-    getGameNumber(date),
-    finishedCardScores(date),
-  ]);
+  const [game, gameNumber] = await Promise.all([getFullGame(date), getGameNumber(date)]);
+  const finished = await finishedCardScores(date, Math.max(1, (game?.cards.length ?? 0) - 1));
 
   return (
     <>
