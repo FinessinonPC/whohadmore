@@ -8,14 +8,7 @@ import { GameStats } from "@/components/profile/GameStats";
 import { DangerZone } from "@/components/profile/DangerZone";
 import { SignUpFlow } from "@/components/auth/SignUpFlow";
 import { useProfile } from "@/hooks/useProfile";
-import {
-  ACHIEVEMENTS,
-  RANK_STEPS,
-  effectiveStreak,
-  levelInfo,
-  rankTitle,
-  totalPointsToReach,
-} from "@/lib/leaderboard";
+import { ACHIEVEMENTS, effectiveStreak, levelInfo, rankTitle } from "@/lib/leaderboard";
 import { previousISODate, todayISO } from "@/lib/date";
 
 /**
@@ -112,7 +105,7 @@ export function ProfileView() {
                 accent="#FF7A00"
                 note={streak > 0 ? `day${streak === 1 ? "" : "s"} in a row` : "play today"}
               />
-              <StatCell value={profile?.longest_streak ?? 0} label="Max streak" />
+              <StatCell value={profile?.longest_streak ?? 0} label="Highest streak" />
               <StatCell value={profile?.days_played ?? 0} label="Days" />
             </div>
             <p className="mt-2 text-center text-[11px] text-ink-secondary">
@@ -133,7 +126,6 @@ export function ProfileView() {
       {hasName && (
         <>
           <GameStats />
-          <RankLadder level={level} points={points} />
           <Achievements earned={profile?.achievements ?? []} />
           <DangerZone username={profile?.username ?? ""} onDelete={deleteAccount} />
         </>
@@ -150,54 +142,6 @@ const POINTS_PER_GAME = 600;
 function gamesToGo(points: number): string {
   const n = Math.max(1, Math.round(points / POINTS_PER_GAME));
   return `${n} more game${n === 1 ? "" : "s"}`;
-}
-
-/** The rank ladder: where you are, what's next, and what it costs. Ranks are
- *  the long-horizon carrot - levels come fast at first, titles don't. */
-function RankLadder({ level, points }: { level: number; points: number }) {
-  const next = RANK_STEPS.find((r) => r.min > level);
-  return (
-    <section className="mt-4 card-ink rounded-2xl p-6">
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-sm font-extrabold text-ink">Ranks</h2>
-        <span className="text-xs font-semibold text-ink-secondary">
-          {next ? `${(totalPointsToReach(next.min) - points).toLocaleString()} pts to ${next.title}` : "Top rank"}
-        </span>
-      </div>
-      <div className="mt-3 flex flex-col gap-1.5">
-        {RANK_STEPS.map((r) => {
-          const held = level >= r.min;
-          const isNext = next?.min === r.min;
-          return (
-            <div
-              key={r.title}
-              className={`wonky flex items-center gap-3 border px-3 py-2 ${
-                held
-                  ? "border-ink bg-[#FFB300]/15"
-                  : isNext
-                    ? "border-ink border-dashed bg-background"
-                    : "border-border bg-background"
-              }`}
-            >
-              <span
-                className={`tabular w-11 shrink-0 font-condensed text-sm font-semibold ${
-                  held ? "text-ink" : "text-ink-secondary"
-                }`}
-              >
-                Lv {r.min}
-              </span>
-              <span className={`min-w-0 flex-1 truncate text-[13px] font-bold ${held ? "text-ink" : "text-ink-secondary"}`}>
-                {r.title}
-              </span>
-              <span className="tabular shrink-0 text-[11px] font-semibold text-ink-secondary">
-                {totalPointsToReach(r.min).toLocaleString()} pts
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
 }
 
 function Achievements({ earned }: { earned: string[] }) {

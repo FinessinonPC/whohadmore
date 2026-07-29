@@ -88,13 +88,6 @@ export function levelFromPoints(points: number): number {
   return levelInfo(points).level;
 }
 
-/** Total lifetime points required to REACH a given level (for "next level" copy). */
-export function totalPointsToReach(level: number): number {
-  let sum = 0;
-  for (let l = 1; l < Math.max(1, level); l++) sum += pointsForLevel(l);
-  return sum;
-}
-
 /** Everything the client needs to throw the level-up party, computed server-side
  *  so the celebration can never disagree with the stored profile. */
 export interface LevelUp {
@@ -120,9 +113,6 @@ export function rankTitle(level: number): string {
   return RANKS.find((r) => level >= r.min)?.title ?? "Wanderer";
 }
 
-/** The same ranks bottom-up, for rendering the ladder on the profile. */
-export const RANK_STEPS: readonly { min: number; title: string }[] = [...RANKS].reverse();
-
 // --- Per-game scoring --------------------------------------------------------
 
 /** Hearts banked from a game = lives remaining at the end (0–3). */
@@ -147,6 +137,24 @@ export function speedFactor(timeSeconds: number, reached: number): number {
 
 export function speedBonus(reached: number, timeSeconds: number): number {
   return Math.round(Math.max(0, reached) * SPEED_XP * speedFactor(timeSeconds, reached));
+}
+
+// --- Chain's 10-decision basis -----------------------------------------------
+// Chains haven't always been the same length: older days ran as many as 15
+// decisions, newer ones 10. That made "avg correct" read out of some fractional
+// 12.7, which is meaningless, and quietly punished anyone who played the long
+// days. Every Chain stat is therefore normalised to a flat 10, generously in
+// both directions: a longer day is capped (clearing the first 10 is a clean
+// sheet, the extras can't hurt you) and a shorter one is scaled up.
+export const CHAIN_BASIS = 10;
+
+/** A Chain result restated on the 10-decision basis. Never lower than the
+ *  straight proportion, so no player loses ground to the rescaling. */
+export function chainCorrectOfTen(reached: number, rounds: number): number {
+  const correct = Math.max(0, reached);
+  if (rounds <= 0) return Math.min(correct, CHAIN_BASIS);
+  if (rounds >= CHAIN_BASIS) return Math.min(correct, CHAIN_BASIS);
+  return Math.min(CHAIN_BASIS, (correct / rounds) * CHAIN_BASIS);
 }
 
 /** How many calls you got right, plus a bonus for a full clear. */

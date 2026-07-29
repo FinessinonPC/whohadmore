@@ -3,6 +3,7 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import { monthPeriod, todayISO } from "@/lib/date";
 import type { Profile } from "@/lib/leaderboard";
+import { applyRollup, computeRollup } from "@/lib/profileRollup";
 
 export const dynamic = "force-dynamic";
 
@@ -104,22 +105,51 @@ export async function GET(req: Request) {
     return NextResponse.json({ profile: null, rank: null });
   }
 
-  // Reset the displayed monthly tally if the stored period is stale.
-  const period = monthPeriod(todayISO());
-  const effectiveMonthly = profile.monthly_period === period ? profile.monthly_score : 0;
+  // Recompute from history rather than trusting the stored columns. Those are
+  // only rewritten when a game is recorded, so between plays they can be stale
+  // - and any row last written under an older scoring rule stays wrong forever
+  // until that player happens to finish another game. Recomputing on read makes
+  // every account self-heal on its next profile load, with no backfill.
+  const today = todayISO();
+  const period = monthPeriod(today);
+  const roll = await computeRollup(supabase, session_id, today, period);
 
-  // Rank all-time, by streak-free total score (only meaningful once > 0).
+  let fresh: Profile = {
+    ...profile,
+    total_score: roll.totalScore,
+    total_stars: roll.totalStars,
+    days_played: roll.daysPlayed,
+    current_streak: roll.currentStreak,
+    longest_streak: Math.max(profile.longest_streak ?? 0, roll.longestRun, roll.currentStreak),
+    monthly_score: roll.monthlyScore,
+    monthly_period: period,
+  };
+
+  // Only write when the stored row actually disagrees - a read shouldn't churn
+  // the table, but a stale row shouldn't survive being looked at either. When
+  // it does disagree, applyRollup's result is what we return: it also merges
+  // history-derived achievements, which the projection above doesn't.
+  const stale =
+    profile.total_score !== fresh.total_score ||
+    profile.monthly_score !== fresh.monthly_score ||
+    profile.monthly_period !== fresh.monthly_period ||
+    profile.days_played !== fresh.days_played ||
+    profile.current_streak !== fresh.current_streak ||
+    profile.longest_streak !== fresh.longest_streak;
+  if (stale) {
+    const { profile: written } = await applyRollup(supabase, session_id, today, period);
+    if (written) fresh = written as unknown as Profile;
+  }
+
+  // Rank all-time, by total points (only meaningful once > 0).
   let rank: number | null = null;
-  if (profile.total_score > 0) {
+  if (fresh.total_score > 0) {
     const { count } = await supabase
       .from("profiles")
       .select("id", { count: "exact", head: true })
-      .gt("total_score", profile.total_score);
+      .gt("total_score", fresh.total_score);
     rank = (count ?? 0) + 1;
   }
 
-  return NextResponse.json({
-    profile: { ...profile, monthly_score: effectiveMonthly },
-    rank,
-  });
+  return NextResponse.json({ profile: fresh, rank });
 }

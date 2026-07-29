@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getAllLocalResults, getSessionId } from "@/lib/playStore";
 import { getAllModeResults, type ModeResult } from "@/lib/modeStore";
 import { usePlayedResults } from "@/hooks/usePlayedResults";
-import { chainDailyScore } from "@/lib/leaderboard";
+import { CHAIN_BASIS, chainCorrectOfTen, chainDailyScore } from "@/lib/leaderboard";
 import { DUALITY_PAIRS, WORD_MAX_GUESSES, WORD_POINTS } from "@/lib/modes";
 import type { ModeRow } from "@/app/api/modes/stats/route";
 
@@ -20,9 +20,9 @@ import type { ModeRow } from "@/app/api/modes/stats/route";
 
 export interface ChainStats {
   played: number;
-  avgCorrect: number | null; // mean correct calls per game
-  avgRounds: number | null; // mean round count (for the "of N" label)
-  perfect: number; // full clears
+  avgCorrect: number | null; // mean correct calls per game, on the 10-decision basis
+  avgRounds: number | null; // always CHAIN_BASIS - kept so the "of N" label has one source
+  perfect: number; // clean sheets (all 10 on the normalised basis)
   avgPoints: number | null;
   best: number;
 }
@@ -160,11 +160,14 @@ export function useGameStats(): GameStatsData {
     }
     const chainList = Object.values(chainDays);
     const chainPts = chainList.map((c) => chainDailyScore(c.reached, c.rounds));
+    // Every day restated on the flat 10-decision basis, so the average reads
+    // "7.4 / 10" instead of "7.4 / 12.7" and the old long chains don't drag.
+    const ofTen = chainList.map((c) => chainCorrectOfTen(c.reached, c.rounds));
     const chain: ChainStats = {
       played: chainList.length,
-      avgCorrect: avg(chainList.reduce((a, c) => a + c.reached, 0), chainList.length),
-      avgRounds: avg(chainList.reduce((a, c) => a + c.rounds, 0), chainList.length),
-      perfect: chainList.filter((c) => c.rounds > 0 && c.reached >= c.rounds).length,
+      avgCorrect: avg(ofTen.reduce((a, n) => a + n, 0), ofTen.length),
+      avgRounds: chainList.length > 0 ? CHAIN_BASIS : null,
+      perfect: ofTen.filter((n) => n >= CHAIN_BASIS).length,
       avgPoints: avg(chainPts.reduce((a, p) => a + p, 0), chainPts.length),
       best: chainPts.reduce((m, p) => Math.max(m, p), 0),
     };
