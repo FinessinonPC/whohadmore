@@ -38,12 +38,17 @@ export async function finishedCardScores(
   try {
     const supabase = getServiceSupabase();
     const [chainRes, modeRes] = await Promise.all([
+      // limit(1) rather than maybeSingle(): until 0011 is applied nothing stops
+      // a duplicate chain row existing, and maybeSingle throws on two - which
+      // would silently drop this whole optimisation for that player.
       supabase
         .from("game_results")
         .select("score, rounds")
         .eq("session_id", session)
         .eq("play_date", date)
-        .maybeSingle<{ score: number | null; rounds: number | null }>(),
+        .order("score", { ascending: false })
+        .limit(1)
+        .returns<{ score: number | null; rounds: number | null }[]>(),
       supabase
         .from("game_mode_results")
         .select("mode, score")
@@ -53,9 +58,10 @@ export async function finishedCardScores(
     ]);
 
     const scores: Record<string, number> = {};
-    if (chainRes.data) {
-      const r = chainRes.data.rounds && chainRes.data.rounds > 0 ? chainRes.data.rounds : rounds;
-      scores.chain = chainDailyScore(chainRes.data.score ?? 0, r);
+    const chain = chainRes.data?.[0];
+    if (chain) {
+      const r = chain.rounds && chain.rounds > 0 ? chain.rounds : rounds;
+      scores.chain = chainDailyScore(chain.score ?? 0, r);
     }
     for (const row of modeRes.data ?? []) scores[row.mode] = row.score ?? 0;
 
