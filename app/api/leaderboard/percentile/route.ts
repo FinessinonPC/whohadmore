@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import { isValidISODate, todayISO } from "@/lib/date";
-import { chainDailyScore } from "@/lib/leaderboard";
-import { roundsByDate, roundsFor } from "@/lib/chainRounds";
+import { dailyScore, heartsFor } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +25,16 @@ export async function GET(req: Request) {
     const supabase = getServiceSupabase();
     const { data } = await supabase
       .from("game_results")
-      .select("session_id, score, rounds, play_date")
+      .select("session_id, score, time_seconds, lives_remaining, stars")
       .eq("play_date", date)
       .returns<
-        { session_id: string; score: number | null; rounds: number | null; play_date: string }[]
+        {
+          session_id: string;
+          score: number | null;
+          time_seconds: number | null;
+          lives_remaining: number | null;
+          stars: number | null;
+        }[]
       >();
 
     const others = (data ?? []).filter((r) => r.session_id !== viewer);
@@ -37,10 +42,9 @@ export async function GET(req: Request) {
     if (total === 0) {
       return NextResponse.json({ percentile: null, total: 0 });
     }
-    // Same Chain formula as the boards and the profile.
-    const byDate = await roundsByDate(supabase);
     const beat = others.reduce((n, r) => {
-      const s = chainDailyScore(r.score ?? 0, roundsFor(r, byDate));
+      const hearts = r.stars != null ? r.stars : heartsFor(r.lives_remaining ?? 0);
+      const s = dailyScore(r.score ?? 0, hearts, r.time_seconds ?? 0);
       return n + (s < yourScore ? 1 : 0);
     }, 0);
     return NextResponse.json({ percentile: Math.round((beat / total) * 100), total });

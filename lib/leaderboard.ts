@@ -43,45 +43,31 @@ export interface DailyRow {
 }
 
 // --- Levels ------------------------------------------------------------------
-// ONE number. The leaderboard ranked players by `total_score` while the level
-// beside their name was computed from `xp` - two totals that moved for
-// different reasons, shown side by side, so the board could rank you first
-// while calling you a lower level than someone below you. Points are the score,
-// the rank AND the level now; `xp` is no longer read anywhere.
-//
-// Cost to go from level L to L+1 = 700 * L^1.35, rounded to 50. Front-loaded:
-// the first level lands inside the first session and each one after costs a
-// little more.
+// Rising curve: early levels come quickly (rewarding), later ones take longer.
+// XP to go from level L to L+1 = 200 + (L-1)*100  (L1->2: 200, L2->3: 300, …).
 
-const LEVEL_BASE = 700;
-const LEVEL_EXP = 1.35;
-
-/** Points needed to go from `level` to `level + 1`. */
-export function pointsForLevel(level: number): number {
-  const l = Math.max(1, Math.floor(level));
-  return Math.round((LEVEL_BASE * Math.pow(l, LEVEL_EXP)) / 50) * 50;
+export function xpForLevel(level: number): number {
+  return 200 + (Math.max(1, level) - 1) * 100;
 }
 
 export interface LevelInfo {
   level: number;
-  into: number; // points earned into the current level
-  needed: number; // points required to finish the current level
+  into: number; // XP into the current level
+  needed: number; // XP needed to finish the current level
 }
 
-/** Where a lifetime POINTS total sits on the curve. */
-export function levelInfo(points: number): LevelInfo {
+export function levelInfo(xp: number): LevelInfo {
   let level = 1;
-  let remaining = Math.max(0, Math.floor(points));
-  // Guard against a runaway loop on absurd inputs; 200 is far beyond reach.
-  while (level < 200 && remaining >= pointsForLevel(level)) {
-    remaining -= pointsForLevel(level);
+  let remaining = Math.max(0, Math.floor(xp));
+  while (remaining >= xpForLevel(level)) {
+    remaining -= xpForLevel(level);
     level += 1;
   }
-  return { level, into: remaining, needed: pointsForLevel(level) };
+  return { level, into: remaining, needed: xpForLevel(level) };
 }
 
-export function levelFromPoints(points: number): number {
-  return levelInfo(points).level;
+export function levelFromXp(xp: number): number {
+  return levelInfo(xp).level;
 }
 
 const RANKS: { min: number; title: string }[] = [

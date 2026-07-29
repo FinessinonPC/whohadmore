@@ -5,7 +5,7 @@ import { monthPeriod, previousISODate, todayISO } from "@/lib/date";
 import {
   chainDailyScore,
   earnedAchievementIds,
-  levelFromPoints,
+  levelFromXp,
   type Profile,
 } from "@/lib/leaderboard";
 import { roundsByDate, roundsFor } from "@/lib/chainRounds";
@@ -76,7 +76,7 @@ function aggregate(
   const achievements = earnedAchievementIds({
     daysPlayed,
     currentStreak: streak,
-    level: levelFromPoints(totalScore),
+    level: levelFromXp(xp),
     clearedThisGame: false,
   });
   return { xp, totalStars, totalScore, monthlyScore, daysPlayed, streak, lastPlayed, achievements };
@@ -202,17 +202,29 @@ export async function POST(req: Request) {
     const modeRows = allModes ?? [];
 
     const agg = aggregate(rows, modeRows, today, period, await roundsByDate(supabase));
+    // RAISE ONLY. This recompute sums the rows that exist right now, and while
+    // Chain rows are still trickling back from devices "right now" is
+    // incomplete. Writing the raw recompute would let a returning player's total
+    // drop to match the missing rows. Points earned cannot be un-earned, so this
+    // may only ever move a stored tally up. The merge of a new device's plays
+    // still lands (it adds rows, which only pushes the recompute higher); what
+    // it can never do is subtract.
     const { data: updated } = await supabase
       .from("profiles")
       .update({
-        xp: agg.xp,
-        total_score: agg.totalScore,
-        total_stars: agg.totalStars,
-        days_played: agg.daysPlayed,
+        xp: Math.max(agg.xp, existing.xp ?? 0),
+        total_score: Math.max(agg.totalScore, existing.total_score ?? 0),
+        total_stars: Math.max(agg.totalStars, existing.total_stars ?? 0),
+        days_played: Math.max(agg.daysPlayed, existing.days_played ?? 0),
         current_streak: agg.streak,
         longest_streak: Math.max(existing.longest_streak, agg.streak),
         last_played_date: agg.lastPlayed,
-        monthly_score: agg.monthlyScore,
+        // Only ratchet monthly against THIS month's stored value; a prior
+        // month's number must not be carried forward by the max.
+        monthly_score:
+          existing.monthly_period === period
+            ? Math.max(agg.monthlyScore, existing.monthly_score ?? 0)
+            : agg.monthlyScore,
         monthly_period: period,
         achievements: Array.from(new Set([...existing.achievements, ...agg.achievements])),
         updated_at: new Date().toISOString(),

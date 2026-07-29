@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
-import { levelFromPoints, type LeaderboardRow } from "@/lib/leaderboard";
+import { levelFromXp, type LeaderboardRow } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +37,7 @@ export async function GET() {
     score: r.total_score,
     total_stars: r.total_stars,
     current_streak: r.current_streak,
-    level: levelFromPoints(r.total_score),
+    level: levelFromXp(r.xp),
   }));
 
   return NextResponse.json({ rows });
