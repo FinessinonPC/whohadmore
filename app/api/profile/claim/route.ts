@@ -6,7 +6,7 @@ import {
   dailyScore,
   earnedAchievementIds,
   heartsFor,
-  levelFromXp,
+  levelFromPoints,
   pointsForGame,
   type Profile,
 } from "@/lib/leaderboard";
@@ -175,7 +175,7 @@ export async function POST(req: Request) {
   const achievements = earnedAchievementIds({
     daysPlayed,
     currentStreak: streak,
-    level: levelFromXp(xp),
+    level: levelFromPoints(totalScore),
     clearedThisGame: false,
   });
 

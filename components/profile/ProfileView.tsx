@@ -8,15 +8,16 @@ import { GameStats } from "@/components/profile/GameStats";
 import { DangerZone } from "@/components/profile/DangerZone";
 import { SignUpFlow } from "@/components/auth/SignUpFlow";
 import { useProfile } from "@/hooks/useProfile";
-import { ACHIEVEMENTS, effectiveStreak, levelInfo, rankTitle, streakMultiplier } from "@/lib/leaderboard";
+import { ACHIEVEMENTS, effectiveStreak, levelInfo, rankTitle } from "@/lib/leaderboard";
 import { previousISODate, todayISO } from "@/lib/date";
 
-/** The player's own profile: level, streak multiplier, and lifetime stats. */
+/** The player's own profile. ONE number: the points you score are the points
+ *  that level you up, and the same total the leaderboard ranks. */
 export function ProfileView() {
   const { profile, rank, claim, reload, loading, deleteAccount } = useProfile();
 
-  const xp = profile?.xp ?? 0;
-  const { level, into, needed } = levelInfo(xp);
+  const points = profile?.total_score ?? 0;
+  const { level, into, needed } = levelInfo(points);
   const today = todayISO();
   const streak = effectiveStreak(
     profile?.current_streak ?? 0,
@@ -50,10 +51,13 @@ export function ProfileView() {
               </div>
             </div>
 
-            {/* XP bar - XP is the leveling track, separate from daily points */}
+            {/* One number: it scores your day, ranks the board and fills this bar */}
             <div className="mt-5">
               <div className="mb-1.5 flex items-center justify-between text-xs font-semibold text-ink-secondary">
-                <span><span className="text-ink">{into}</span> / {needed} XP</span>
+                <span>
+                  <span className="tabular text-ink">{into.toLocaleString()}</span> /{" "}
+                  {needed.toLocaleString()} pts
+                </span>
                 <span>Level {level + 1}</span>
               </div>
               <div className="h-3.5 w-full overflow-hidden rounded-full bg-background">
@@ -65,13 +69,18 @@ export function ProfileView() {
                 />
               </div>
               <p className="mt-1.5 text-[11px] text-ink-secondary">
-                XP levels you up over time. It&apos;s separate from your daily points.
+                {points.toLocaleString()} points all time - the same total the leaderboard ranks.
               </p>
             </div>
 
             {/* Habit stats - streaks front and center, NYT-style */}
             <div className="mt-6 grid grid-cols-3 divide-x divide-border">
-              <StatCell value={streak} label="Streak" accent="#FF7A00" note={streak > 0 ? `×${streakMultiplier(streak).toFixed(2)} XP` : undefined} />
+              <StatCell
+                value={streak}
+                label="Streak"
+                accent="#FF7A00"
+                note={streak > 0 ? `day${streak === 1 ? "" : "s"} in a row` : undefined}
+              />
               <StatCell value={profile?.longest_streak ?? 0} label="Max streak" />
               <StatCell value={profile?.days_played ?? 0} label="Days" />
             </div>

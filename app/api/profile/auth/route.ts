@@ -6,7 +6,7 @@ import {
   dailyScore,
   earnedAchievementIds,
   heartsFor,
-  levelFromXp,
+  levelFromPoints,
   type Profile,
 } from "@/lib/leaderboard";
 
@@ -70,7 +70,7 @@ function aggregate(rows: ResultRow[], modeRows: { score: number | null }[], toda
   const achievements = earnedAchievementIds({
     daysPlayed,
     currentStreak: streak,
-    level: levelFromXp(xp),
+    level: levelFromPoints(totalScore),
     clearedThisGame: false,
   });
   return { xp, totalStars, totalScore, monthlyScore, daysPlayed, streak, lastPlayed, achievements };
