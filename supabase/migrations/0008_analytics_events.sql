@@ -6,7 +6,9 @@
 
 create table if not exists public.analytics_events (
   id         uuid primary key default gen_random_uuid(),
-  event      text not null,           -- 'share_click' | 'results_modal_shown' | 'past_card_click'
+  -- Deliberately plain text, not an enum or a check: the allowlist lives in
+  -- /api/track so adding an event is a code change, never a migration.
+  event      text not null,           -- see EVENTS in app/api/track/route.ts
   surface    text,                    -- where it happened: results_modal / card_complete / hub
   game       text,                    -- per-game context when relevant
   session_id text not null,           -- who (anonymous session), for dedupe/uniques
