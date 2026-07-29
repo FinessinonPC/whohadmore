@@ -14,8 +14,13 @@ import { getAllLocalResults, getSessionId } from "@/lib/playStore";
 //
 // It is not a one-off repair script: it runs quietly for everyone, forever, so
 // any result that failed to record (offline, a dropped request, a 500) heals
-// the next time that player opens the site. /api/profile/complete is idempotent
-// per session+date, so re-sending something already stored does nothing.
+// the next time that player opens the site.
+//
+// It posts to /api/profile/restore, NOT the normal completion route, and that
+// matters: profile totals are accumulated as games are played, so a player's
+// stored total still contains the points from a row that has gone missing.
+// Replaying it as a completion would add those points a second time. The
+// restore endpoint puts the row back and touches nothing else.
 //
 // Deliberately conservative: only dates the server has NO row for, only from
 // this device, at most one pass per tab.
@@ -53,7 +58,7 @@ export function RestoreLocalChain() {
           if (cancelled) return;
           const r = local[play_date];
           if (!r || typeof r.reached !== "number" || typeof r.rounds !== "number") continue;
-          await fetch("/api/profile/complete", {
+          await fetch("/api/profile/restore", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ session_id, play_date, reached: r.reached, rounds: r.rounds }),
