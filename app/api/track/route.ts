@@ -13,6 +13,10 @@ const EVENTS = new Set([
   "past_card_click",
   "level_up_shown",
   "level_up_profile_click",
+  "deal_dealt",
+  "deal_click",
+  "deal_signin_click",
+  "run_end",
 ]);
 
 const clean = (v: unknown, max = 40): string | null =>

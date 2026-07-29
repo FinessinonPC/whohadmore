@@ -14,6 +14,10 @@ import { LIVE_MODES, MODES } from "@/lib/modes";
 import { useArchiveGate } from "@/hooks/useArchiveGate";
 import { ArchiveLock } from "@/components/games/ArchiveLock";
 import { DayBoard } from "@/components/hub/DayBoard";
+import { CardReceipt } from "@/components/hub/CardReceipt";
+import { RunTicket } from "@/components/hub/RunTicket";
+import { NextCardInRun, WhatsNextToday } from "@/components/hub/WhatsNext";
+import { addRunCard } from "@/lib/runStore";
 import { ShareResults } from "@/components/game/ShareResults";
 import { todayISO } from "@/lib/date";
 import { themeFor } from "@/lib/weekly";
@@ -62,7 +66,15 @@ function StarStamp({ className = "" }: { className?: string }) {
  * the lettering. No icons in boxes, no marketing copy: the cards ARE the page.
  */
 export function GameHub({ game, date, gameNumber }: GameHubProps) {
-  const [tiles, setTiles] = useState<Record<string, TileState>>({});
+  // Tiles are stamped with the date they were computed for. A run navigates
+  // /day/A -> /day/B on the same route, so React reuses this component and the
+  // previous card's scores would otherwise survive one render into the next
+  // card - long enough to flash "Card complete" over a card nobody has played.
+  const [tileState, setTiles] = useState<{ date: string; map: Record<string, TileState> }>({
+    date: "",
+    map: {},
+  });
+  const tiles = tileState.date === date ? tileState.map : {};
   // Server truth (account / session), so scores persist across sign-out/in and
   // devices - not just this device's localStorage.
   const serverChain = usePlayedResults();
@@ -98,13 +110,22 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
             : { played: false, label: "Play", score: 0 };
       }
     }
-    setTiles(next);
+    setTiles({ date, map: next });
   }, [date, serverChain, serverModes]);
 
   const playedCount = LIVE_MODES.filter((m) => tiles[m.id]?.played).length;
   const total = LIVE_MODES.reduce((a, m) => a + (tiles[m.id]?.score ?? 0), 0);
   const isToday = date === todayISO();
   const { locked, checking } = useArchiveGate(date);
+  // `tiles` is empty on the first render, so guard on it rather than letting
+  // 0 === 0 flash the finished layout before the scores have loaded.
+  const done = Object.keys(tiles).length > 0 && playedCount === LIVE_MODES.length;
+
+  // Finishing an archived card while a run is going banks it into the tally.
+  // Keyed by date in the store, so re-opening a card already counted is a no-op.
+  useEffect(() => {
+    if (done && !isToday) addRunCard(date, total);
+  }, [done, isToday, date, total]);
 
   if (!game || game.cards.length < 2) {
     return (
@@ -133,19 +154,31 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
         </div>
       )}
 
+      {/* The run ticket, on every archived card while a run is going. */}
+      {!isToday && (
+        <div className="relative z-[47] mt-3">
+          <RunTicket />
+        </div>
+      )}
+
       <div className="relative z-[46] flex flex-1 flex-col">
-        {/* The card's masthead: crooked date stamp, title, running total */}
+        {/* The card's masthead. Once the card is finished it stops counting and
+            stamps itself; on an archived card the topic becomes the headline, so
+            every card in a run is a NAMED thing rather than another "that day". */}
         <div className="mt-7 text-center">
           <span className="stamp-red">
             {isToday ? "" : "Archive · "}
             {formatDisplayDate(date)} · Card No. {gameNumber}
           </span>
           <h1 className="mt-3 font-display text-4xl font-semibold uppercase leading-none tracking-wide text-ink">
-            {isToday ? "Today's card" : "That day's card"}
+            {done ? "Card complete" : isToday ? "Today's card" : game.topic_label}
           </h1>
           <p className="mt-2.5 font-condensed text-lg font-semibold text-ink">
-            Running total: <span className="marker-gold tabular">{total.toLocaleString("en-US")} pts</span>
-            <span className="text-ink-secondary"> · {playedCount}/{LIVE_MODES.length}</span>
+            {!done && "Running total: "}
+            <span className="marker-gold tabular">{total.toLocaleString("en-US")} pts</span>
+            <span className="text-ink-secondary">
+              {done ? "" : ` · ${playedCount}/${LIVE_MODES.length}`}
+            </span>
           </p>
         </div>
 
@@ -153,6 +186,32 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
           <div className="min-h-[40vh]" aria-hidden />
         ) : locked ? (
           <ArchiveLock date={date} />
+        ) : done ? (
+          /* Finished: the ledger compresses to a record, and the space it gives
+             up goes to what to do next. */
+          <>
+            <div className="mt-6">
+              <CardReceipt
+                date={date}
+                label={isToday ? "Today's card" : `No. ${gameNumber} · ${game.topic_label}`}
+                scores={Object.fromEntries(LIVE_MODES.map((m) => [m.id, tiles[m.id]?.score ?? 0]))}
+              />
+            </div>
+
+            <div className="mt-4">
+              {isToday ? <WhatsNextToday /> : <NextCardInRun date={date} />}
+            </div>
+
+            {isToday && (
+              <div className="mt-4">
+                <ShareResults date={date} surface="hub" />
+              </div>
+            )}
+
+            {!isToday && <DayBoard date={date} />}
+
+            <HubFooter />
+          </>
         ) : (
         <>
         {/* The ledger: one printed row per game, filled in as you play */}
@@ -221,33 +280,32 @@ export function GameHub({ game, date, gameNumber }: GameHubProps) {
           })}
         </div>
 
-        {/* All four done - invite a share (the growth loop) */}
-        {playedCount === LIVE_MODES.length && (
-          <div className="mt-5">
-            <ShareResults date={date} surface="hub" />
-          </div>
-        )}
-
         {!isToday && <DayBoard date={date} />}
 
-        {/* Quiet footer, set like the card's fine print */}
-        <div className="small-caps mt-8 flex items-center justify-center gap-5 text-[10px] font-bold text-ink-secondary">
-          <Link href="/leaderboard" className="transition-colors hover:text-ink">
-            Leaderboard
-          </Link>
-          <span aria-hidden>·</span>
-          <Link href="/archive" className="transition-colors hover:text-ink">
-            Past cards
-          </Link>
-          <span aria-hidden>·</span>
-          <Link href="/about" className="transition-colors hover:text-ink">
-            About
-          </Link>
-        </div>
+        <HubFooter />
         </>
         )}
       </div>
     </main>
     </>
+  );
+}
+
+/** Quiet footer, set like the card's fine print. */
+function HubFooter() {
+  return (
+    <div className="small-caps mt-8 flex items-center justify-center gap-5 text-[10px] font-bold text-ink-secondary">
+      <Link href="/leaderboard" className="transition-colors hover:text-ink">
+        Leaderboard
+      </Link>
+      <span aria-hidden>·</span>
+      <Link href="/archive" className="transition-colors hover:text-ink">
+        Past cards
+      </Link>
+      <span aria-hidden>·</span>
+      <Link href="/about" className="transition-colors hover:text-ink">
+        About
+      </Link>
+    </div>
   );
 }

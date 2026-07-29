@@ -14,7 +14,12 @@ export function trackEvent(
     | "results_modal_shown"
     | "past_card_click"
     | "level_up_shown"
-    | "level_up_profile_click",
+    | "level_up_profile_click"
+    // The archive run: dealt a card, tapped deal, hit the wall, ended a run.
+    | "deal_dealt"
+    | "deal_click"
+    | "deal_signin_click"
+    | "run_end",
   props: { surface?: string; game?: string; date?: string } = {}
 ): void {
   try {
