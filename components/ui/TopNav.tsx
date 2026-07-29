@@ -7,8 +7,10 @@ import { AccountButton } from "./AccountButton";
 import { ThemeToggle } from "./ThemeToggle";
 
 /**
- * Shared top bar: brand on the left; Past cards, Games, Leaderboard, theme and
- * account on the right. The brand always returns to the daily home page.
+ * Shared top bar: brand on the left; Past cards, Leaderboard, theme and account
+ * on the right. The brand always returns to the daily home page. (/games is
+ * an SEO landing page, not somewhere a player wants to go mid-visit - it keeps
+ * its internal links from the homepage footer instead of a nav slot.)
  *
  * Past cards is the one nav item that survives to phone width, and it's set in
  * full ink rather than secondary. The archive is the single best reason an
@@ -34,12 +36,6 @@ export function TopNav() {
           className="small-caps -my-2.5 whitespace-nowrap py-2.5 text-[10.5px] font-bold text-ink transition-colors hover:text-ink-secondary"
         >
           Past cards
-        </Link>
-        <Link
-          href="/games"
-          className="small-caps hidden text-[10.5px] font-bold text-ink-secondary transition-colors hover:text-ink sm:inline"
-        >
-          Games
         </Link>
         <Link
           href="/leaderboard"
