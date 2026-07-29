@@ -3,13 +3,14 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import { isValidISODate, monthPeriod, previousISODate, todayISO } from "@/lib/date";
 import {
-  dailyScore,
+  chainDailyScore,
   earnedAchievementIds,
   heartsFor,
   levelFromPoints,
   pointsForGame,
   type Profile,
 } from "@/lib/leaderboard";
+import { roundsByDate, roundsFor } from "@/lib/chainRounds";
 
 interface LastGame {
   play_date: string;
@@ -130,11 +131,12 @@ export async function POST(req: Request) {
 
   const { data: results } = await supabase
     .from("game_results")
-    .select("play_date, points, stars, score, time_seconds, lives_remaining")
+    .select("play_date, points, stars, score, time_seconds, lives_remaining, rounds")
     .eq("session_id", session_id)
     .returns<
       {
         play_date: string;
+        rounds: number | null;
         points: number | null;
         stars: number | null;
         score: number | null;
@@ -156,11 +158,9 @@ export async function POST(req: Request) {
   const xp = rows.reduce((s, r) => s + (r.points ?? 0), 0);
   const totalStars = rows.reduce((s, r) => s + (r.stars ?? 0), 0);
   // Streak-free all-time score = sum of each game's daily score.
-  let totalScore = rows.reduce(
-    (s, r) =>
-      s + dailyScore(r.score ?? 0, r.stars ?? heartsFor(r.lives_remaining ?? 0), r.time_seconds ?? 0),
-    0
-  );
+  // Same Chain formula as live play and the boards.
+  const byDate = await roundsByDate(supabase);
+  let totalScore = rows.reduce((s, r) => s + chainDailyScore(r.score ?? 0, roundsFor(r, byDate)), 0);
   totalScore += modeRows.reduce((s, r) => s + (r.score ?? 0), 0);
   
   const monthlyScore = rows

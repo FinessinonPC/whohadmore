@@ -3,12 +3,12 @@ import { getServerSupabase, getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
 import { monthPeriod, previousISODate, todayISO } from "@/lib/date";
 import {
-  dailyScore,
+  chainDailyScore,
   earnedAchievementIds,
-  heartsFor,
   levelFromPoints,
   type Profile,
 } from "@/lib/leaderboard";
+import { roundsByDate, roundsFor } from "@/lib/chainRounds";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +23,7 @@ interface Body {
 
 interface ResultRow {
   play_date: string;
+  rounds?: number | null;
   points: number | null;
   stars: number | null;
   score: number | null;
@@ -30,7 +31,7 @@ interface ResultRow {
   lives_remaining: number | null;
 }
 
-const RESULT_COLUMNS = "play_date, points, stars, score, time_seconds, lives_remaining";
+const RESULT_COLUMNS = "play_date, points, stars, score, time_seconds, lives_remaining, rounds";
 
 function computeStreak(dates: Set<string>, today: string): number {
   let cursor = dates.has(today)
@@ -48,15 +49,20 @@ function computeStreak(dates: Set<string>, today: string): number {
 
 /** Roll a session's full result history up into profile stats. Idempotent: the
  *  same rows always produce the same totals (points/stars are stored per game). */
-function aggregate(rows: ResultRow[], modeRows: { score: number | null }[], today: string, period: string) {
+function aggregate(
+  rows: ResultRow[],
+  modeRows: { score: number | null }[],
+  today: string,
+  period: string,
+  byDate: Map<string, number>
+) {
   const dates = new Set(rows.map((r) => r.play_date));
   const xp = rows.reduce((s, r) => s + (r.points ?? 0), 0);
   const totalStars = rows.reduce((s, r) => s + (r.stars ?? 0), 0);
-  let totalScore = rows.reduce(
-    (s, r) =>
-      s + dailyScore(r.score ?? 0, r.stars ?? heartsFor(r.lives_remaining ?? 0), r.time_seconds ?? 0),
-    0
-  );
+  // Same Chain formula as live play and the boards: the share you got right on
+  // a 0-1000 scale. This used to sum dailyScore(correct, hearts, time), so
+  // signing in rewrote your total onto a scale nothing else used.
+  let totalScore = rows.reduce((s, r) => s + chainDailyScore(r.score ?? 0, roundsFor(r, byDate)), 0);
   totalScore += modeRows.reduce((s, r) => s + (r.score ?? 0), 0);
   
   const monthlyScore = rows
@@ -195,7 +201,7 @@ export async function POST(req: Request) {
       .returns<{ score: number | null }[]>();
     const modeRows = allModes ?? [];
 
-    const agg = aggregate(rows, modeRows, today, period);
+    const agg = aggregate(rows, modeRows, today, period, await roundsByDate(supabase));
     const { data: updated } = await supabase
       .from("profiles")
       .update({
@@ -240,7 +246,7 @@ export async function POST(req: Request) {
     .select("score")
     .eq("session_id", session_id)
     .returns<{ score: number | null }[]>();
-  const agg = aggregate(results ?? [], modeResults ?? [], today, period);
+  const agg = aggregate(results ?? [], modeResults ?? [], today, period, await roundsByDate(supabase));
 
   const { data: created, error } = await supabase
     .from("profiles")

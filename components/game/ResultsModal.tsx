@@ -8,7 +8,7 @@ import { LIVE_MODES } from "@/lib/modes";
 import { useArchiveScores } from "@/hooks/useArchiveScores";
 import { getLocalResult, getSessionId } from "@/lib/playStore";
 import { getModeResult } from "@/lib/modeStore";
-import { dailyScore, type DailyRow } from "@/lib/leaderboard";
+import { chainDailyScore, type DailyRow } from "@/lib/leaderboard";
 import { formatDisplayDate } from "@/lib/date";
 import { ShareResults } from "./ShareResults";
 
@@ -39,12 +39,12 @@ export function ResultsModal({ date, onClose }: { date: string; onClose: () => v
     trackEvent("results_modal_shown", { date });
   }, [date]);
 
-  // Rank on the SAME scale the leaderboard ranks on (dailyScore for Chain +
+  // Rank on the SAME scale the leaderboard ranks on (chainDailyScore for Chain +
   // the quick-game points), merging a synthetic "you" row so it appears
   // instantly - the leaderboard write may not have landed yet.
   useEffect(() => {
     const chain = getLocalResult(date);
-    const chainPts = chain ? dailyScore(chain.reached, 0, 0) : 0;
+    const chainPts = chain ? chainDailyScore(chain.reached, chain.rounds) : 0;
     const modeSum = (["duality", "word", "mini"] as const).reduce(
       (a, m) => a + (getModeResult(m, date)?.score ?? 0),
       0

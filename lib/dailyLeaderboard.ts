@@ -9,7 +9,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
-import { dailyScore, heartsFor, type DailyRow } from "@/lib/leaderboard";
+import { chainDailyScore, heartsFor, type DailyRow } from "@/lib/leaderboard";
 import { hashSeed } from "@/lib/seed";
 
 // A stable, unique-ish display name for a profile-less player, derived from
@@ -124,7 +124,14 @@ export async function getDailyLeaderboard(
           reached,
           hearts,
           timeSeconds,
-          score: dailyScore(reached, hearts, timeSeconds ?? 0) + (modeSum.get(r.session_id) ?? 0),
+          // Chain scores the share you got right on the same 0-1000 scale as
+          // every other game - the formula the hub, the archive and the profile
+          // all use. It used to score dailyScore(correct, hearts, time) here and
+          // nowhere else, which put Chain on a different scale to the rest of
+          // the card AND made rows without hearts or a clock (anything replayed
+          // or restored) score differently from rows recorded live.
+          score:
+            chainDailyScore(reached, rounds > 0 ? rounds : 10) + (modeSum.get(r.session_id) ?? 0),
         };
       })
       .sort((a, b) => (b.score !== a.score ? b.score - a.score : (a.timeSeconds ?? 1e9) - (b.timeSeconds ?? 1e9)))
