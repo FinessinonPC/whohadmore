@@ -9,6 +9,7 @@ import { formatDisplayDate } from "@/lib/date";
 import { getLocalResult, getProgress, getSessionId } from "@/lib/playStore";
 import { getModeResult } from "@/lib/modeStore";
 import { usePlayedResults } from "@/hooks/usePlayedResults";
+import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
 import { chainDailyScore } from "@/lib/leaderboard";
 import { LIVE_MODES, MODES } from "@/lib/modes";
 import { useArchiveGate } from "@/hooks/useArchiveGate";
@@ -101,7 +102,11 @@ export function GameHub({ game, date, gameNumber, initialScores }: GameHubProps)
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
+  // A LAYOUT effect, not a plain one: this decides which of the two layouts to
+  // render, and a plain effect runs after the paint - so on a client-side
+  // navigation the ledger would flash before being replaced by the receipt.
+  // Running before the paint means the browser only ever draws the right one.
+  useIsomorphicLayoutEffect(() => {
     const next: Record<string, TileState> = {};
     const chainServer = serverChain[date];
     const modeServer = serverModes[date] ?? {};

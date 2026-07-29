@@ -13,6 +13,7 @@ import { ArchiveLock } from "./ArchiveLock";
 import { ShareResults } from "@/components/game/ShareResults";
 import { ResultsModal } from "@/components/game/ResultsModal";
 import { isAdminPreview } from "@/lib/adminClient";
+import { writeCardCookieIfComplete } from "@/lib/cardState";
 import { isJuly4th } from "@/lib/festive";
 import { Fireworks } from "@/components/game/Fireworks";
 
@@ -102,6 +103,11 @@ export function NextGameCTA({ date, current }: { date: string; current: ModeId }
     const nextId = unplayed[0]?.id ?? null;
     setNext(nextId);
     setChecked(true);
+
+    // The card just got finished, and we're on a game screen - tell the server
+    // now, so walking back to the hub (directly or via the leaderboard) serves
+    // the finished layout instead of the ledger it then has to replace.
+    if (nextId === null) writeCardCookieIfComplete(date);
 
     // Finishing the fourth game pops the results pop-up - once per day, per
     // device (never during an admin preview).
