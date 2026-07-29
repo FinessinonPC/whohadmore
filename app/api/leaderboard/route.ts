@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/mockGame";
-import { levelFromXp, type LeaderboardRow } from "@/lib/leaderboard";
+import { levelFromPoints, type LeaderboardRow } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/leaderboard  ->  { rows } - top players all-time, by total score
-// (streak-free). Level still comes from XP, which does carry the streak bonus.
+// GET /api/leaderboard  ->  { rows } - top players all-time, by total score.
+// Level comes from the SAME total_score, so a player's level and their board
+// rank always agree - no matter when they started playing.
 export async function GET() {
   if (!isSupabaseConfigured()) {
     return NextResponse.json({ rows: [] });
@@ -37,7 +38,7 @@ export async function GET() {
     score: r.total_score,
     total_stars: r.total_stars,
     current_streak: r.current_streak,
-    level: levelFromXp(r.xp),
+    level: levelFromPoints(r.total_score),
   }));
 
   return NextResponse.json({ rows });

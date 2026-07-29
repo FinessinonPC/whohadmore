@@ -5,7 +5,7 @@ import { isValidISODate, monthPeriod, previousISODate, todayISO } from "@/lib/da
 import {
   chainDailyScore,
   earnedAchievementIds,
-  levelFromXp,
+  levelFromPoints,
   pointsForGame,
   type Profile,
 } from "@/lib/leaderboard";
@@ -119,14 +119,15 @@ export async function POST(req: Request) {
   }
 
   const xp = profile.xp + pts;
-  const level = levelFromXp(xp);
   const daysPlayed = profile.days_played + 1;
   const currentStreak = isToday ? nextStreak : profile.current_streak;
   const longestStreak = Math.max(profile.longest_streak, currentStreak);
   const monthlyScore = (profile.monthly_period === period ? profile.monthly_score : 0) + pts;
-  // All-time score: streak-free sum of each day's Chain points (0–1000). Only XP
-  // carries the streak bonus; the competitive boards don't.
+  // All-time score: streak-free sum of each day's Chain points (0–1000). This is
+  // the one currency now - it ranks the board AND sets the level.
   const totalScore = (profile.total_score ?? 0) + chainDailyScore(reached, rounds);
+  // The level the player is shown, so achievement thresholds agree with the chip.
+  const level = levelFromPoints(totalScore);
 
   const earned = earnedAchievementIds({ daysPlayed, currentStreak, level, clearedThisGame: cleared });
 

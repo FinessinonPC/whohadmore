@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useProfile } from "@/hooks/useProfile";
-import { levelFromXp } from "@/lib/leaderboard";
+import { levelFromPoints } from "@/lib/leaderboard";
 
 /**
  * Top-right account affordance. "Sign up" when no username is claimed on this
@@ -21,7 +21,7 @@ export function AccountButton() {
         className="flex items-center gap-1.5 rounded-full border border-border bg-surface py-1 pl-1 pr-3 text-xs font-bold text-ink transition-colors hover:bg-border/40"
       >
         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-ink text-[10px] font-bold text-white">
-          {levelFromXp(profile.xp)}
+          {levelFromPoints(profile.total_score ?? 0)}
         </span>
         <span className="max-w-[7rem] truncate">{profile.username}</span>
       </Link>

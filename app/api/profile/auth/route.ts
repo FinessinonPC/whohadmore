@@ -5,7 +5,7 @@ import { monthPeriod, previousISODate, todayISO } from "@/lib/date";
 import {
   chainDailyScore,
   earnedAchievementIds,
-  levelFromXp,
+  levelFromPoints,
   type Profile,
 } from "@/lib/leaderboard";
 import { roundsByDate, roundsFor } from "@/lib/chainRounds";
@@ -76,7 +76,7 @@ function aggregate(
   const achievements = earnedAchievementIds({
     daysPlayed,
     currentStreak: streak,
-    level: levelFromXp(xp),
+    level: levelFromPoints(totalScore),
     clearedThisGame: false,
   });
   return { xp, totalStars, totalScore, monthlyScore, daysPlayed, streak, lastPlayed, achievements };
