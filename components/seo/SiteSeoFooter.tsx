@@ -61,8 +61,12 @@ export function SiteSeoFooter() {
   };
 
   return (
-    <section className="mx-auto w-full max-w-2xl px-5 pb-12 pt-4">
-      <div className="border-t border-border pt-8">
+    // A fresh sheet of manila laid under the scorecard: the same card stock and
+    // heavy ink edge the archive cards are cut from, run full-bleed. The shade
+    // change is what tells you the games have ended and the reading starts -
+    // no hard divider needed, and the fold stays where it was.
+    <section className="border-t-[3px] border-ink bg-card">
+      <div className="mx-auto w-full max-w-2xl px-5 pb-14 pt-9">
         <h2 className="font-display text-2xl font-semibold text-ink">
           Four free daily games, one score
         </h2>
