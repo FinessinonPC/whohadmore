@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
+import { clearModeProgress, getModeProgress, saveModeProgress } from "@/lib/modeProgress";
+import { useResumableClock } from "@/hooks/useResumableClock";
 import { recordModeResult } from "@/lib/recordGame";
 import { isAdminPreview } from "@/lib/adminClient";
 import { useModeGuard } from "@/hooks/useModeGuard";
@@ -42,30 +44,40 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
     return m;
   }, [day]);
 
-  const [entries, setEntries] = useState<string[][]>(() =>
-    Array.from({ length: 5 }, () => Array(5).fill(""))
+  // The whole grid survives leaving the page. Without it a reload wiped the
+  // letters AND reset checks and the clock to zero - and since both feed the
+  // score, walking out and back in was a free perfect.
+  interface Saved { entries: string[][]; locked: string[]; wrong: string[]; checks: number }
+  const saved = useMemo(() => getModeProgress<Saved>("mini", date), [date]);
+
+  const [entries, setEntries] = useState<string[][]>(
+    () =>
+      saved?.state.entries ??
+      Array.from({ length: 5 }, () => Array(5).fill(""))
   );
   const [active, setActive] = useState<{ r: number; c: number }>(() => {
     const s = day.across[0];
     return { r: s.row, c: s.col };
   });
   const [dir, setDir] = useState<Dir>("A");
-  const [wrong, setWrong] = useState<Set<string>>(new Set());
+  const [wrong, setWrong] = useState<Set<string>>(() => new Set(saved?.state.wrong ?? []));
   // Cells confirmed correct by a Check are LOCKED - permanent, uneditable, and
   // the cursor skips over them as you type.
-  const [locked, setLocked] = useState<Set<string>>(new Set());
-  const [checks, setChecks] = useState(0); // times Check was used - the crutch
+  const [locked, setLocked] = useState<Set<string>>(() => new Set(saved?.state.locked ?? []));
+  const [checks, setChecks] = useState(() => saved?.state.checks ?? 0); // times Check was used - the crutch
   const [wrongNudge, setWrongNudge] = useState(false); // full grid, but not all right
   const [done, setDone] = useState<null | { score: number; revealed: boolean; seconds: number }>(null);
   const [, tick] = useState(0); // drives the live clock re-render
-  const startRef = useRef<number | null>(null); // clock starts on game entry
-  const secondsNow = () => (startRef.current ? (Date.now() - startRef.current) / 1000 : 0);
+  const gameClock = useResumableClock();
+  const secondsNow = () => gameClock.elapsedSeconds();
   const { already, checking } = useModeGuard("mini", date, MINI_MAX_POINTS);
 
-  // The clock starts the moment the player lands on the puzzle.
+  // The clock starts the moment the player lands on the puzzle, resuming from
+  // whatever was banked on an earlier visit rather than restarting at zero.
   useEffect(() => {
-    if (startRef.current === null) startRef.current = Date.now();
-  }, []);
+    gameClock.seed(saved?.elapsedMs ?? 0);
+    gameClock.start();
+  }, [gameClock, saved]);
 
   // Tick the visible clock once a second while the puzzle is live.
   useEffect(() => {
@@ -148,7 +160,18 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
   };
 
   const write = (r: number, c: number, ch: string) =>
-    setEntries((e) => e.map((row, ri) => row.map((cur, ci) => (ri === r && ci === c ? ch : cur))));
+    setEntries((e) => {
+      const next = e.map((row, ri) => row.map((cur, ci) => (ri === r && ci === c ? ch : cur)));
+      // Every keystroke goes through here, so this is the one place the grid
+      // needs snapshotting.
+      saveModeProgress(
+        "mini",
+        date,
+        { entries: next, locked: [...locked], wrong: [...wrong], checks },
+        gameClock.elapsedMs()
+      );
+      return next;
+    });
 
   const type = useCallback(
     (key: string) => {
@@ -248,6 +271,8 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
 
   const finish = (score: number, revealed: boolean, seconds: number) => {
     setDone({ score, revealed, seconds: Math.floor(seconds) });
+    // The snapshot's job is over - the result is the record from here.
+    clearModeProgress("mini", date);
     if (isAdminPreview()) return; // don't record admin previews
     if (getModeResult("mini", date)) return;
     saveModeResult("mini", date, {
@@ -314,9 +339,16 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
       }
     if (bad.size === 0) feedbackCorrect();
     else feedbackWrong();
+    const nextLocked = new Set([...locked, ...good]);
     setWrong(bad);
-    setLocked((prev) => new Set([...prev, ...good]));
-    setChecks((n) => n + 1);
+    setLocked(nextLocked);
+    setChecks(checks + 1);
+    saveModeProgress(
+      "mini",
+      date,
+      { entries, locked: [...nextLocked], wrong: [...bad], checks: checks + 1 },
+      gameClock.elapsedMs()
+    );
   };
 
   const reveal = () => {

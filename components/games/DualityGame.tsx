@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/Button";
 import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
+import { clearModeProgress, getModeProgress, saveModeProgress } from "@/lib/modeProgress";
+import { useResumableClock } from "@/hooks/useResumableClock";
 import { recordModeResult } from "@/lib/recordGame";
 import { isAdminPreview } from "@/lib/adminClient";
 import { useModeGuard } from "@/hooks/useModeGuard";
@@ -40,14 +42,27 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
     return seededShuffle(defs, mulberry32(hashSeed(`duality:${date}:board`)));
   }, [day, date]);
 
+  // Progress survives leaving the page. Without this a reload handed back all
+  // three mistakes and wiped the clock - and mistakes cost points, so walking
+  // out and back in was worth a free perfect score.
+  interface Saved { found: number[]; mistakes: number; tried: string[] }
+  const saved = useMemo(() => getModeProgress<Saved>("duality", date), [date]);
+
   const [selected, setSelected] = useState<string[]>([]);
-  const [found, setFound] = useState<number[]>([]); // pair indexes, in found order
-  const [mistakes, setMistakes] = useState(0);
-  const [tried, setTried] = useState<Set<string>>(new Set()); // wrong combos already used
+  const [found, setFound] = useState<number[]>(() => saved?.state.found ?? []); // pair indexes, in found order
+  const [mistakes, setMistakes] = useState(() => saved?.state.mistakes ?? 0);
+  const [tried, setTried] = useState<Set<string>>(
+    () => new Set(saved?.state.tried ?? [])
+  ); // wrong combos already used
   const [shake, setShake] = useState<string[]>([]); // texts currently shaking (wrong)
   const [elapsed, setElapsed] = useState(0); // seconds, frozen at finish
-  const startRef = useRef<number | null>(null); // clock starts on first pick
+  const clock = useResumableClock();
   const { already, checking } = useModeGuard("duality", date, DUALITY_MAX_SCORE);
+
+  // Time already banked on an earlier visit; the clock resumes from there.
+  useEffect(() => {
+    clock.seed(saved?.elapsedMs ?? 0);
+  }, [clock, saved]);
 
   const failed = mistakes >= DUALITY_MAX_MISTAKES;
   const solved = found.length === day.pairs.length;
@@ -55,7 +70,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
   const score = dualityScore(found.length, mistakes, elapsed);
   const max = DUALITY_MAX_SCORE;
 
-  const secondsNow = () => (startRef.current ? (Date.now() - startRef.current) / 1000 : 0);
+  const secondsNow = () => clock.elapsedSeconds();
 
   const currentKey = selected.length === 2 ? comboKey(selected[0], selected[1]) : null;
   const isRepeat = currentKey ? tried.has(currentKey) : false;
@@ -80,7 +95,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
 
   const toggle = (text: string) => {
     if (done || shake.length > 0) return;
-    if (startRef.current === null) startRef.current = Date.now();
+    clock.start();
     setSelected((s) =>
       s.includes(text) ? s.filter((t) => t !== text) : s.length < 2 ? [...s, text] : s
     );
@@ -95,13 +110,27 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
       // Freeze the clock the instant the last pair lands, so the persisted
       // score uses the real solve time (not a stale render value).
       if (found.length + 1 >= DUALITY_PAIRS) setElapsed(secondsNow());
-      setFound((f) => [...f, picked[0].pair]);
+      const nextFound = [...found, picked[0].pair];
+      setFound(nextFound);
       setSelected([]);
+      saveModeProgress(
+        "duality",
+        date,
+        { found: nextFound, mistakes, tried: [...tried] },
+        clock.elapsedMs()
+      );
       feedbackCorrect();
     } else {
       if (mistakes + 1 >= DUALITY_MAX_MISTAKES) setElapsed(secondsNow());
-      setMistakes((m) => m + 1);
-      setTried((t) => new Set(t).add(key));
+      const nextTried = new Set(tried).add(key);
+      setMistakes(mistakes + 1);
+      setTried(nextTried);
+      saveModeProgress(
+        "duality",
+        date,
+        { found, mistakes: mistakes + 1, tried: [...nextTried] },
+        clock.elapsedMs()
+      );
       setShake(selected); // shake the two wrong tiles, then clear them
       feedbackWrong();
       window.setTimeout(() => {
@@ -125,6 +154,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
       moves: mistakes,
       won: solved,
     });
+    clearModeProgress("duality", date);
     recordModeResult({
       session_id: getSessionId(),
       play_date: date,

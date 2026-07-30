@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { GameShell, NextGameCTA } from "./GameShell";
 import { getSessionId } from "@/lib/playStore";
 import { getModeResult, saveModeResult } from "@/lib/modeStore";
+import { clearModeProgress, getModeProgress, saveModeProgress } from "@/lib/modeProgress";
 import { recordModeResult } from "@/lib/recordGame";
 import { isAdminPreview } from "@/lib/adminClient";
 import { useModeGuard } from "@/hooks/useModeGuard";
@@ -47,7 +48,12 @@ const KEY_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
  */
 export function WordGame({ answer, date }: { answer: string; date: string }) {
 
-  const [rows, setRows] = useState<string[]>([]);
+  // Guesses are restored from this device, so leaving and coming back does NOT
+  // hand out a fresh six tries - which, since the score is set by how many
+  // guesses you used, was worth a free 1000 points.
+  const [rows, setRows] = useState<string[]>(
+    () => getModeProgress<string[]>("word", date)?.state ?? []
+  );
   const [current, setCurrent] = useState("");
   const [shake, setShake] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -97,6 +103,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
         const next = [...rows, current];
         setRows(next);
         setCurrent("");
+        saveModeProgress("word", date, next, 0);
         if (current === answer) feedbackCorrect();
         else if (next.length >= WORD_MAX_GUESSES) feedbackWrong();
         return;
@@ -107,7 +114,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
       }
       if (/^[A-Z]$/.test(key) && current.length < 5) setCurrent((c) => c + key);
     },
-    [current, rows, done, already, answer]
+    [current, rows, done, already, answer, date]
   );
 
   // Physical keyboard.
@@ -136,6 +143,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
       moves: rows.length,
       won,
     });
+    clearModeProgress("word", date);
     recordModeResult({
       session_id: getSessionId(),
       play_date: date,
