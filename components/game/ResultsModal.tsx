@@ -1,91 +1,32 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { trackEvent } from "@/lib/clientTrack";
 import { LIVE_MODES } from "@/lib/modes";
 import { useArchiveScores } from "@/hooks/useArchiveScores";
-import { getLocalResult, getSessionId } from "@/lib/playStore";
-import { getModeResult } from "@/lib/modeStore";
-import { chainDailyScore, type DailyRow } from "@/lib/leaderboard";
+import { useDailyStanding } from "@/hooks/useDailyStanding";
 import { formatDisplayDate } from "@/lib/date";
 import { ShareResults } from "./ShareResults";
 
-interface RankInfo {
-  rank: number;
-  total: number;
-  /** Share of today's other players this score beat, 0-100. */
-  beatPct: number;
-  window: { rank: number; name: string; anon: boolean; score: number; you: boolean }[];
-}
-
 /**
- * The end-of-card pop-up ("Scorecard" layout). Fires once the player finishes
- * all four games. Shows their finished total, their LIVE leaderboard rank (a
- * three-row window around them, computed the way DayStandings does so it's right
- * even before the result write lands), a prominent Share button, and a nudge
- * into past cards - which for a signed-out player leads to sign-up. Every
- * actionable tap is analytics-tracked.
+ * The end-of-card pop-up. Fires once the player finishes all four games.
+ *
+ * Deliberately short: the date, the total, how they did against everyone else,
+ * and two things to do next. It used to also list every game's individual score
+ * and a three-row slice of the board - detail that made the card longer without
+ * making it say more. One number and one sentence land in the second a player
+ * actually gives this.
  */
 export function ResultsModal({ date, onClose }: { date: string; onClose: () => void }) {
   const dates = useMemo(() => [{ play_date: date }], [date]);
   const scoreFor = useArchiveScores(dates);
-  const perGame = LIVE_MODES.map((m) => ({ name: m.name, score: scoreFor(date, m.id) }));
-  const total = perGame.reduce((a, p) => a + p.score.points, 0);
-  const max = LIVE_MODES.length * 1000;
-
-  const [rank, setRank] = useState<RankInfo | null>(null);
+  const total = LIVE_MODES.reduce((a, m) => a + scoreFor(date, m.id).points, 0);
+  const standing = useDailyStanding(date);
 
   useEffect(() => {
     trackEvent("results_modal_shown", { date });
-  }, [date]);
-
-  // Rank on the SAME scale the leaderboard ranks on (dailyScore for Chain +
-  // the quick-game points), merging a synthetic "you" row so it appears
-  // instantly - the leaderboard write may not have landed yet.
-  useEffect(() => {
-    const chain = getLocalResult(date);
-    const chainPts = chain ? chainDailyScore(chain.reached, chain.rounds) : 0;
-    const modeSum = (["duality", "word", "mini"] as const).reduce(
-      (a, m) => a + (getModeResult(m, date)?.score ?? 0),
-      0
-    );
-    const myScore = chainPts + modeSum;
-
-    let cancelled = false;
-    const build = (rows: DailyRow[]) => {
-      const others = rows.filter((r) => !r.you);
-      const you = { rank: 0, name: "You", anon: true, score: myScore, you: true };
-      const merged = [...others.map((r) => ({ rank: 0, name: r.name, anon: r.anon, score: r.score, you: false })), you]
-        .sort((a, b) => b.score - a.score)
-        .map((r, i) => ({ ...r, rank: i + 1 }));
-      const idx = merged.findIndex((r) => r.you);
-      const start = Math.max(0, Math.min(idx - 1, merged.length - 3));
-      // Beaten = everyone ELSE scoring strictly lower. Ties don't count as beaten,
-      // so the number can never flatter; with nobody else on the board yet it's
-      // 0 and the copy falls back to "first one in today".
-      const beaten = others.filter((r) => r.score < myScore).length;
-      const beatPct = others.length > 0 ? Math.round((beaten / others.length) * 100) : 0;
-      return {
-        rank: idx + 1,
-        total: merged.length,
-        beatPct,
-        window: merged.slice(start, start + 3),
-      };
-    };
-
-    fetch(`/api/leaderboard/daily?date=${date}&session=${getSessionId()}`)
-      .then((r) => r.json())
-      .then((d: { rows?: DailyRow[] }) => {
-        if (!cancelled) setRank(build(d.rows ?? []));
-      })
-      .catch(() => {
-        if (!cancelled) setRank(build([]));
-      });
-    return () => {
-      cancelled = true;
-    };
   }, [date]);
 
   // Escape closes, like any dialog.
@@ -124,65 +65,51 @@ export function ResultsModal({ date, onClose }: { date: string; onClose: () => v
           ×
         </button>
 
-        {/* masthead */}
         <div className="text-center">
           <span className="stamp-red">{formatDisplayDate(date)}</span>
           <h2 className="mt-2.5 font-display text-2xl font-semibold uppercase tracking-wide text-ink">
             Card complete
           </h2>
-          <p className="mt-1.5">
-            <span className="marker-gold font-condensed text-4xl font-semibold text-ink tabular">
+          <p className="mt-2">
+            <span className="marker-gold font-condensed text-[44px] font-semibold leading-none text-ink tabular">
               {total.toLocaleString()}
             </span>
-            <span className="text-sm font-semibold text-ink-secondary"> / {max.toLocaleString()} pts</span>
           </p>
-          <p className="mt-1 text-[11px] font-semibold text-ink-secondary">
-            {perGame.map((p) => `${p.name} ${p.score.points.toLocaleString()}`).join(" · ")}
-          </p>
+          <p className="small-caps mt-1 text-[10px] font-bold text-ink-secondary">points</p>
         </div>
 
-        {/* How you did. One sentence and one marker beats a table: it reads at a
-            glance, it survives being screenshotted, and it stays meaningful when
-            only a handful of people have played. The rank sits underneath for
-            anyone who wants the precise number. */}
-        <div className="card-ink-flat mt-4 px-4 py-3.5">
-          {rank ? (
+        {/* How they did - the one line worth reading, and a bar to see it in. */}
+        <div className="mt-4 min-h-[62px]">
+          {standing ? (
             <>
               <p className="text-center font-condensed text-[22px] font-semibold leading-tight text-ink">
-                {rank.total <= 1 ? (
-                  <>You&apos;re <span className="marker-gold">first in</span> today</>
+                {standing.total <= 1 ? (
+                  <>
+                    You&apos;re <span className="marker-gold">first in</span> today
+                  </>
                 ) : (
                   <>
-                    You beat <span className="marker-gold">{rank.beatPct}%</span> of players
+                    You beat <span className="marker-gold">{standing.beatPct}%</span> of players
                   </>
                 )}
               </p>
-
-              <div className="relative mt-3 h-3.5 w-full rounded-full border-2 border-ink bg-background">
+              <div className="relative mt-2.5 h-3.5 w-full rounded-full border-2 border-ink bg-background">
                 <motion.div
                   className="absolute inset-y-0 left-0 rounded-l-full bg-[#FFB300]"
                   initial={{ width: 0 }}
-                  animate={{ width: `${rank.beatPct}%` }}
+                  animate={{ width: `${standing.beatPct}%` }}
                   transition={{ delay: 0.15, type: "spring", damping: 26, stiffness: 140 }}
                 />
                 <motion.div
                   className="absolute -top-1.5 h-6 w-[3px] bg-ink"
                   initial={{ left: "0%" }}
-                  animate={{ left: `${rank.beatPct}%` }}
+                  animate={{ left: `${standing.beatPct}%` }}
                   transition={{ delay: 0.15, type: "spring", damping: 26, stiffness: 140 }}
                 />
               </div>
-              <div className="mt-1 flex justify-between text-[10px] font-semibold text-ink-secondary">
-                <span>Lowest today</span>
-                <span>Best today</span>
-              </div>
-
-              <p className="mt-2.5 text-center text-[12px] font-semibold text-ink-secondary">
-                #{rank.rank} of {rank.total} today
-              </p>
             </>
           ) : (
-            <p className="py-6 text-center text-xs text-ink-secondary">Working out how you did…</p>
+            <p className="pt-4 text-center text-xs text-ink-secondary">Working out how you did…</p>
           )}
         </div>
 

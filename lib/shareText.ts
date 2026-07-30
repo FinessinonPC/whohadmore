@@ -1,85 +1,65 @@
 // ============================================================================
 // What a player posts.
 //
-// The old share was a scoreboard: four game names and four numbers. Nothing in
-// it told a reader what the puzzle was ABOUT, gave them a claim to disagree
-// with, or looked like anything in a feed. A number nobody can argue with is a
-// number nobody forwards.
+// Four lines, and every one earns its place:
 //
-// This leads with Chain, because Chain is the only game here that isn't a
-// format people already play elsewhere - and because it's argumentative. "No
-// way he had more than her" is a thing people say out loud, and saying it out
-// loud is the growth loop.
+//   the topic   what today was about, so the post has a subject
+//   the run     🟩🟥 in the order played - the glanceable bit, and the only
+//               part that survives being seen at thumbnail size
+//   the numbers the total, and the share of players it beat. Two numbers,
+//               because a total alone means nothing to someone who has never
+//               played and "beat 67%" is the part worth bragging about
+//   the link
 //
-// Three deliberate parts:
-//   the topic     tells the reader what today is about, so the post has a
-//                 subject rather than just a score
-//   the run       a glanceable ✅/❌ line, the way a Wordle grid is glanceable
-//   the matchup   the pair that caught the player out - the actual hook, and
-//                 the bit worth replying to
+// Deliberately NOT here: a per-game breakdown. Four game names and four scores
+// is a table, and nobody reads a table in a group chat.
 //
-// Spoiler-safe: naming the two entities never reveals which is higher, so the
-// reader still has to play to find out.
+// Spoiler-safe: the run shows only whether each call was right, never which
+// side it was, so a reader still has to play.
 // ============================================================================
-
-import { LIVE_MODES } from "@/lib/modes";
 
 export interface ChainShare {
   reached: number;
   rounds: number;
   wrongRounds: number[];
   topic?: string;
-  missed?: [string, string];
 }
 
-/** The run as ticks and crosses, in the order they were played. */
+/** The run as coloured blocks, in the order played. */
 export function runGlyphs(reached: number, rounds: number, wrongRounds: number[]): string {
   const total = Math.max(0, Math.min(rounds, 20));
   if (total === 0) return "";
   const wrong = new Set(wrongRounds);
-  // Rounds only ever end at the last pair, so everything up to `played` was
-  // actually attempted; anything beyond it was never reached.
+  // A chain only ends at the last pair, so everything up to `played` was
+  // attempted; anything past it was never reached.
   const played = Math.min(total, reached + wrongRounds.length);
   let out = "";
-  for (let i = 0; i < played; i++) out += wrong.has(i) ? "❌" : "✅";
+  for (let i = 0; i < played; i++) out += wrong.has(i) ? "🟥" : "🟩";
   return out;
 }
 
 export interface ShareInput {
-  date: string;
-  /** Display date, already formatted by the caller. */
+  /** Display date, already formatted - the fallback header when there's no topic. */
   dateLabel: string;
   chain: ChainShare | null;
-  /** Points per mode id, for the quick games. */
-  modeScores: Record<string, { points: number; played: boolean }>;
+  /** Combined score for the day. */
+  total: number;
+  /** Share of today's other players this beat, or null while unknown. */
+  beatPct: number | null;
   origin: string;
 }
 
-export function buildShareText({ dateLabel, chain, modeScores, origin }: ShareInput): string {
-  const lines: string[] = [];
+export function buildShareText({ dateLabel, chain, total, beatPct, origin }: ShareInput): string {
+  const lines: string[] = [`WhoHadMore · ${chain?.topic ?? dateLabel}`];
 
-  // --- Chain leads -----------------------------------------------------------
   if (chain && chain.rounds > 0) {
-    lines.push(`WhoHadMore · ${chain.topic ?? dateLabel}`);
     const run = runGlyphs(chain.reached, chain.rounds, chain.wrongRounds);
-    lines.push(`${run} ${chain.reached}/${chain.rounds}`.trim());
-    if (chain.missed) {
-      lines.push(`Got me: ${chain.missed[0]} vs ${chain.missed[1]}`);
-    } else if (chain.reached >= chain.rounds) {
-      lines.push("Clean sweep - didn't miss one.");
-    }
-  } else {
-    lines.push(`WhoHadMore · ${dateLabel}`);
+    if (run) lines.push(run);
   }
 
-  // --- the rest of the card, compact ----------------------------------------
-  const quick = LIVE_MODES.filter((m) => m.id !== "chain")
-    .map((m) => ({ name: m.name, ...(modeScores[m.id] ?? { points: 0, played: false }) }))
-    .filter((m) => m.played);
-  if (quick.length) {
-    lines.push(quick.map((m) => `${m.name} ${m.points.toLocaleString()}`).join(" · "));
-  }
-
+  const score = `${total.toLocaleString()} points`;
+  lines.push(beatPct === null ? score : `${score} · beat ${beatPct}% of players`);
   lines.push(origin);
+
   return lines.join("\n");
 }

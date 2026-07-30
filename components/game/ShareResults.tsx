@@ -7,37 +7,34 @@ import { formatDisplayDate } from "@/lib/date";
 import { getLocalResult } from "@/lib/playStore";
 import { buildShareText } from "@/lib/shareText";
 import { useArchiveScores } from "@/hooks/useArchiveScores";
+import { useDailyStanding } from "@/hooks/useDailyStanding";
 
 /**
  * A shareable, spoiler-free post that links back to the site.
  *
- * Leads with Chain - the topic, the run, and the matchup that caught the player
- * out - because that's the part a reader can argue with, and arguing is what
- * makes a post travel. See lib/shareText for the reasoning. Scores still come
- * from the device+server merge the hub uses, so a signed-in player's numbers
- * are right even when this device's localStorage is empty.
+ * Topic, the run as coloured blocks, the total, and the share of players it
+ * beat. No per-game breakdown - a table of four names and four numbers is not
+ * something anyone reads in a group chat. See lib/shareText.
  */
-function shareText(date: string, scoreFor: ReturnType<typeof useArchiveScores>): string {
-  const chainLocal = getLocalResult(date);
-  const modeScores = Object.fromEntries(
-    LIVE_MODES.filter((m) => m.id !== "chain").map((m) => {
-      const s = scoreFor(date, m.id);
-      return [m.id, { points: s.points, played: s.played }];
-    })
-  );
+function shareText(
+  date: string,
+  scoreFor: ReturnType<typeof useArchiveScores>,
+  beatPct: number | null
+): string {
+  const chain = getLocalResult(date);
+  const total = LIVE_MODES.reduce((a, m) => a + scoreFor(date, m.id).points, 0);
   return buildShareText({
-    date,
     dateLabel: formatDisplayDate(date),
-    chain: chainLocal
+    chain: chain
       ? {
-          reached: chainLocal.reached,
-          rounds: chainLocal.rounds,
-          wrongRounds: chainLocal.wrongRounds ?? [],
-          topic: chainLocal.topic,
-          missed: chainLocal.missed,
+          reached: chain.reached,
+          rounds: chain.rounds,
+          wrongRounds: chain.wrongRounds ?? [],
+          topic: chain.topic,
         }
       : null,
-    modeScores,
+    total,
+    beatPct,
     origin:
       typeof window !== "undefined"
         ? window.location.origin.replace(/^https?:\/\//, "")
@@ -76,9 +73,12 @@ export function ShareResults({ date, className, variant = "bar", surface = "card
   const [copied, setCopied] = useState(false);
   const dates = useMemo(() => [{ play_date: date }], [date]);
   const scoreFor = useArchiveScores(dates);
+  // Same source the card-complete pop-up reads, so the post and the screen
+  // behind it can never quote different figures.
+  const standing = useDailyStanding(date);
 
   async function share() {
-    const text = shareText(date, scoreFor);
+    const text = shareText(date, scoreFor, standing?.beatPct ?? null);
     trackEvent("share_click", { surface, game: game ?? "all", date });
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
