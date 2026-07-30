@@ -15,6 +15,8 @@ import { ShareResults } from "./ShareResults";
 interface RankInfo {
   rank: number;
   total: number;
+  /** Share of today's other players this score beat, 0-100. */
+  beatPct: number;
   window: { rank: number; name: string; anon: boolean; score: number; you: boolean }[];
 }
 
@@ -60,7 +62,17 @@ export function ResultsModal({ date, onClose }: { date: string; onClose: () => v
         .map((r, i) => ({ ...r, rank: i + 1 }));
       const idx = merged.findIndex((r) => r.you);
       const start = Math.max(0, Math.min(idx - 1, merged.length - 3));
-      return { rank: idx + 1, total: merged.length, window: merged.slice(start, start + 3) };
+      // Beaten = everyone ELSE scoring strictly lower. Ties don't count as beaten,
+      // so the number can never flatter; with nobody else on the board yet it's
+      // 0 and the copy falls back to "first one in today".
+      const beaten = others.filter((r) => r.score < myScore).length;
+      const beatPct = others.length > 0 ? Math.round((beaten / others.length) * 100) : 0;
+      return {
+        rank: idx + 1,
+        total: merged.length,
+        beatPct,
+        window: merged.slice(start, start + 3),
+      };
     };
 
     fetch(`/api/leaderboard/daily?date=${date}&session=${getSessionId()}`)
@@ -129,36 +141,48 @@ export function ResultsModal({ date, onClose }: { date: string; onClose: () => v
           </p>
         </div>
 
-        {/* rank window */}
-        <div className="card-ink-flat mt-4 px-3 py-2.5">
-          <div className="mb-1 flex items-baseline justify-between">
-            <span className="small-caps text-[10px] font-bold text-ink-secondary">Today&apos;s board</span>
-            <span className="font-condensed text-sm font-semibold text-ink">
-              {rank ? `you're #${rank.rank} of ${rank.total}` : "ranking…"}
-            </span>
-          </div>
+        {/* How you did. One sentence and one marker beats a table: it reads at a
+            glance, it survives being screenshotted, and it stays meaningful when
+            only a handful of people have played. The rank sits underneath for
+            anyone who wants the precise number. */}
+        <div className="card-ink-flat mt-4 px-4 py-3.5">
           {rank ? (
-            rank.window.map((r, i) => (
-              <div
-                key={`${r.rank}-${i}`}
-                className={`flex items-center gap-2.5 px-1.5 py-1.5 ${
-                  r.you ? "-mx-1 rounded-lg bg-[#FFB300]/25" : i > 0 ? "border-t border-border/60" : ""
-                }`}
-              >
-                <span className="w-5 shrink-0 text-center font-condensed text-sm font-semibold text-ink-secondary">
-                  {r.rank}
-                </span>
-                <span className={`min-w-0 flex-1 truncate text-sm font-bold ${r.anon && !r.you ? "text-ink-secondary" : "text-ink"}`}>
-                  {r.you ? "You" : r.name}
-                  {r.you && <span className="ml-1.5 font-extrabold text-correct">(you)</span>}
-                </span>
-                <span className="tabular font-condensed text-base font-semibold text-ink">
-                  {r.score.toLocaleString()}
-                </span>
+            <>
+              <p className="text-center font-condensed text-[22px] font-semibold leading-tight text-ink">
+                {rank.total <= 1 ? (
+                  <>You&apos;re <span className="marker-gold">first in</span> today</>
+                ) : (
+                  <>
+                    You beat <span className="marker-gold">{rank.beatPct}%</span> of players
+                  </>
+                )}
+              </p>
+
+              <div className="relative mt-3 h-3.5 w-full rounded-full border-2 border-ink bg-background">
+                <motion.div
+                  className="absolute inset-y-0 left-0 rounded-l-full bg-[#FFB300]"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${rank.beatPct}%` }}
+                  transition={{ delay: 0.15, type: "spring", damping: 26, stiffness: 140 }}
+                />
+                <motion.div
+                  className="absolute -top-1.5 h-6 w-[3px] bg-ink"
+                  initial={{ left: "0%" }}
+                  animate={{ left: `${rank.beatPct}%` }}
+                  transition={{ delay: 0.15, type: "spring", damping: 26, stiffness: 140 }}
+                />
               </div>
-            ))
+              <div className="mt-1 flex justify-between text-[10px] font-semibold text-ink-secondary">
+                <span>Lowest today</span>
+                <span>Best today</span>
+              </div>
+
+              <p className="mt-2.5 text-center text-[12px] font-semibold text-ink-secondary">
+                #{rank.rank} of {rank.total} today
+              </p>
+            </>
           ) : (
-            <p className="py-4 text-center text-xs text-ink-secondary">Loading the board…</p>
+            <p className="py-6 text-center text-xs text-ink-secondary">Working out how you did…</p>
           )}
         </div>
 
