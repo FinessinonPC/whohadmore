@@ -163,7 +163,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
               <p className="font-condensed text-2xl font-semibold uppercase tracking-wide leading-none">
                 {p.word}
               </p>
-              <p className="mt-1 text-[11px] font-bold opacity-80">{p.defs.join("  ·  ")}</p>
+              <p className="mt-1 text-[13px] font-bold opacity-80">{p.defs.join("  ·  ")}</p>
             </div>
           ))}
         </div>
@@ -183,7 +183,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
 
   return (
     <GameShell mode="duality" date={date}>
-      <p className="text-center text-xs font-semibold text-ink-secondary">
+      <p className="text-center text-[15px] font-semibold text-ink-secondary">
         Match the pairs - two meanings, one word
       </p>
 
@@ -200,7 +200,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
             <p className="font-condensed text-2xl font-semibold uppercase tracking-wide leading-none">
               {day.pairs[pairIdx].word}
             </p>
-            <p className="mt-1 text-[11px] font-bold opacity-80">
+            <p className="mt-1 text-[13px] font-bold opacity-80">
               {day.pairs[pairIdx].defs.join("  ·  ")}
             </p>
           </motion.div>
@@ -224,7 +224,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
                     onClick={() => toggle(d.text)}
                     animate={isShaking ? { x: [0, -8, 8, -6, 6, 0] } : { x: 0, scale: isSel ? 1.04 : 1 }}
                     transition={isShaking ? { duration: 0.42 } : { type: "spring", stiffness: 500, damping: 30 }}
-                    className={`ink-fix wonky flex min-h-[4.8rem] w-full items-center justify-center border-2 border-ink px-3 py-3 text-center text-sm font-bold leading-snug transition-colors active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:text-[15px] ${
+                    className={`ink-fix wonky flex min-h-[5.2rem] w-full items-center justify-center border-2 border-ink px-2.5 py-3 text-center text-[17px] font-bold leading-snug transition-colors active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:text-[18px] ${
                       isSel ? "ink-shadow" : "ink-shadow-sm"
                     } ${isShaking ? "" : isSel ? "" : "text-ink"}`}
                     // Inline wins over the ink-fix utility: selected tiles read
@@ -257,7 +257,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
                 <p className="font-condensed text-2xl font-semibold uppercase tracking-wide leading-none text-ink-secondary">
                   {p.word}
                 </p>
-                <p className="mt-1 text-[11px] font-bold text-ink-secondary opacity-80">
+                <p className="mt-1 text-[13px] font-bold text-ink-secondary opacity-80">
                   {p.defs.join("  ·  ")}
                 </p>
               </div>
@@ -284,7 +284,7 @@ export function DualityGame({ day, date }: { day: DualityDay; date: string }) {
                 />
               ))}
             </span>
-            <span className="text-[11px] font-semibold text-ink-secondary">mistakes left</span>
+            <span className="text-[13px] font-semibold text-ink-secondary">mistakes left</span>
           </>
         )}
       </div>

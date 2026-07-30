@@ -275,7 +275,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
           ) : done ? null : toast ? (
             <p className="text-xs font-bold text-wrong">{toast}</p>
           ) : (
-            <p className="text-xs font-semibold text-ink-secondary">
+            <p className="text-sm font-semibold text-ink-secondary">
               Guess the five-letter word · {WORD_MAX_GUESSES - rows.length} tries left
             </p>
           )}
@@ -292,7 +292,7 @@ export function WordGame({ answer, date }: { answer: string; date: string }) {
                   {i === 2 && (
                     <button
                       onClick={() => type("ENTER")}
-                      className="flex h-12 flex-[1.6] items-center justify-center rounded-lg border-2 border-ink bg-cta text-[11px] font-extrabold text-background active:scale-95"
+                      className="flex h-12 flex-[1.6] items-center justify-center rounded-lg border-2 border-ink bg-cta text-[13px] font-extrabold text-background active:scale-95"
                     >
                       ENTER
                     </button>

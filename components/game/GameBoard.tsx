@@ -148,7 +148,7 @@ export function GameBoard({
           <p className="hidden small-caps text-[11px] text-ink-secondary md:block">
             {formatShortDate(date)} · {embedded ? "Preview" : `Game No. ${gameNumber}`}
           </p>
-          <p className="text-[13px] font-semibold text-ink-secondary md:mt-1">
+          <p className="text-[15px] font-semibold text-ink-secondary md:mt-1">
             {game.stat_label}
             {game.stat_unit ? ` (${game.stat_unit})` : ""}
           </p>
@@ -177,7 +177,7 @@ export function GameBoard({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.18 }}
-              className={`text-sm font-bold uppercase tracking-wide ${hint.tone}`}
+              className={`text-[15px] font-bold uppercase tracking-wide ${hint.tone}`}
             >
               {hint.text}
             </motion.p>

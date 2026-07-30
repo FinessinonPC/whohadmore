@@ -110,10 +110,10 @@ export function Card({
 
         {/* Name + value: compact pills hugging the bottom edge, off the subject */}
         <div className="relative z-10 mb-3 flex max-w-[94%] flex-col items-center gap-1.5 px-2">
-          <span className="wonky line-clamp-2 border border-black/10 bg-white/95 px-3.5 py-1 text-center text-[13px] font-bold leading-snug text-[#101318] shadow-md sm:px-4 sm:text-sm">
+          <span className="wonky line-clamp-2 border border-black/10 bg-white/95 px-3.5 py-1.5 text-center text-[16px] font-bold leading-snug text-[#101318] shadow-md sm:px-4 sm:text-[17px]">
             {card.entity_name}
           </span>
-          <span className="wonky tabular border border-black/10 bg-white/95 px-3 py-0.5 text-center font-condensed text-xl font-semibold text-[#101318] shadow-md sm:text-2xl">
+          <span className="wonky tabular border border-black/10 bg-white/95 px-3.5 py-1 text-center font-condensed text-[26px] font-semibold leading-none text-[#101318] shadow-md sm:text-[30px]">
             {!revealValue ? (
               "?"
             ) : (
@@ -124,7 +124,7 @@ export function Card({
                   formatStat(card.stat_value)
                 )}
                 {statUnit && (
-                  <span className="ml-1 text-xs font-bold text-[#5A6068] sm:text-sm">
+                  <span className="ml-1 text-sm font-bold text-[#5A6068] sm:text-[15px]">
                     {statUnit}
                   </span>
                 )}

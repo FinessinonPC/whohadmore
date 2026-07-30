@@ -452,7 +452,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
                 >
                   {num && (
                     <span
-                      className="absolute left-0.5 top-0 text-[8px] font-bold opacity-60 lg:left-1 lg:text-[11px]"
+                      className="absolute left-0.5 top-0 text-[10px] font-bold opacity-60 lg:left-1 lg:text-[11px]"
                       style={{ color: isActive || inWord ? "#16181D" : "rgb(var(--ink-2))" }}
                     >
                       {num}
@@ -505,7 +505,7 @@ export function MiniGame({ day, date }: { day: MiniDay; date: string }) {
               style={{ background: PASTEL }}
             >
               <span
-                className={`text-[13px] font-bold leading-snug text-ink ${
+                className={`text-[16px] font-bold leading-snug text-ink ${
                   activeSlot && isSlotFilled(activeSlot, dir) ? "line-through opacity-50" : ""
                 }`}
               >
