@@ -16,6 +16,15 @@ export interface StoredResult {
   wrongRounds: number[];
   xpEarned: number;
   completedAt: string; // ISO timestamp
+  // --- for the share, recorded at play time -------------------------------
+  // The share is the growth loop, and a bare score gives a reader nothing to
+  // react to. What travels is the ARGUMENT: the topic, and the one matchup
+  // that caught you out. Both are captured here because the share button can
+  // be pressed from surfaces that never loaded the day's cards.
+  /** That day's Chain topic, e.g. "NBA Scoring Leaders". */
+  topic?: string;
+  /** The two names from the first round they got wrong. */
+  missed?: [string, string];
 }
 
 /**

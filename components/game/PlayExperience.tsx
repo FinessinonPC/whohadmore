@@ -98,12 +98,23 @@ export function PlayExperience({
       // Points for this run, computed on-device so the end screen works
       // offline. The server derives the same number from the recorded row.
       const xpEarned = pointsForGame(summary.reached, summary.rounds);
+      // Capture what the share needs while the cards are still in scope: the
+      // topic, and the pair that caught them out. Round i compared cards[i]
+      // with cards[i + 1], so the first wrong round names its own matchup.
+      const cards = initialGame?.cards ?? [];
+      const firstWrong = summary.wrongRounds[0];
+      const missed =
+        typeof firstWrong === "number" && cards[firstWrong] && cards[firstWrong + 1]
+          ? ([cards[firstWrong].entity_name, cards[firstWrong + 1].entity_name] as [string, string])
+          : undefined;
       const stored: StoredResult = {
         reached: summary.reached,
         rounds: summary.rounds,
         wrongRounds: summary.wrongRounds,
         xpEarned,
         completedAt: new Date().toISOString(),
+        topic: initialGame?.topic_label,
+        missed,
       };
       saveLocalResult(date, stored);
       clearProgress(date); // game is finished - nothing to resume
@@ -122,7 +133,7 @@ export function PlayExperience({
         rounds: summary.rounds,
       });
     },
-    [date]
+    [date, initialGame]
   );
 
   // Tapping the brand mid-game returns to the daily page. On the daily route we

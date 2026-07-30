@@ -4,36 +4,45 @@ import { useState, useMemo } from "react";
 import { trackEvent } from "@/lib/clientTrack";
 import { LIVE_MODES } from "@/lib/modes";
 import { formatDisplayDate } from "@/lib/date";
+import { getLocalResult } from "@/lib/playStore";
+import { buildShareText } from "@/lib/shareText";
 import { useArchiveScores } from "@/hooks/useArchiveScores";
 
 /**
- * A shareable, spoiler-free scorecard that links back to the site. Scores come
- * from the same device+server merge the hub uses, so a signed-in player's total
- * is correct even when this device's localStorage is empty.
+ * A shareable, spoiler-free post that links back to the site.
+ *
+ * Leads with Chain - the topic, the run, and the matchup that caught the player
+ * out - because that's the part a reader can argue with, and arguing is what
+ * makes a post travel. See lib/shareText for the reasoning. Scores still come
+ * from the device+server merge the hub uses, so a signed-in player's numbers
+ * are right even when this device's localStorage is empty.
  */
 function shareText(date: string, scoreFor: ReturnType<typeof useArchiveScores>): string {
-  const lines = LIVE_MODES.map((m) => {
-    const s = scoreFor(date, m.id);
-    return { name: m.name, score: s.points, played: s.played };
+  const chainLocal = getLocalResult(date);
+  const modeScores = Object.fromEntries(
+    LIVE_MODES.filter((m) => m.id !== "chain").map((m) => {
+      const s = scoreFor(date, m.id);
+      return [m.id, { points: s.points, played: s.played }];
+    })
+  );
+  return buildShareText({
+    date,
+    dateLabel: formatDisplayDate(date),
+    chain: chainLocal
+      ? {
+          reached: chainLocal.reached,
+          rounds: chainLocal.rounds,
+          wrongRounds: chainLocal.wrongRounds ?? [],
+          topic: chainLocal.topic,
+          missed: chainLocal.missed,
+        }
+      : null,
+    modeScores,
+    origin:
+      typeof window !== "undefined"
+        ? window.location.origin.replace(/^https?:\/\//, "")
+        : "www.whohadmore.com",
   });
-  const total = lines.reduce((a, l) => a + l.score, 0);
-  const max = LIVE_MODES.length * 1000;
-  const origin =
-    typeof window !== "undefined"
-      ? window.location.origin.replace(/^https?:\/\//, "")
-      : "www.whohadmore.com";
-  const games = lines
-    .filter((l) => l.played)
-    .map((l) => `${l.name} ${l.score.toLocaleString()}`)
-    .join(" · ");
-  return [
-    `WhoHadMore — ${formatDisplayDate(date)} 🎯`,
-    games,
-    `Total ${total.toLocaleString()} / ${max.toLocaleString()}`,
-    origin,
-  ]
-    .filter(Boolean)
-    .join("\n");
 }
 
 function ShareGlyph({ className = "" }: { className?: string }) {
