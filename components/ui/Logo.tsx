@@ -52,7 +52,7 @@ export function BrandLockup({
     <span className={`inline-flex items-center gap-2 ${className}`}>
       <BrandMark className="h-[27px] w-[27px]" />
       <span
-        className={`text-[17px] font-display font-bold uppercase tracking-wide text-ink mt-0.5 ${
+        className={`text-[15px] sm:text-[17px] font-display font-bold uppercase tracking-wide text-ink mt-0.5 ${
           compact ? "hidden sm:inline" : ""
         }`}
       >

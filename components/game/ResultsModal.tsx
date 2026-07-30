@@ -132,12 +132,6 @@ export function ResultsModal({ date, onClose }: { date: string; onClose: () => v
           </span>
         </Link>
 
-        <button
-          onClick={onClose}
-          className="small-caps mt-2.5 w-full py-1 text-center text-[10px] font-bold text-ink-secondary transition-colors hover:text-ink"
-        >
-          Maybe later
-        </button>
       </motion.div>
     </div>
   );

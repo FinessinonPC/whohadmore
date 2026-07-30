@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/ui/SiteHeader";
 import { GameStats } from "@/components/profile/GameStats";
 import { DangerZone } from "@/components/profile/DangerZone";
 import { SignUpFlow } from "@/components/auth/SignUpFlow";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useProfile } from "@/hooks/useProfile";
 import { ACHIEVEMENTS, effectiveStreak, levelInfo, rankTitle } from "@/lib/leaderboard";
 import { previousISODate, todayISO } from "@/lib/date";
@@ -112,8 +113,14 @@ export function ProfileView() {
               Streaks earn badges, not points - the board ranks how you play, not how often.
             </p>
 
-            <div className="mt-4 text-center">
+            {/* The theme toggle lives here as well as the desktop nav - on a
+                phone the nav slot went to Past cards and Board, which people
+                press daily, rather than a switch most flip once. */}
+            <div className="mt-4 flex items-center justify-center gap-4">
               <UsernameEditor current={profile?.username ?? ""} onSave={claim} />
+              <span className="sm:hidden">
+                <ThemeToggle />
+              </span>
             </div>
           </>
         ) : loading ? (
