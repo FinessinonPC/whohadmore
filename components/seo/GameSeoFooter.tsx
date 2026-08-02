@@ -3,6 +3,7 @@ import { puzzleDescription } from "@/lib/seo";
 import { getSiteUrl } from "@/lib/site";
 import { getRecentGameLinks } from "@/lib/games";
 import { getCategorySeo } from "@/lib/categories";
+import { GAME_SEO } from "@/lib/gameSeo";
 import { todayISO } from "@/lib/date";
 import type { FullGame } from "@/types";
 
@@ -91,7 +92,7 @@ export async function GameSeoFooter({ game, date }: { game: FullGame; date: stri
               {recent.map((g) => (
                 <li key={g.play_date}>
                   <Link
-                    href={`/play/${g.play_date}`}
+                    href={`/day/${g.play_date}`}
                     className="wonky inline-block border border-ink/30 bg-card px-4 py-2 text-xs font-bold text-ink"
                   >
                     {g.topic_label}
@@ -101,6 +102,31 @@ export async function GameSeoFooter({ game, date }: { game: FullGame; date: stri
             </ul>
           </>
         )}
+
+        {/* Every archived day links the four playable pages by name.
+            These are the pages that have to win "<game> whohadmore", and they
+            had almost no internal links - only the /games index, each other,
+            and the homepage footer - while each day page linked out to /,
+            /archive, /category and its neighbours. The archive outweighed them
+            roughly forty to one, which is how a months-old card came to win
+            that query and drop searchers onto a stale puzzle. Linked by name,
+            straight to today's copy. */}
+        <h3 className="mt-8 text-lg font-extrabold text-ink">Today&apos;s games</h3>
+        <p className="mt-1">
+          Every card is four puzzles, and a fresh one lands at midnight. Play today&apos;s:
+        </p>
+        <ul className="mt-3 flex flex-wrap gap-2.5">
+          {GAME_SEO.map((g) => (
+            <li key={g.id}>
+              <Link
+                href={`/${g.id}`}
+                className="wonky inline-block border border-ink/30 bg-card px-4 py-2 text-xs font-bold text-ink"
+              >
+                {g.heading}
+              </Link>
+            </li>
+          ))}
+        </ul>
 
         <div className="mt-8 flex flex-wrap gap-2.5">
           <Link href="/" className="wonky bg-cta px-4 py-2 text-xs font-bold text-background">

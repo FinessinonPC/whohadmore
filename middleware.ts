@@ -18,24 +18,38 @@ export function middleware(request: NextRequest) {
   // Set the CSP header on the response
   response.headers.set('Content-Security-Policy', cspHeader);
 
-  // --- SEO: one indexable host, one indexable URL per day ---
-  // 1) Any *.vercel.app host (preview builds AND the project's production alias)
-  //    is a duplicate of www - noindex it so it never competes with the brand.
-  // 2) Per-day URLs: /day/<date> is the CANONICAL archive page for a day. It
-  //    server-renders real content (topic, how-to-play, the day's entities,
-  //    internal links), so it stays indexable and compounds - one durable page
-  //    per day is the long tail this site actually has.
-  //    The single-game routes (/play, /word, /mini, /duality/<date>) and the
-  //    bare /YYYY-MM-DD alias all render the SAME day with far less text, so
-  //    they stay noindexed to avoid competing duplicates. `follow` keeps every
-  //    link crawlable, so no crawl signal is lost.
+  // --- SEO: every result Google shows should be a game you can play now ---
+  //
+  // Search for a game and you should land ON that game, today's copy of it,
+  // ready to play. Not on an explainer, and not on a card from three weeks
+  // ago. So exactly one page per game is indexable - the bare /chain,
+  // /duality, /word, /mini - plus the homepage for the brand itself.
+  //
+  // Everything noindexed below is still a real page for real visitors;
+  // `follow` keeps every link crawlable, so nothing loses crawl signal.
+  //
+  // 1) Any *.vercel.app host (preview builds AND the project's production
+  //    alias) duplicates www - noindex so it never competes with the brand.
+  // 2) Dated game routes and the bare /YYYY-MM-DD alias: same game as the
+  //    bare route, so they would compete with it.
+  // 3) /day/<date>: the archive. Every one of these is behind the sign-in
+  //    wall for anyone without an account, which is most arrivals, so as a
+  //    search result it offers a stranger a signup form instead of a game.
+  //    (Trade-off: this was the only part of the index that grew by itself.
+  //    Unwalling the archive would make these worth indexing again - it is
+  //    one condition in useArchiveGate.)
+  // 4) /games/<id>: the explainers. They rank for game names and win, which
+  //    is precisely the problem - a searcher wanting Chain gets an article
+  //    about Chain. They stay live and linked, just not as landing pages.
   const host = request.headers.get('host') ?? '';
   const path = request.nextUrl.pathname;
   const nonCanonicalHost = host.endsWith('.vercel.app');
   const duplicateDayUrl =
-    /^\/(play|word|mini|duality)\/[^/]+/.test(path) ||
+    /^\/(play|word|mini|duality|chain)\/[^/]+/.test(path) ||
     /^\/\d{4}-\d{2}-\d{2}(\/|$)/.test(path);
-  if (nonCanonicalHost || duplicateDayUrl) {
+  const archiveDay = /^\/day\/[^/]+/.test(path);
+  const gameExplainer = /^\/games\/[^/]+/.test(path);
+  if (nonCanonicalHost || duplicateDayUrl || archiveDay || gameExplainer) {
     response.headers.set('X-Robots-Tag', 'noindex, follow');
   }
 
