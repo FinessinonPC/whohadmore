@@ -19,7 +19,13 @@ export function trackEvent(
     | "deal_dealt"
     | "deal_click"
     | "deal_signin_click"
-    | "run_end",
+    | "run_end"
+    // Come-back-tomorrow prompt. `surface` carries which ask was made -
+    // install / ios / desktop - so the funnel splits by what the browser
+    // allowed. shown is the denominator; confirmed over shown is the number.
+    | "keep_handy_shown"
+    | "keep_handy_confirmed"
+    | "keep_handy_snoozed",
   props: { surface?: string; game?: string; date?: string } = {}
 ): void {
   try {

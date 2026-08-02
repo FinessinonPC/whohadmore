@@ -4,6 +4,7 @@ import { getSiteUrl } from "@/lib/site";
 import { Analytics } from "@vercel/analytics/next";
 import { LevelUpHost } from "@/components/game/LevelUpModal";
 import { RestoreLocalChain } from "@/components/game/RestoreLocalChain";
+import { InstallCapture } from "@/components/game/InstallCapture";
 import "./globals.css";
 
 // The scorecard is filled in BY HAND: Patrick Hand (a real person's print) is
@@ -140,6 +141,9 @@ export default function RootLayout({
         <LevelUpHost />
         {/* Puts back any Chain result this device has that the server doesn't. */}
         <RestoreLocalChain />
+        {/* Catches Chrome's install prompt on load so KeepHandy can offer it
+            at the end of a card instead of losing it. Renders nothing. */}
+        <InstallCapture />
         <Analytics />
       </body>
     </html>

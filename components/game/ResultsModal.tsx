@@ -9,6 +9,7 @@ import { useArchiveScores } from "@/hooks/useArchiveScores";
 import { useDailyStanding } from "@/hooks/useDailyStanding";
 import { formatDisplayDate } from "@/lib/date";
 import { ShareResults } from "./ShareResults";
+import { KeepHandy } from "./KeepHandy";
 
 /**
  * The end-of-card pop-up. Fires once the player finishes all four games.
@@ -131,6 +132,10 @@ export function ResultsModal({ date, onClose }: { date: string; onClose: () => v
             </span>
           </span>
         </Link>
+
+        {/* Last, and quieter than the archive nudge above it on purpose - it
+            asks for nothing and shouldn't outrank the thing that does. */}
+        <KeepHandy />
 
       </motion.div>
     </div>

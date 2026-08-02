@@ -53,7 +53,12 @@ export default async function GameLandingPage({
 
   const def = modeDef(seo.id);
   const base = getSiteUrl();
-  const playHref = def.href(todayISO());
+  // Point at the bare route, not def.href(todayISO()). This page is
+  // force-static with a 24h revalidate, so a baked-in date is stale for up to
+  // a day after midnight - it would offer "play today's Duality" and hand over
+  // yesterday's. /duality resolves today's puzzle per request, so it cannot go
+  // stale no matter how long this page sits in the cache.
+  const playHref = `/${def.id}`;
   const others = LIVE_MODES.filter((m) => m.id !== seo.id);
 
   const jsonLd = {

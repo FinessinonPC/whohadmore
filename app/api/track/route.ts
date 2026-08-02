@@ -17,6 +17,11 @@ const EVENTS = new Set([
   "deal_click",
   "deal_signin_click",
   "run_end",
+  // Bookmark / install prompt. Without these three here the client would post
+  // them and the route would 400 - the events are allowlisted server-side too.
+  "keep_handy_shown",
+  "keep_handy_confirmed",
+  "keep_handy_snoozed",
 ]);
 
 const clean = (v: unknown, max = 40): string | null =>
