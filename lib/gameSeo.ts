@@ -98,7 +98,7 @@ const CHAIN: GameSeo = {
 
 const DUALITY: GameSeo = {
   id: "duality",
-  seoTitle: "Duality - Daily Word Association Puzzle",
+  seoTitle: "Duality - The Daily Double Meanings Word Game",
   metaDescription:
     "Play Duality free every day: eight definitions hide four pairs, and each pair is one word with two unrelated meanings. A new word puzzle every midnight.",
   heading: "Duality",
@@ -138,7 +138,7 @@ const DUALITY: GameSeo = {
   faqs: [
     {
       q: "What is Duality?",
-      a: "Duality is a daily word association puzzle where eight definitions conceal four pairs. Each pair is a single word with two unrelated meanings - your job is to find all four.",
+      a: "Duality is a daily double meanings puzzle where eight definitions conceal four pairs. Each pair is a single word with two unrelated meanings - your job is to find all four.",
     },
     {
       q: "How many mistakes can I make in Duality?",
