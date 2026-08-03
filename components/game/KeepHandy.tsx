@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { trackEvent } from "@/lib/clientTrack";
+import { recordCardCompleted } from "@/lib/cardsCompleted";
 import {
   canInstall,
   isIOS,
@@ -12,145 +13,140 @@ import {
 
 const KEY = "whm_keep_handy";
 
-/** Said yes once - never ask that player again. Asking twice is the annoying part. */
-type Saved = { done?: true; snoozedAt?: number };
+/** Two asks, ever. The first card, then the fifth - and nothing after that. */
+const ASK_ON_CARDS = [1, 5];
 
-/** How long "not now" lasts. A daily game is seen daily; a fortnight is a nudge,
- *  a week starts to feel like nagging. */
-const SNOOZE_DAYS = 14;
-
-const read = (): Saved => {
+const isDone = () => {
   try {
-    return JSON.parse(window.localStorage.getItem(KEY) ?? "{}") as Saved;
+    return window.localStorage.getItem(KEY) === "done";
   } catch {
-    return {};
+    return false;
   }
 };
-const write = (v: Saved) => {
+const markDone = () => {
   try {
-    window.localStorage.setItem(KEY, JSON.stringify(v));
+    window.localStorage.setItem(KEY, "done");
   } catch {
-    /* private mode: it will ask again, which is the safe direction to fail */
+    /* private mode: it may ask once more, which is the safe way to fail */
   }
 };
+
+/** The iOS share glyph, which people recognise far faster than the words. */
+const ShareGlyph = () => (
+  <svg
+    viewBox="0 0 24 24"
+    aria-hidden
+    className="inline-block h-[1.05em] w-[1.05em] -translate-y-[1px] align-middle"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M12 3.5v11" />
+    <path d="M8.2 7.3 12 3.5l3.8 3.8" />
+    <path d="M5.5 12.5V19a1.5 1.5 0 0 0 1.5 1.5h10a1.5 1.5 0 0 0 1.5-1.5v-6.5" />
+  </svg>
+);
 
 /**
- * "Come back tomorrow" only works if coming back is easy.
+ * Offer to put the site on the player's home screen.
  *
- * Shown at the end of a completed card - the one moment a player has just been
- * given something and nothing is being asked of them yet. Three asks, depending
- * on what the browser actually supports:
+ * Deliberately narrow. It appears on the first completed card and the fifth,
+ * and never again - say yes and it stops immediately. It also never appears
+ * unless adding to the home screen is genuinely possible: a real install
+ * prompt, or iOS where the Share sheet can do it. Desktop browsers without an
+ * install prompt see nothing at all, because the honest ask there is "press
+ * Ctrl+D", which is a worse thing to read than silence.
  *
- *  - Chrome/Edge/Android: a real install prompt. One tap, icon on the home
- *    screen, and the browser tells us truthfully whether they accepted.
- *  - iOS: no install API exists at all, so the best available is pointing at
- *    the Share button.
- *  - Desktop otherwise: the bookmark shortcut. No browser has had an
- *    "add bookmark" API for over a decade, so a keystroke really is the whole
- *    of what can be offered.
- *
- * Only the install path can be measured for certain. The other two end in an
- * "I've done it" button, which means those numbers are self-reported - people
- * who bookmark without saying so are invisible, and the odd person will click
- * it without bookmarking. Treat the desktop figure as a floor, not a count.
+ * On iPhone this is more than a shortcut. iOS only delivers web push to sites
+ * that have been added to the home screen, so for half this audience this is
+ * the one route that ever allows a reminder. Which is also why it is worth
+ * showing the actual Share glyph rather than describing it.
  */
-export function KeepHandy() {
+export function KeepHandy({ date }: { date: string }) {
   const installable = useSyncExternalStore(subscribeInstall, canInstall, () => false);
 
-  const [ready, setReady] = useState(false);
-  const [hidden, setHidden] = useState(true);
+  // Decided once, on mount: is this player, on this card, someone to ask?
+  const [eligible, setEligible] = useState(false);
   const [ios, setIOS] = useState(false);
-  const [mac, setMac] = useState(false);
+  const [closed, setClosed] = useState(false);
   const shownLogged = useRef(false);
 
   useEffect(() => {
-    // Already installed: settle it permanently rather than re-deciding daily.
+    const count = recordCardCompleted(date);
+    // Already on a home screen - settle it permanently rather than re-asking.
     if (isStandalone()) {
-      write({ done: true });
-      setReady(true);
+      markDone();
       return;
     }
-    const saved = read();
-    const snoozeOver =
-      !saved.snoozedAt || Date.now() - saved.snoozedAt > SNOOZE_DAYS * 86_400_000;
+    if (isDone()) return;
     setIOS(isIOS());
-    setMac(/Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent));
-    setHidden(Boolean(saved.done) || !snoozeOver);
-    setReady(true);
-  }, []);
+    setEligible(ASK_ON_CARDS.includes(count));
+  }, [date]);
 
-  // The denominator for the whole funnel. Logged when it actually appears, and
-  // once per mount - not on every re-render as the install event resolves.
-  const variant = installable ? "install" : ios ? "ios" : "desktop";
+  // Whether the ask is possible is evaluated on render, not frozen on mount:
+  // beforeinstallprompt can arrive a moment after this modal opens, and a
+  // decision made too early would hide the button for exactly the browsers
+  // that can act on it.
+  const variant = installable ? "install" : ios ? "ios" : null;
+  const visible = eligible && !closed && variant !== null;
+
   useEffect(() => {
-    if (ready && !hidden && !shownLogged.current) {
+    if (visible && !shownLogged.current) {
       shownLogged.current = true;
-      trackEvent("keep_handy_shown", { surface: variant });
+      trackEvent("keep_handy_shown", { surface: variant ?? undefined, date });
     }
-  }, [ready, hidden, variant]);
+  }, [visible, variant, date]);
 
-  const confirm = useCallback(
+  const done = useCallback(
     (surface: string) => {
-      write({ done: true });
-      setHidden(true);
-      trackEvent("keep_handy_confirmed", { surface });
+      markDone();
+      setClosed(true);
+      trackEvent("keep_handy_confirmed", { surface, date });
     },
-    [],
+    [date],
   );
 
-  const snooze = useCallback(
+  const later = useCallback(
     (surface: string) => {
-      write({ snoozedAt: Date.now() });
-      setHidden(true);
-      trackEvent("keep_handy_snoozed", { surface });
+      // No flag written: the fifth card is the next ask, and that count is
+      // already being kept. Nothing else needs remembering.
+      setClosed(true);
+      trackEvent("keep_handy_snoozed", { surface, date });
     },
-    [],
+    [date],
   );
 
   const install = useCallback(async () => {
     const outcome = await showInstallPrompt();
-    // Chrome's own dialog is the source of truth here - no self-reporting.
-    if (outcome === "accepted") confirm("install");
-    else snooze("install");
-  }, [confirm, snooze]);
+    // Chrome's own dialog is the source of truth - no self-reporting here.
+    if (outcome === "accepted") done("install");
+    else later("install");
+  }, [done, later]);
 
-  if (!ready || hidden) return null;
+  if (!visible) return null;
 
   return (
     <div className="wonky mt-2.5 flex items-center gap-3 border-2 border-dashed border-ink/35 px-4 py-2.5">
       <div className="min-w-0 flex-1">
-        {installable ? (
-          <>
-            <span className="block text-[13px] font-bold leading-tight text-ink">
-              A new card lands at midnight
-            </span>
-            <button
-              onClick={install}
-              className="mt-0.5 text-[11px] font-bold text-ink underline decoration-2 underline-offset-2"
-            >
-              Put it on your home screen →
-            </button>
-          </>
+        <span className="block text-[13px] font-bold leading-tight text-ink">
+          Keep it on your home screen
+        </span>
+        {variant === "install" ? (
+          <button
+            onClick={install}
+            className="mt-0.5 text-[11px] font-bold text-ink underline decoration-2 underline-offset-2"
+          >
+            Add WhoHadMore →
+          </button>
         ) : (
           <>
-            <span className="block text-[13px] font-bold leading-tight text-ink">
-              A new card lands at midnight
-            </span>
-            <span className="block text-[11px] font-semibold text-ink-secondary">
-              {ios ? (
-                <>
-                  Share <span aria-hidden>↑</span> then &ldquo;Add to Home Screen&rdquo;
-                </>
-              ) : (
-                <>
-                  Bookmark it: <kbd className="font-bold text-ink">{mac ? "⌘" : "Ctrl"}</kbd>
-                  {" + "}
-                  <kbd className="font-bold text-ink">D</kbd>
-                </>
-              )}
+            <span className="block text-[11px] font-semibold leading-snug text-ink-secondary">
+              Tap <ShareGlyph /> below, then &ldquo;Add to Home Screen&rdquo;
             </span>
             <button
-              onClick={() => confirm(ios ? "ios" : "desktop")}
+              onClick={() => done("ios")}
               className="mt-0.5 text-[11px] font-bold text-ink underline decoration-2 underline-offset-2"
             >
               Done — don&apos;t ask again
@@ -159,7 +155,7 @@ export function KeepHandy() {
         )}
       </div>
       <button
-        onClick={() => snooze(variant)}
+        onClick={() => later(variant ?? "unknown")}
         aria-label="Not now"
         className="shrink-0 text-lg leading-none text-ink-secondary transition-colors hover:text-ink"
       >

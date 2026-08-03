@@ -138,9 +138,12 @@ export function ResultsModal({ date, onClose }: { date: string; onClose: () => v
           </span>
         </Link>
 
-        {/* Last, and quieter than the archive nudge above it on purpose - it
-            asks for nothing and shouldn't outrank the thing that does. */}
-        <KeepHandy />
+        {/* Last, and quieter than the archive nudge above it on purpose. Shows
+            on the first completed card and the fifth, and only where adding to
+            a home screen is actually possible - so most of the time this
+            renders nothing. It also keeps the completed-card count, which is
+            why it mounts unconditionally. */}
+        <KeepHandy date={date} />
 
       </motion.div>
     </div>
