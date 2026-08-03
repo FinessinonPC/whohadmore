@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Offline · WhoHadMore</title>
+    <!--
+      Everything here is inline on purpose. This page is served by the service
+      worker when there is no connection, so it cannot fetch a stylesheet, a
+      font or an image - anything external would render as a blank page at the
+      exact moment the page needs to work.
+
+      It deliberately contains no puzzle. Today's card needs the network; a
+      cached one would be the wrong day.
+    -->
+    <style>
+      :root {
+        --card: rgb(243 231 199);
+        --ink: rgb(22 24 29);
+        --ink-2: rgb(96 100 87);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --card: rgb(42 38 27);
+          --ink: rgb(237 232 216);
+          --ink-2: rgb(158 152 133);
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: var(--card);
+        color: var(--ink);
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        text-align: center;
+      }
+      .card {
+        max-width: 22rem;
+        border: 2px solid var(--ink);
+        background: var(--card);
+        padding: 2rem 1.5rem;
+        transform: rotate(-0.6deg);
+        box-shadow: 4px 4px 0 var(--ink);
+      }
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      p { margin: 0 0 1.5rem; color: var(--ink-2); font-size: 0.95rem; line-height: 1.5; }
+      /* An anchor, not a button with an onclick. Navigating to "/" retries the
+         connection just as well as location.reload(), and needs no script at
+         all - so this page keeps working regardless of what the CSP allows. */
+      a {
+        display: inline-block;
+        font-weight: 700;
+        text-decoration: none;
+        border: 2px solid var(--ink);
+        background: var(--ink);
+        color: var(--card);
+        padding: 0.7rem 1.5rem;
+      }
+      a:active { transform: translate(2px, 2px); }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>No connection</h1>
+      <p>Today&rsquo;s card needs the internet. It&rsquo;ll be here when you&rsquo;re back.</p>
+      <a href="/">Try again</a>
+    </main>
+  </body>
+</html>
