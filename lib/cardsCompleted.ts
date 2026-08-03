@@ -57,13 +57,21 @@ export function recordCardCompleted(date: string): number {
  * Worth it to give everyone else a streak they can see.
  */
 export function currentStreak(today: string): number {
-  const dates = new Set(readDates());
-  if (!dates.has(today)) return 0;
-  let run = 0;
-  let cursor = today;
-  while (dates.has(cursor)) {
-    run += 1;
-    cursor = previousISODate(cursor);
+  try {
+    const dates = new Set(readDates());
+    if (!dates.has(today)) return 0;
+    let run = 0;
+    let cursor = today;
+    // Bounded and wrapped. previousISODate throws on a malformed date, and this
+    // runs in an effect in the results modal - an exception there takes the
+    // whole card-complete screen down over a number nobody needs. A wrong
+    // streak is a cosmetic bug; a missing modal is a broken game.
+    while (dates.has(cursor) && run < 4000) {
+      run += 1;
+      cursor = previousISODate(cursor);
+    }
+    return run;
+  } catch {
+    return 0;
   }
-  return run;
 }
