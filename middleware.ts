@@ -64,7 +64,15 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     * - sw.js, offline.html, manifest.webmanifest, icon.svg (PWA files)
+     *
+     * The PWA files are excluded for two reasons. The browser re-checks sw.js
+     * on a schedule of its own, and there is no sense paying for a middleware
+     * invocation each time to attach a CSP to a static file. More to the
+     * point, the CSP on a worker script governs what that worker may fetch -
+     * so leaving it off keeps the header from quietly restricting the very
+     * requests the worker exists to make.
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|sw.js|offline.html|manifest.webmanifest|icon.svg).*)',
   ],
 };

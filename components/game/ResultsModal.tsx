@@ -53,7 +53,12 @@ export function ResultsModal({ date, onClose }: { date: string; onClose: () => v
         onClick={onClose}
       />
       <motion.div
-        className="card-ink tilt-l relative z-10 w-full max-w-[380px] px-5 pb-4 pt-5"
+        // max-h/overflow because this card grew: date, score, standing bar,
+        // share, past-card nudge and now the keep-handy row. On a short phone
+        // that is taller than the viewport, and without this the bottom is
+        // simply clipped with no way to reach it. dvh, not vh, so mobile
+        // browser chrome is accounted for.
+        className="card-ink tilt-l relative z-10 max-h-[90dvh] w-full max-w-[380px] overflow-y-auto px-5 pb-4 pt-5"
         initial={{ opacity: 0, y: 24, scale: 0.94 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ type: "spring", damping: 26, stiffness: 300 }}
