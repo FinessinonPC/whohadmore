@@ -142,8 +142,12 @@ export function KeepHandy({ date }: { date: string }) {
           </button>
         ) : (
           <>
+            {/* No "below": the Share button is in the bottom bar only in
+                Safari on iPhone. It is top-right on iPad, and top-right again
+                in Chrome for iOS - so naming a location is wrong for a good
+                share of the people reading this. The glyph is the instruction. */}
             <span className="block text-[11px] font-semibold leading-snug text-ink-secondary">
-              Tap <ShareGlyph /> below, then &ldquo;Add to Home Screen&rdquo;
+              Tap <ShareGlyph /> then &ldquo;Add to Home Screen&rdquo;
             </span>
             <button
               onClick={() => done("ios")}
