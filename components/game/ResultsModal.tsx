@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { trackEvent } from "@/lib/clientTrack";
 import { LIVE_MODES } from "@/lib/modes";
 import { useArchiveScores } from "@/hooks/useArchiveScores";
 import { useDailyStanding } from "@/hooks/useDailyStanding";
-import { formatDisplayDate } from "@/lib/date";
+import { formatDisplayDate, todayISO } from "@/lib/date";
+import { currentStreak, recordCardCompleted } from "@/lib/cardsCompleted";
 import { ShareResults } from "./ShareResults";
+import { StreakLine } from "./StreakLine";
 import { KeepHandy } from "./KeepHandy";
 
 /**
@@ -26,8 +28,19 @@ export function ResultsModal({ date, onClose }: { date: string; onClose: () => v
   const total = LIVE_MODES.reduce((a, m) => a + scoreFor(date, m.id).points, 0);
   const standing = useDailyStanding(date);
 
+  // This modal mounting IS a completed card, so the record is kept here rather
+  // than in one of the children - it is the definition, and keeping it in one
+  // place means the streak and the home-screen prompt cannot disagree about
+  // how many cards have been finished or race each other to write it.
+  const [cards, setCards] = useState(0);
+  const [streak, setStreak] = useState(0);
+
   useEffect(() => {
     trackEvent("results_modal_shown", { date });
+    setCards(recordCardCompleted(date));
+    // Only for today's card. Finishing an archived day from months ago is not
+    // a streak, and claiming it was would be a lie the player can see through.
+    if (date === todayISO()) setStreak(currentStreak(date));
   }, [date]);
 
   // Escape closes, like any dialog.
@@ -82,6 +95,10 @@ export function ResultsModal({ date, onClose }: { date: string; onClose: () => v
             </span>
           </p>
           <p className="small-caps mt-1 text-[10px] font-bold text-ink-secondary">points</p>
+          {/* Score, then streak, then how they did against everyone else -
+              what they earned today, what they're building, then the social
+              beat. */}
+          <StreakLine streak={streak} />
         </div>
 
         {/* How they did - the one line worth reading, and a bar to see it in. */}
@@ -143,7 +160,7 @@ export function ResultsModal({ date, onClose }: { date: string; onClose: () => v
             a home screen is actually possible - so most of the time this
             renders nothing. It also keeps the completed-card count, which is
             why it mounts unconditionally. */}
-        <KeepHandy date={date} />
+        <KeepHandy date={date} cardCount={cards} />
 
       </motion.div>
     </div>

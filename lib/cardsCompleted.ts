@@ -12,6 +12,8 @@
  * inflate the number.
  */
 
+import { previousISODate } from "@/lib/date";
+
 const KEY = "whm_cards_done";
 
 const readDates = (): string[] => {
@@ -38,4 +40,30 @@ export function recordCardCompleted(date: string): number {
     }
   }
   return dates.length;
+}
+
+/**
+ * Days in a row, counting back from `today`.
+ *
+ * Computed from this device's record rather than the profile's current_streak,
+ * for two reasons. It works for signed-out players, who have no profile and so
+ * have never had a streak at all - and they are most of the people finishing a
+ * card. And it is instant, which matters when the number appears in a modal
+ * that opens the moment the last game ends; a fetch would have it pop in late
+ * or not at all.
+ *
+ * The cost is that a signed-in player who played yesterday on another device
+ * sees a lower number here than on their profile, which stays authoritative.
+ * Worth it to give everyone else a streak they can see.
+ */
+export function currentStreak(today: string): number {
+  const dates = new Set(readDates());
+  if (!dates.has(today)) return 0;
+  let run = 0;
+  let cursor = today;
+  while (dates.has(cursor)) {
+    run += 1;
+    cursor = previousISODate(cursor);
+  }
+  return run;
 }

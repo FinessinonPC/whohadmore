@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { trackEvent } from "@/lib/clientTrack";
-import { recordCardCompleted } from "@/lib/cardsCompleted";
 import {
   canInstall,
   isIOS,
@@ -64,7 +63,7 @@ const ShareGlyph = () => (
  * the one route that ever allows a reminder. Which is also why it is worth
  * showing the actual Share glyph rather than describing it.
  */
-export function KeepHandy({ date }: { date: string }) {
+export function KeepHandy({ date, cardCount }: { date: string; cardCount: number }) {
   const installable = useSyncExternalStore(subscribeInstall, canInstall, () => false);
 
   // Decided once, on mount: is this player, on this card, someone to ask?
@@ -74,7 +73,7 @@ export function KeepHandy({ date }: { date: string }) {
   const shownLogged = useRef(false);
 
   useEffect(() => {
-    const count = recordCardCompleted(date);
+    if (!cardCount) return; // the parent has not counted this card yet
     // Already on a home screen - settle it permanently rather than re-asking.
     if (isStandalone()) {
       markDone();
@@ -82,8 +81,8 @@ export function KeepHandy({ date }: { date: string }) {
     }
     if (isDone()) return;
     setIOS(isIOS());
-    setEligible(ASK_ON_CARDS.includes(count));
-  }, [date]);
+    setEligible(ASK_ON_CARDS.includes(cardCount));
+  }, [cardCount]);
 
   // Whether the ask is possible is evaluated on render, not frozen on mount:
   // beforeinstallprompt can arrive a moment after this modal opens, and a
