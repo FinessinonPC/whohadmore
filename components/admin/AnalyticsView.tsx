@@ -17,6 +17,11 @@ interface Cohort {
   back2: number;
   back3: number;
 }
+interface Completion {
+  started: number;
+  fullCard: number;
+  games: Record<string, number>;
+}
 interface Data {
   configured: boolean;
   error?: string;
@@ -28,6 +33,7 @@ interface Data {
     gamesToday: number;
   };
   daily?: DailyRow[];
+  funnel?: { today: Completion; week: Completion };
   cohorts?: Cohort[];
   share?: {
     configured: boolean;
@@ -99,6 +105,16 @@ export function AnalyticsView() {
               The <span className="font-bold text-ink">green</span> (returning) share is the one that
               matters — if it&apos;s a real slice most days, you&apos;re building a base. Near-zero
               means you&apos;re churning through strangers.
+            </p>
+          </Panel>
+
+          {/* Per-game completion */}
+          <Panel title="Where the card gets abandoned" hint="today vs last 7 days">
+            <CompletionFunnel today={data.funnel?.today} week={data.funnel?.week} />
+            <p className="mt-3 text-[11px] leading-snug text-ink-secondary">
+              Counted per player per day. The gap between Chain and Mini is how many people never
+              reach the end of the card — and the end is where the streak, the share and the
+              home-screen prompt live, so anyone who stops early sees none of it.
             </p>
           </Panel>
 
@@ -191,6 +207,82 @@ function NewReturningChart({ daily }: { daily: DailyRow[] }) {
             <div className="w-full overflow-hidden rounded-t-[3px] bg-[#FFB300]" style={{ height: `${h}%` }}>
               <div className="w-full bg-correct" style={{ height: `${retShare}%` }} />
             </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+const GAME_ORDER = ["chain", "duality", "word", "mini"] as const;
+const GAME_LABEL: Record<string, string> = {
+  chain: "Chain",
+  duality: "Duality",
+  word: "Word",
+  mini: "Mini",
+};
+
+function CompletionFunnel({ today, week }: { today?: Completion; week?: Completion }) {
+  if (!week || week.started === 0) {
+    return <p className="text-sm text-ink-secondary">No plays in the last 7 days yet.</p>;
+  }
+
+  // Bars are sized on the 7-day rate, not today's - a quiet morning would
+  // otherwise redraw the whole shape and suggest a problem that isn't there.
+  const rows = [
+    ...GAME_ORDER.map((g) => ({
+      key: g,
+      label: GAME_LABEL[g],
+      todayN: today?.games[g] ?? 0,
+      weekN: week.games[g] ?? 0,
+      full: false,
+    })),
+    {
+      key: "full",
+      label: "Full card",
+      todayN: today?.fullCard ?? 0,
+      weekN: week.fullCard,
+      full: true,
+    },
+  ];
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-3 text-[10px] uppercase tracking-wide text-ink-secondary">
+        <span className="w-16 shrink-0" />
+        <span className="flex-1" />
+        <span className="w-20 shrink-0 text-right">Today</span>
+        <span className="w-20 shrink-0 text-right">7 days</span>
+      </div>
+      {rows.map((r) => {
+        const rate = week.started > 0 ? (r.weekN / week.started) * 100 : 0;
+        return (
+          <div
+            key={r.key}
+            className={`flex items-center gap-3 ${r.full ? "mt-1.5 border-t border-border pt-2.5" : ""}`}
+            title={`${r.label}: ${r.weekN} of ${week.started} card-days in the last 7 days`}
+          >
+            <span
+              className={`w-16 shrink-0 text-xs ${r.full ? "font-extrabold text-ink" : "font-semibold text-ink"}`}
+            >
+              {r.label}
+            </span>
+            <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-border/40">
+              <span
+                className={`block h-full rounded-full ${r.full ? "bg-correct" : "bg-[#FFB300]"}`}
+                style={{ width: `${rate}%` }}
+              />
+            </span>
+            <span className="w-20 shrink-0 text-right text-xs tabular-nums text-ink">
+              {r.todayN}
+              <span className="ml-1 text-ink-secondary">
+                {today && today.started > 0 ? pct(r.todayN, today.started) : "–"}
+              </span>
+            </span>
+            <span className="w-20 shrink-0 text-right text-xs tabular-nums text-ink-secondary">
+              {r.weekN}
+              <span className="ml-1">{pct(r.weekN, week.started)}</span>
+            </span>
           </div>
         );
       })}

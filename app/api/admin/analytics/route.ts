@@ -16,28 +16,43 @@ export const dynamic = "force-dynamic";
 interface Play {
   sid: string;
   date: string; // YYYY-MM-DD
+  mode?: string; // duality | word | mini; absent for the Chain table
 }
 
 /** Fetch every row of a (session_id, play_date) table, paginating past the
- *  1000-row API cap so retention stays correct as history grows. */
-async function fetchPlays(supabase: SupabaseClient, table: string): Promise<Play[]> {
+ *  1000-row API cap so retention stays correct as history grows.
+ *  `withMode` for game_mode_results, which is the only one carrying a mode. */
+async function fetchPlays(
+  supabase: SupabaseClient,
+  table: string,
+  withMode = false,
+): Promise<Play[]> {
   const out: Play[] = [];
   const page = 1000;
+  const cols = withMode ? "session_id, play_date, mode" : "session_id, play_date";
   for (let from = 0; from < 100_000; from += page) {
     const { data, error } = await supabase
       .from(table)
-      .select("session_id, play_date")
+      .select(cols)
       .order("play_date", { ascending: true })
       .range(from, from + page - 1)
-      .returns<{ session_id: string | null; play_date: string | null }[]>();
+      .returns<{ session_id: string | null; play_date: string | null; mode?: string | null }[]>();
     if (error || !data || data.length === 0) break;
     for (const r of data) {
-      if (r.session_id && r.play_date) out.push({ sid: String(r.session_id), date: r.play_date });
+      if (r.session_id && r.play_date) {
+        out.push({
+          sid: String(r.session_id),
+          date: r.play_date,
+          ...(r.mode ? { mode: r.mode } : {}),
+        });
+      }
     }
     if (data.length < page) break;
   }
   return out;
 }
+
+const CARD_GAMES = ["chain", "duality", "word", "mini"] as const;
 
 // --- Date helpers (plain server code, YYYY-MM-DD in UTC) --------------------
 function addDays(date: string, n: number): string {
@@ -61,7 +76,7 @@ export async function GET(req: Request) {
   try {
     const [chainPlays, modePlays] = await Promise.all([
       fetchPlays(supabase, "game_results"),
-      fetchPlays(supabase, "game_mode_results"),
+      fetchPlays(supabase, "game_mode_results", true),
     ]);
 
     // One play-day per (session, date) across both tables.
@@ -101,6 +116,43 @@ export async function GET(req: Request) {
       for (const s of sids) if (firstPlay.get(s) === date) fresh++;
       daily.push({ date, players: sids.size, new: fresh, returning: sids.size - fresh });
     }
+
+    // --- Per-game completion -------------------------------------------------
+    // "37 players today" hides the question that matters: how many of them
+    // finished the card? Everything at the end - the streak, the share, the
+    // home-screen prompt - only fires when all four games are done, so a big
+    // drop between Chain and Mini means most of that machinery never runs.
+    //
+    // Counted per (session, day), not per session, so a week's figures are
+    // "card attempts" rather than "people who eventually played all four across
+    // seven days" - which would be true and useless.
+    const completion = (window: Set<string>) => {
+      const byCardDay = new Map<string, Set<string>>();
+      const push = (sid: string, date: string, game: string) => {
+        if (!window.has(date)) return;
+        const k = `${sid}|${date}`;
+        (byCardDay.get(k) ?? byCardDay.set(k, new Set()).get(k)!).add(game);
+      };
+      for (const p of chainPlays) push(p.sid, p.date, "chain");
+      for (const p of modePlays) if (p.mode) push(p.sid, p.date, p.mode);
+
+      const games: Record<string, number> = { chain: 0, duality: 0, word: 0, mini: 0 };
+      let started = 0;
+      let fullCard = 0;
+      for (const played of byCardDay.values()) {
+        started += 1;
+        for (const g of played) if (g in games) games[g] += 1;
+        if (CARD_GAMES.every((g) => played.has(g))) fullCard += 1;
+      }
+      return { started, fullCard, games };
+    };
+
+    const weekWindow = new Set<string>();
+    for (let i = 0; i < 7; i++) weekWindow.add(addDays(today, -i));
+    const funnel = {
+      today: completion(new Set([today])),
+      week: completion(weekWindow),
+    };
 
     // --- Weekly cohort retention --------------------------------------------
     const cohortNew = new Map<string, Set<string>>(); // cohort monday -> sids
@@ -158,6 +210,7 @@ export async function GET(req: Request) {
         gamesToday: gamesToday ?? 0,
       },
       daily,
+      funnel,
       cohorts,
       share,
     });
