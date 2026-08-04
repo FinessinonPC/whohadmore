@@ -56,14 +56,14 @@ export function AdSlot() {
         src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
         crossOrigin="anonymous"
       />
-      {/* min-height reserves the space before the ad arrives. Without it the
-          page reflows when it loads, which Core Web Vitals counts against you
-          - and which feels worse than the ad itself. */}
-      <aside
-        aria-label="Advertisement"
-        className="mx-auto w-full max-w-2xl px-4 pb-8 pt-2"
-        style={{ minHeight: 110 }}
-      >
+      {/* Sized to whatever container it sits in, so placement is a decision
+          made where it's used rather than baked in here.
+
+          min-height reserves the space before the ad arrives. Without it the
+          page reflows when it loads, pushing the footer links out from under
+          a thumb that was already reaching for them - which feels worse than
+          the ad itself, and which Core Web Vitals counts against you. */}
+      <aside aria-label="Advertisement" className="mt-8 w-full" style={{ minHeight: 110 }}>
         <p className="mb-1 text-center text-[9px] font-bold uppercase tracking-widest text-ink-secondary/60">
           Advertisement
         </p>
