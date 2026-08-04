@@ -130,6 +130,17 @@ export function SiteSeoFooter() {
             About
           </Link>
         </div>
+
+        {/* Quieter than the rest - findable, which is what the law asks for,
+            without competing with the links that lead somewhere fun. */}
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[12px] font-semibold text-ink-secondary">
+          <Link href="/privacy" className="underline decoration-1 underline-offset-4">
+            Privacy
+          </Link>
+          <Link href="/terms" className="underline decoration-1 underline-offset-4">
+            Terms
+          </Link>
+        </div>
       </div>
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
