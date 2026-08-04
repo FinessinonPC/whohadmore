@@ -1,15 +1,35 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { adsEnabled } from '@/lib/ads';
 
 export function middleware(request: NextRequest) {
   // Generate the CSP header
+  // AdSense needs its own hosts on script-src, frame-src and connect-src.
+  // frame-src especially: it was never declared, so ad iframes were falling
+  // back to default-src 'self' and would have been blocked outright.
+  //
+  // Only added when ads are actually configured. There is no reason to loosen
+  // the policy for a script the site isn't loading, and keeping the tight
+  // version as the default means the permissive one is a deliberate act.
+  const ads = adsEnabled();
+  const adScript = ads
+    ? " https://pagead2.googlesyndication.com https://partner.googleadservices.com https://tpc.googlesyndication.com https://adservice.google.com https://www.googletagservices.com"
+    : "";
+  const adFrame = ads
+    ? "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com;"
+    : "";
+  const adConnect = ads
+    ? " https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net"
+    : "";
+
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com;
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com${adScript};
     style-src 'self' 'unsafe-inline';
-    connect-src 'self' https://*.supabase.co https://vitals.vercel-insights.com;
+    connect-src 'self' https://*.supabase.co https://vitals.vercel-insights.com${adConnect};
     img-src * data: blob:;
     font-src 'self' data:;
+    ${adFrame}
   `.replace(/\s{2,}/g, ' ').trim();
 
   // Create response

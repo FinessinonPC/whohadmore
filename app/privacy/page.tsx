@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { LEGAL } from "@/lib/legal";
+import { adsEnabled } from "@/lib/ads";
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
 
 const DESCRIPTION =
-  "What WhoHadMore stores, why, and how to get rid of it. No ads, no data sold, no third-party trackers beyond privacy-friendly analytics.";
+  "What WhoHadMore stores, why, and how to get rid of it: anonymous session data, optional accounts, and no data sold to anyone.";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -26,6 +27,11 @@ export const metadata: Metadata = {
  * than no privacy policy, because it is a statement rather than a silence.
  */
 export default function PrivacyPage() {
+  // Conditional so the page is never wrong in either direction: it does not
+  // claim to be ad-free once ads are live, and it does not describe advertising
+  // that isn't running. Both pages are statically built, and setting the
+  // AdSense env vars requires a redeploy anyway, so the two stay in step.
+  const ads = adsEnabled();
   return (
     <>
       <SiteHeader />
@@ -40,8 +46,12 @@ export default function PrivacyPage() {
         <div className="mt-6 space-y-6 text-[15px] leading-relaxed text-ink">
           <section>
             <p>
-              WhoHadMore is a free daily puzzle site. It carries no advertising, sells no data, and
-              loads no third-party tracking pixels. This page describes everything it does store.
+              WhoHadMore is a free daily puzzle site. We do not sell your data, and we do not build
+              a profile of you.{" "}
+              {ads
+                ? "The site carries one advertisement, described below."
+                : "The site carries no advertising and loads no third-party tracking pixels."}{" "}
+              This page describes everything it does store.
             </p>
           </section>
 
@@ -96,13 +106,52 @@ export default function PrivacyPage() {
             </p>
           </Section>
 
+          {ads && (
+            <Section title="Advertising">
+              <p>
+                One advertisement appears at the foot of the page, served by Google AdSense. It pays
+                for the hosting; the site is otherwise free and has no subscription.
+              </p>
+              <p className="mt-3">
+                We have configured it to serve{" "}
+                <strong className="font-bold">non-personalized ads only</strong>. That means what
+                you see is based on the page you are on and your rough location, and{" "}
+                <em>not</em> on a profile of your browsing history. It is why you are not being asked
+                to accept tracking before you can play.
+              </p>
+              <p className="mt-3">
+                Non-personalized does not mean invisible. Google still uses cookies or similar
+                storage to cap how often you see the same ad, to measure the ads it served, and to
+                detect fraud. Google&apos;s handling of that is covered by its own{" "}
+                <a
+                  href="https://policies.google.com/technologies/partner-sites"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline decoration-2 underline-offset-4"
+                >
+                  privacy terms for partner sites
+                </a>
+                . We never send Google your email address, your username, or your scores.
+              </p>
+              <p className="mt-3">
+                No ad is shown on this page, on the terms page, or anywhere in the admin area.
+              </p>
+            </Section>
+          )}
+
           <Section title="Who else touches your data">
             <p>
-              Two companies, both acting on our behalf under their own privacy terms:{" "}
-              <strong className="font-bold">Vercel</strong>, which hosts the site and provides the
-              analytics above, and <strong className="font-bold">Supabase</strong>, which stores the
-              database and sends the sign-in emails. That is the complete list. We do not sell,
-              rent, or trade any of it.
+              <strong className="font-bold">Vercel</strong> hosts the site and provides the analytics
+              above. <strong className="font-bold">Supabase</strong> stores the database and sends
+              the sign-in emails.
+              {ads ? (
+                <>
+                  {" "}
+                  <strong className="font-bold">Google</strong> serves the advertisement described
+                  above.
+                </>
+              ) : null}{" "}
+              That is the complete list. We do not sell, rent, or trade any of it.
             </p>
           </Section>
 

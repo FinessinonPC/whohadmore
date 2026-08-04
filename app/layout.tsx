@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { LevelUpHost } from "@/components/game/LevelUpModal";
 import { RestoreLocalChain } from "@/components/game/RestoreLocalChain";
 import { PwaSetup } from "@/components/game/PwaSetup";
+import { AdSlot } from "@/components/ads/AdSlot";
 import "./globals.css";
 
 // The scorecard is filled in BY HAND: Patrick Hand (a real person's print) is
@@ -137,6 +138,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteLd) }}
         />
         {children}
+        {/* One ad, foot of the page, below everything. Renders nothing until
+            the AdSense env vars are set, and never on admin or the legal
+            pages. */}
+        <AdSlot />
         {/* One celebration host for the whole app - any game can trigger it. */}
         <LevelUpHost />
         {/* Puts back any Chain result this device has that the server doesn't. */}
