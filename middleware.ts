@@ -88,6 +88,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     * - ads.txt (polled by Google on its own schedule)
      * - sw.js, offline.html, manifest.webmanifest, icon.svg (PWA files)
      *
      * The PWA files are excluded for two reasons. The browser re-checks sw.js
@@ -97,6 +98,6 @@ export const config = {
      * so leaving it off keeps the header from quietly restricting the very
      * requests the worker exists to make.
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|sw.js|offline.html|manifest.webmanifest|icon.svg).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|ads.txt|sw.js|offline.html|manifest.webmanifest|icon.svg).*)',
   ],
 };
