@@ -12,10 +12,10 @@ import { usePlayedResults } from "@/hooks/usePlayedResults";
 import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
 import { chainDailyScore } from "@/lib/leaderboard";
 import { LIVE_MODES, MODES } from "@/lib/modes";
-import { AdSlot } from "@/components/ads/AdSlot";
 import { useArchiveGate } from "@/hooks/useArchiveGate";
 import { ArchiveLock } from "@/components/games/ArchiveLock";
 import { DayBoard } from "@/components/hub/DayBoard";
+import { HubAds } from "@/components/ads/HubAds";
 import { CardReceipt } from "@/components/hub/CardReceipt";
 import { RunTicket } from "@/components/hub/RunTicket";
 import { NextCardInRun, WhatsNextToday } from "@/components/hub/WhatsNext";
@@ -309,13 +309,10 @@ export function GameHub({ game, date, gameNumber, initialScores }: GameHubProps)
 
         {!isToday && <DayBoard date={date} />}
 
-        {/* Directly under the four cards, in the scroll path rather than
-            below everything - an ad nobody scrolls to earns nothing and drags
-            the RPM down over time. Renders nothing until AdSense is
-            configured. */}
-        <AdSlot />
-
         <HubFooter />
+
+        {/* Every ad on the site. Card screen only - see HubAds. */}
+        <HubAds />
         </>
         )}
       </div>
