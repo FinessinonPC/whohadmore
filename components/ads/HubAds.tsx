@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SLOT_ANCHOR, SLOT_INFLOW, SLOT_SIDE, hasSlot } from "@/lib/ads";
+import { SLOT_BOTTOM, SLOT_SIDE, hasSlot } from "@/lib/ads";
 import { AdScript, AdUnit } from "./AdUnit";
 
 const DISMISS_KEY = "whm_anchor_ad_hidden";
@@ -38,37 +38,39 @@ function useMedia(query: string): boolean | null {
  * or the Mini would. It is also the page people return to between games, so it
  * is the most-seen surface on the site without being the most intrusive.
  *
- * Three placements, each independently dormant until its slot id is set:
+ * Two placements, each independently dormant until its slot id is set.
  *
- *   mobile   a sticky banner pinned to the bottom, which the reader can push
- *            back down. Phones have no margins to spare, so a fixed banner is
- *            the only placement that doesn't shove the cards around.
- *   desktop  a rail beside the 540px column, in space that is otherwise empty,
- *            plus one in the flow under the cards.
+ * The bottom ad is one unit shown two ways, because it is one decision:
+ * pinned to the bottom of the viewport on a phone, where there is no margin to
+ * spare and a fixed banner is the only thing that doesn't shove the cards
+ * around; in the flow under the cards on a desktop, where it can simply sit
+ * there. Only one of the two ever renders.
  *
- * The two are exclusive by breakpoint - nobody gets a sticky banner AND a rail.
+ * The side rail is separate, desktop-only, and stays dark until its own slot
+ * is set - so the bottom ad can run alone for as long as it takes to learn
+ * whether a second ad is worth having.
  */
 export function HubAds() {
   return (
     <>
       <AdScript />
       <SideRail />
-      <InFlowAd />
-      <AnchorAd />
+      <BottomAd />
     </>
   );
 }
 
-/** Under the cards, in the flow. Desktop only - on a phone this competes with
- *  the sticky banner, and two ads on one small screen is one too many. */
-function InFlowAd() {
+/** The bottom ad. Sticky on a phone, in the flow on a desktop, never both. */
+function BottomAd() {
   const desktop = useMedia("(min-width: 1024px)");
-  if (!hasSlot(SLOT_INFLOW) || !desktop) return null;
-  return (
+  if (!hasSlot(SLOT_BOTTOM) || desktop === null) return null;
+  return desktop ? (
     <aside aria-label="Advertisement" className="mt-8 w-full">
       <Label />
-      <AdUnit slot={SLOT_INFLOW} />
+      <AdUnit slot={SLOT_BOTTOM} />
     </aside>
+  ) : (
+    <StickyBottom />
   );
 }
 
@@ -106,11 +108,10 @@ function SideRail() {
  * session only - sessionStorage, not local - so it is gone for as long as
  * someone is annoyed by it and back on their next visit.
  */
-function AnchorAd() {
+function StickyBottom() {
   // Starts hidden and is revealed on the client, so a dismissal made on the
   // hub survives walking into a game and back - without it the banner would
   // reappear on every return, which is the behaviour people actually resent.
-  const desktop = useMedia("(min-width: 1024px)");
   const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
@@ -121,7 +122,7 @@ function AnchorAd() {
     }
   }, []);
 
-  if (!hasSlot(SLOT_ANCHOR) || hidden || desktop !== false) return null;
+  if (hidden) return null;
 
   const dismiss = () => {
     try {
@@ -152,7 +153,7 @@ function AnchorAd() {
         </svg>
       </button>
       <div className="px-2 pb-1 pt-0.5">
-        <AdUnit slot={SLOT_ANCHOR} format="horizontal" style={{ height: 60 }} />
+        <AdUnit slot={SLOT_BOTTOM} format="horizontal" style={{ height: 60 }} />
       </div>
     </aside>
     </>

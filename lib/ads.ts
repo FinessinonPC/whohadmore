@@ -15,22 +15,22 @@ const DEFAULT_CLIENT = "ca-pub-9229999543376066";
 export const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? DEFAULT_CLIENT;
 
 /**
- * One slot per placement, and no defaults for any of them.
+ * Two placements, two slots, no defaults for either.
  *
- * Slot ids only exist once AdSense has approved the site, and each placement
- * gets its own ad unit rather than sharing one - not for correctness, since
- * sharing works, but because reporting is per-unit. Sharing an id would leave
- * you unable to tell whether it is the sticky banner or the side rail earning
- * anything, which is exactly the question worth asking a month in.
+ * Slot ids only exist once AdSense has approved the site.
  *
- * Each is independently dormant, so they can be switched on one at a time.
+ *   NEXT_PUBLIC_ADSENSE_SLOT        the bottom ad
+ *   NEXT_PUBLIC_ADSENSE_SLOT_SIDE   the side rail (wide desktop only)
  *
- *   NEXT_PUBLIC_ADSENSE_SLOT          in-flow, under the cards (desktop)
- *   NEXT_PUBLIC_ADSENSE_SLOT_ANCHOR   sticky bottom banner (mobile)
- *   NEXT_PUBLIC_ADSENSE_SLOT_SIDE     side rail (wide desktop)
+ * The bottom ad is one ad unit shown two ways, because it is one decision:
+ * pinned to the bottom of the viewport on a phone, in the flow under the cards
+ * on a desktop. Only ever one of the two is rendered, so the id is never used
+ * twice on a page and reporting still answers "what did the bottom ad earn".
+ *
+ * They are independently dormant, so the bottom can run alone for as long as
+ * it takes to find out whether a second ad is worth having.
  */
-export const SLOT_INFLOW = process.env.NEXT_PUBLIC_ADSENSE_SLOT ?? "";
-export const SLOT_ANCHOR = process.env.NEXT_PUBLIC_ADSENSE_SLOT_ANCHOR ?? "";
+export const SLOT_BOTTOM = process.env.NEXT_PUBLIC_ADSENSE_SLOT ?? "";
 export const SLOT_SIDE = process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDE ?? "";
 
 /**
