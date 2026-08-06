@@ -4,16 +4,14 @@ import { useEffect, useState } from "react";
 import { SLOT_BOTTOM, SLOT_SIDE, hasSlot } from "@/lib/ads";
 import { AdScript, AdUnit } from "./AdUnit";
 
-const DISMISS_KEY = "whm_anchor_ad_hidden";
-
 /**
- * Breakpoints have to be answered in JS here, not with `lg:hidden`.
+ * Breakpoints answered in JS, not with `xl:hidden`.
  *
  * A CSS-hidden unit is still in the DOM, so the tag gets pushed and AdSense
  * fills a container nobody can see - an impression that is never viewable.
  * Google treats ads in hidden containers as a policy problem, and viewability
- * is what the RPM eventually rests on, so a phone must not carry the desktop
- * units at all and vice versa.
+ * is what the RPM eventually rests on, so a phone must not carry a desktop
+ * unit at all.
  *
  * Returns null until measured, so nothing is pushed before it is known whether
  * it belongs on this screen.
@@ -38,17 +36,8 @@ function useMedia(query: string): boolean | null {
  * or the Mini would. It is also the page people return to between games, so it
  * is the most-seen surface on the site without being the most intrusive.
  *
- * Two placements, each independently dormant until its slot id is set.
- *
- * The bottom ad is one unit shown two ways, because it is one decision:
- * pinned to the bottom of the viewport on a phone, where there is no margin to
- * spare and a fixed banner is the only thing that doesn't shove the cards
- * around; in the flow under the cards on a desktop, where it can simply sit
- * there. Only one of the two ever renders.
- *
- * The side rail is separate, desktop-only, and stays dark until its own slot
- * is set - so the bottom ad can run alone for as long as it takes to learn
- * whether a second ad is worth having.
+ * Both placements sit in the page rather than over it. Nothing is fixed to the
+ * viewport, so no ad can cover the thing someone came to do.
  */
 export function HubAds() {
   return (
@@ -60,27 +49,39 @@ export function HubAds() {
   );
 }
 
-/** The bottom ad. Sticky on a phone, in the flow on a desktop, never both. */
+/**
+ * The bottom ad: a banner in the flow, under the cards, on every screen.
+ *
+ * It was a sticky bar pinned to the viewport on phones, and that was a mistake
+ * twice over. `height: 60` did nothing, because a responsive format ignores it
+ * and AdSense returns whatever size it likes - on a phone that meant a fixed
+ * panel over half the screen. And dismissal lived in sessionStorage, which on
+ * mobile survives as long as the tab does, so "not now" read as "never again".
+ *
+ * In the flow, neither can happen: it cannot cover anything because it is part
+ * of the page, and there is nothing to dismiss. `horizontal` asks AdSense for
+ * banner shapes rather than large rectangles, so it stays a strip instead of
+ * growing into a block.
+ */
 function BottomAd() {
-  const desktop = useMedia("(min-width: 1024px)");
-  if (!hasSlot(SLOT_BOTTOM) || desktop === null) return null;
-  return desktop ? (
-    <aside aria-label="Advertisement" className="mt-8 w-full">
+  if (!hasSlot(SLOT_BOTTOM)) return null;
+  return (
+    <aside aria-label="Advertisement" className="mt-8 w-full" style={{ minHeight: 100 }}>
       <Label />
-      <AdUnit slot={SLOT_BOTTOM} />
+      <AdUnit slot={SLOT_BOTTOM} format="horizontal" />
     </aside>
-  ) : (
-    <StickyBottom />
   );
 }
 
 /**
  * Beside the column, on screens wide enough to have room going spare.
  *
- * xl is 1280px: 540 for the card leaves 370 each side, so a 160-wide rail sits
- * clear of the content with room to breathe. Fixed rather than in-flow so it
- * stays put while the cards scroll, and pointer-events stay on the ad itself so
- * the empty margin never swallows a click meant for the page.
+ * 1280px: 540 for the card leaves 370 each side, so a 160-wide rail sits clear
+ * of the content. Fixed position, but out in the margin where there is nothing
+ * to cover - and pointer-events stay on the ad itself so the empty margin never
+ * swallows a click meant for the page.
+ *
+ * Dormant until its own slot id is set, which it is not yet.
  */
 function SideRail() {
   const wide = useMedia("(min-width: 1280px)");
@@ -96,67 +97,6 @@ function SideRail() {
         <AdUnit slot={SLOT_SIDE} format="vertical" responsive={false} style={{ width: 160, height: 600 }} />
       </div>
     </aside>
-  );
-}
-
-/**
- * The sticky one, phones only.
- *
- * Dismissible because it should be: it sits over the page, and a banner you
- * cannot get rid of on a small screen is the kind of thing that makes people
- * leave rather than the kind that makes money. Dismissal is remembered for the
- * session only - sessionStorage, not local - so it is gone for as long as
- * someone is annoyed by it and back on their next visit.
- */
-function StickyBottom() {
-  // Starts hidden and is revealed on the client, so a dismissal made on the
-  // hub survives walking into a game and back - without it the banner would
-  // reappear on every return, which is the behaviour people actually resent.
-  const [hidden, setHidden] = useState(true);
-
-  useEffect(() => {
-    try {
-      setHidden(window.sessionStorage.getItem(DISMISS_KEY) === "1");
-    } catch {
-      setHidden(false);
-    }
-  }, []);
-
-  if (hidden) return null;
-
-  const dismiss = () => {
-    try {
-      window.sessionStorage.setItem(DISMISS_KEY, "1");
-    } catch {
-      /* private mode: it just comes back on the next render, which is fine */
-    }
-    setHidden(true);
-  };
-
-  return (
-    <>
-    {/* Fixed elements sit over the page, so the footer links would end up
-        underneath the banner with no way to reach them. This reserves the
-        height back. */}
-    <div className="h-[76px]" aria-hidden />
-    <aside
-      aria-label="Advertisement"
-      className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-ink/15 bg-background/95 backdrop-blur"
-    >
-      <button
-        onClick={dismiss}
-        aria-label="Hide advertisement"
-        className="absolute -top-6 right-2 flex h-6 w-9 items-center justify-center rounded-t border-2 border-b-0 border-ink/15 bg-background/95 text-ink-secondary"
-      >
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M6 9l6 6 6-6" />
-        </svg>
-      </button>
-      <div className="px-2 pb-1 pt-0.5">
-        <AdUnit slot={SLOT_BOTTOM} format="horizontal" style={{ height: 60 }} />
-      </div>
-    </aside>
-    </>
   );
 }
 
