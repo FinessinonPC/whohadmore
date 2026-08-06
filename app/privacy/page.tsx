@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { LEGAL } from "@/lib/legal";
-import { adsEnabled } from "@/lib/ads";
+import { adsScriptEnabled } from "@/lib/ads";
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
@@ -31,7 +31,7 @@ export default function PrivacyPage() {
   // claim to be ad-free once ads are live, and it does not describe advertising
   // that isn't running. Both pages are statically built, and setting the
   // AdSense env vars requires a redeploy anyway, so the two stay in step.
-  const ads = adsEnabled();
+  const ads = adsScriptEnabled();
   return (
     <>
       <SiteHeader />

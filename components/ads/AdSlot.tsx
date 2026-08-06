@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Script from "next/script";
-import { ADSENSE_CLIENT, ADSENSE_SLOT, adsEnabled } from "@/lib/ads";
+import { ADSENSE_CLIENT, ADSENSE_SLOT, adsEnabled, adsScriptEnabled } from "@/lib/ads";
 
 /** Routes that never carry an ad. Admin is a private tool, and the legal pages
  *  should not be selling anything while explaining what they collect. */
@@ -30,7 +30,11 @@ declare global {
 export function AdSlot() {
   const pathname = usePathname();
   const pushed = useRef<string | null>(null);
-  const enabled = adsEnabled() && !NO_ADS.some((p) => pathname?.startsWith(p));
+  const allowedHere = !NO_ADS.some((p) => pathname?.startsWith(p));
+  // Script alone during review - Google needs to see it on the site before it
+  // will approve, and there is no slot id to render until it has.
+  const scriptOnly = adsScriptEnabled() && allowedHere;
+  const enabled = adsEnabled() && allowedHere;
 
   useEffect(() => {
     if (!enabled || pushed.current === pathname) return;
@@ -45,7 +49,7 @@ export function AdSlot() {
     }
   }, [enabled, pathname]);
 
-  if (!enabled) return null;
+  if (!scriptOnly) return null;
 
   return (
     <>
@@ -63,20 +67,25 @@ export function AdSlot() {
           page reflows when it loads, pushing the footer links out from under
           a thumb that was already reaching for them - which feels worse than
           the ad itself, and which Core Web Vitals counts against you. */}
-      <aside aria-label="Advertisement" className="mt-8 w-full" style={{ minHeight: 110 }}>
-        <p className="mb-1 text-center text-[9px] font-bold uppercase tracking-widest text-ink-secondary/60">
-          Advertisement
-        </p>
-        <ins
-          key={pathname}
-          className="adsbygoogle block"
-          style={{ display: "block" }}
-          data-ad-client={ADSENSE_CLIENT}
-          data-ad-slot={ADSENSE_SLOT}
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-        />
-      </aside>
+      {/* No slot yet means awaiting approval: the script is present so Google
+          can review the site, but there is nothing to render and no empty
+          box reserved for one. */}
+      {enabled && (
+        <aside aria-label="Advertisement" className="mt-8 w-full" style={{ minHeight: 110 }}>
+          <p className="mb-1 text-center text-[9px] font-bold uppercase tracking-widest text-ink-secondary/60">
+            Advertisement
+          </p>
+          <ins
+            key={pathname}
+            className="adsbygoogle block"
+            style={{ display: "block" }}
+            data-ad-client={ADSENSE_CLIENT}
+            data-ad-slot={ADSENSE_SLOT}
+            data-ad-format="auto"
+            data-full-width-responsive="true"
+          />
+        </aside>
+      )}
     </>
   );
 }

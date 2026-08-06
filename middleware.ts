@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { adsEnabled } from '@/lib/ads';
+import { adsScriptEnabled } from '@/lib/ads';
 
 export function middleware(request: NextRequest) {
   // Generate the CSP header
@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
   // Only added when ads are actually configured. There is no reason to loosen
   // the policy for a script the site isn't loading, and keeping the tight
   // version as the default means the permissive one is a deliberate act.
-  const ads = adsEnabled();
+  const ads = adsScriptEnabled();
   const adScript = ads
     ? " https://pagead2.googlesyndication.com https://partner.googleadservices.com https://tpc.googlesyndication.com https://adservice.google.com https://www.googletagservices.com"
     : "";

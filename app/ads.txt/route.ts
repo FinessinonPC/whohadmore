@@ -1,4 +1,4 @@
-import { ADSENSE_CLIENT, adsEnabled } from "@/lib/ads";
+import { ADSENSE_CLIENT, adsScriptEnabled } from "@/lib/ads";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
  * worse than none at all.
  */
 export function GET() {
-  if (!adsEnabled()) {
+  if (!adsScriptEnabled()) {
     return new Response("Not found", { status: 404 });
   }
   // "pub-..." here, not "ca-pub-..." - the ads.txt format wants the bare id.
