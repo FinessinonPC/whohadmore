@@ -13,7 +13,22 @@
  *   NEXT_PUBLIC_ADSENSE_CLIENT=ca-pub-0000000000000000
  *   NEXT_PUBLIC_ADSENSE_SLOT=1234567890
  */
-export const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? "";
+/**
+ * The publisher id is baked in as the default so the script ships without any
+ * dashboard configuration. It is not a secret - it appears in the page source
+ * of every site running AdSense.
+ *
+ * The env var still wins where it is set, including when it is set to an empty
+ * string: `??` only falls through on null/undefined, so
+ * NEXT_PUBLIC_ADSENSE_CLIENT="" switches every trace of AdSense off from the
+ * Vercel dashboard without a deploy. That is the kill switch.
+ */
+const DEFAULT_CLIENT = "ca-pub-9229999543376066";
+
+export const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? DEFAULT_CLIENT;
+
+/** No default: the ad-unit id only exists once AdSense has approved the site,
+ *  and inventing one would render a broken unit rather than nothing. */
 export const ADSENSE_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT ?? "";
 
 /**
