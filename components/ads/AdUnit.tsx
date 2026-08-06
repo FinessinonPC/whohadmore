@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { ADSENSE_CLIENT, adsScriptEnabled, hasSlot } from "@/lib/ads";
 
@@ -40,6 +40,21 @@ export function AdScript() {
  * a stranger to accept tracking before they can play a puzzle costs more than
  * the ad earns.
  */
+/**
+ * Never serve ads on a preview host.
+ *
+ * Vercel gives every branch a *.vercel.app URL, and if the slot env var is set
+ * for all environments those previews would serve live ads. Traffic and clicks
+ * from a staging URL are what AdSense calls invalid, and invalid traffic gets
+ * accounts limited or closed rather than politely warned. The same hosts are
+ * already noindexed in middleware for the same underlying reason: they are not
+ * the real site.
+ */
+function isPreviewHost(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.location.hostname.endsWith(".vercel.app");
+}
+
 export function AdUnit({
   slot,
   format = "auto",
@@ -54,7 +69,12 @@ export function AdUnit({
   className?: string;
 }) {
   const pushed = useRef(false);
-  const enabled = hasSlot(slot);
+  // Resolved on the client: the host is not known while rendering on the
+  // server, so this starts false and the unit appears once it is confirmed
+  // real. Erring towards not showing an ad is the safe direction.
+  const [live, setLive] = useState(false);
+  useEffect(() => setLive(!isPreviewHost()), []);
+  const enabled = hasSlot(slot) && live;
 
   useEffect(() => {
     if (!enabled || pushed.current) return;

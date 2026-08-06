@@ -30,7 +30,15 @@ export const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? DEFAULT_
  * They are independently dormant, so the bottom can run alone for as long as
  * it takes to find out whether a second ad is worth having.
  */
+/** The "Bottom Ad" unit, set in Vercel. Deliberately NOT hard-coded, unlike
+ *  the publisher id: a baked-in slot would render real ads on every preview
+ *  deployment too, and clicks on a staging URL are exactly what AdSense counts
+ *  as invalid traffic. Coming from the environment means it is a thing you
+ *  turn on per environment. */
 export const SLOT_BOTTOM = process.env.NEXT_PUBLIC_ADSENSE_SLOT ?? "";
+
+/** No default - this unit doesn't exist yet. Create it in AdSense when the
+ *  bottom ad has run long enough to say whether a second one is worth it. */
 export const SLOT_SIDE = process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDE ?? "";
 
 /**

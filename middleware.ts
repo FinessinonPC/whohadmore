@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { adsScriptEnabled } from '@/lib/ads';
+import { isFreeArchiveDate } from '@/lib/archiveWindow';
+import { todayISO } from '@/lib/date';
 
 export function middleware(request: NextRequest) {
   // Generate the CSP header
@@ -52,12 +54,13 @@ export function middleware(request: NextRequest) {
   //    alias) duplicates www - noindex so it never competes with the brand.
   // 2) Dated game routes and the bare /YYYY-MM-DD alias: same game as the
   //    bare route, so they would compete with it.
-  // 3) /day/<date>: the archive. Every one of these is behind the sign-in
-  //    wall for anyone without an account, which is most arrivals, so as a
-  //    search result it offers a stranger a signup form instead of a game.
-  //    (Trade-off: this was the only part of the index that grew by itself.
-  //    Unwalling the archive would make these worth indexing again - it is
-  //    one condition in useArchiveGate.)
+  // 3) /day/<date> OUTSIDE the free window: still behind the sign-in wall, so
+  //    still a search result that hands a stranger a signup form instead of a
+  //    puzzle. Recent days are now free to play, so they are indexed - that is
+  //    the one part of this site's search surface that grows by itself, one
+  //    page a day, for as long as it keeps publishing. FREE_ARCHIVE_DAYS is
+  //    the single number deciding this, useArchiveGate and the sitemap
+  //    together; they must agree or the site contradicts itself in public.
   // 4) /games/<id>: the explainers. They rank for game names and win, which
   //    is precisely the problem - a searcher wanting Chain gets an article
   //    about Chain. They stay live and linked, just not as landing pages.
@@ -67,7 +70,8 @@ export function middleware(request: NextRequest) {
   const duplicateDayUrl =
     /^\/(play|word|mini|duality|chain)\/[^/]+/.test(path) ||
     /^\/\d{4}-\d{2}-\d{2}(\/|$)/.test(path);
-  const archiveDay = /^\/day\/[^/]+/.test(path);
+  const dayMatch = /^\/day\/(\d{4}-\d{2}-\d{2})(\/|$)/.exec(path);
+  const archiveDay = /^\/day\//.test(path) && !(dayMatch && isFreeArchiveDate(dayMatch[1], todayISO()));
   const gameExplainer = /^\/games\/[^/]+/.test(path);
   if (nonCanonicalHost || duplicateDayUrl || archiveDay || gameExplainer) {
     response.headers.set('X-Robots-Tag', 'noindex, follow');
