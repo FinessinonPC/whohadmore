@@ -3,6 +3,7 @@ import { PlayExperience } from "@/components/game/PlayExperience";
 import { ChainGate } from "@/components/games/ChainGate";
 import { getFullGame, getGameNumber } from "@/lib/games";
 import { gameSeo } from "@/lib/gameSeo";
+import { GameBelowFold } from "@/components/seo/GameBelowFold";
 import { todayISO } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
@@ -34,8 +35,11 @@ export default async function ChainTodayPage() {
   const [game, gameNumber] = await Promise.all([getFullGame(date), getGameNumber(date)]);
 
   return (
-    <ChainGate date={date} isDaily>
-      <PlayExperience initialGame={game} date={date} gameNumber={gameNumber} isDaily />
-    </ChainGate>
+    <>
+      <ChainGate date={date} isDaily>
+        <PlayExperience initialGame={game} date={date} gameNumber={gameNumber} isDaily />
+      </ChainGate>
+      <GameBelowFold id="chain" />
+    </>
   );
 }

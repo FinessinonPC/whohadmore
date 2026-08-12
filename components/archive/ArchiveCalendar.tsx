@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { todayISO } from "@/lib/date";
 import { useArchiveScores, type ArchiveFilter } from "@/hooks/useArchiveScores";
+import { modeDef } from "@/lib/modes";
 import type { DailyGame } from "@/types";
 
 type NumberedGame = DailyGame & { game_number: number };
@@ -19,12 +20,39 @@ interface ArchiveCalendarProps {
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 const pad = (n: number) => n.toString().padStart(2, "0");
 
-/* Played days get the gold marker wash - same gold as every finished thing on
-   the scorecard. One color, whatever the filter. */
+/* Played days get the gold marker wash - the same gold as every finished thing
+   on the scorecard - while the calendar is showing every game at once. */
 const PLAYED_WASH = "rgba(255, 179, 0, 0.16)";
+
+/** #06B6D4 -> rgba(6, 182, 212, a). The accents live as hex in lib/modes so
+ *  they can be used as solid ink; a wash needs them transparent. */
+function washFrom(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const n = parseInt(h, 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
+/**
+ * The wash for a played day, in the filtered game's own colour.
+ *
+ * Filtering to Duality and still seeing gold makes the calendar look like it
+ * ignored you - the scores change but nothing else does. Tinting the played
+ * days to the game's accent means the filter is legible at a glance, and it is
+ * the same colour that game already wears on the hub, so the association is
+ * one people have from the first card they played.
+ */
+function playedWash(filter: ArchiveFilter): string {
+  // 0.30, not the 0.16 the gold uses, because Word's accent (#FFC400) is a
+  // near-twin of that gold (#FFB300) - at matching alpha, filtering to Word
+  // would look exactly like filtering to nothing, which reads as a broken
+  // button rather than a subtle one. The extra saturation makes "a filter is
+  // on" legible even when the hue barely moves.
+  return filter === "all" ? PLAYED_WASH : washFrom(modeDef(filter).accent, 0.3);
+}
 
 export function ArchiveCalendar({ games, hrefFor, filter = "all" }: ArchiveCalendarProps) {
   const scoreFor = useArchiveScores(games);
+  const wash = playedWash(filter);
   const today = todayISO();
   const [ty, tm] = today.split("-").map(Number);
 
@@ -120,7 +148,7 @@ export function ArchiveCalendar({ games, hrefFor, filter = "all" }: ArchiveCalen
                 isToday ? "ring-2 ring-ink/25" : ""
               }`}
               style={{
-                background: score.played ? PLAYED_WASH : "rgb(var(--surface) / 0.5)",
+                background: score.played ? wash : "rgb(var(--surface) / 0.5)",
                 borderColor: score.played ? "rgb(var(--ink))" : "rgb(var(--ink) / 0.3)",
                 borderStyle: score.played ? "solid" : "dashed",
                 borderWidth: 2,
@@ -148,7 +176,7 @@ export function ArchiveCalendar({ games, hrefFor, filter = "all" }: ArchiveCalen
       {/* Inviting footer - no performance grading, just a nudge to play more */}
       <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-ink-secondary">
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded border border-ink/60" style={{ background: PLAYED_WASH }} />
+          <span className="h-3 w-3 rounded border border-ink/60" style={{ background: wash }} />
           Played
         </span>
         <span className="flex items-center gap-1.5">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { WordGame } from "@/components/games/WordGame";
 import { getWordContent } from "@/lib/minigames";
 import { gameSeo } from "@/lib/gameSeo";
+import { GameBelowFold } from "@/components/seo/GameBelowFold";
 import { todayISO } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
@@ -26,5 +27,10 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function WordTodayPage() {
   const date = todayISO();
   const answer = await getWordContent(date);
-  return <WordGame answer={answer} date={date} />;
+  return (
+    <>
+      <WordGame answer={answer} date={date} />
+      <GameBelowFold id="word" />
+    </>
+  );
 }

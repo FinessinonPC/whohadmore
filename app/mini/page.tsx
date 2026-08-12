@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { MiniGame } from "@/components/games/MiniGame";
 import { getMiniContent } from "@/lib/minigames";
 import { gameSeo } from "@/lib/gameSeo";
+import { GameBelowFold } from "@/components/seo/GameBelowFold";
 import { todayISO } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
@@ -26,5 +27,10 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function MiniTodayPage() {
   const date = todayISO();
   const day = await getMiniContent(date);
-  return <MiniGame day={day} date={date} />;
+  return (
+    <>
+      <MiniGame day={day} date={date} />
+      <GameBelowFold id="mini" />
+    </>
+  );
 }

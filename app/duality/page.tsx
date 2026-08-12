@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DualityGame } from "@/components/games/DualityGame";
 import { getDualityContent } from "@/lib/minigames";
 import { gameSeo } from "@/lib/gameSeo";
+import { GameBelowFold } from "@/components/seo/GameBelowFold";
 import { todayISO } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
@@ -31,5 +32,10 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function DualityTodayPage() {
   const date = todayISO();
   const day = await getDualityContent(date);
-  return <DualityGame day={day} date={date} />;
+  return (
+    <>
+      <DualityGame day={day} date={date} />
+      <GameBelowFold id="duality" />
+    </>
+  );
 }

@@ -216,9 +216,16 @@ const WORD: GameSeo = {
 
 const MINI: GameSeo = {
   id: "mini",
-  seoTitle: "Mini - Free Daily Mini Crossword Puzzle",
+  // Written against Search Console rather than guessed. "mini crosswords free"
+  // converted at 2 clicks from 2 impressions - every single person who saw it
+  // clicked - while bare "mini crossword" took 3 from 46 at an average
+  // position of 54. The volume is on the head term and the intent is on the
+  // qualified one, and "free, no account" is the half NYT structurally cannot
+  // say. So the title leads with free and the description spends its words on
+  // no account, no app, no subscription.
+  seoTitle: "Free Mini Crossword - Daily 5x5, No Account Needed",
   metaDescription:
-    "Play a free 5x5 mini crossword every day. Quick clues, a clean grid, and a solve that takes about a minute. New puzzle every midnight, no download needed.",
+    "A free daily mini crossword: 5x5 grid, quick clues, about a minute to solve. No account, no app, no subscription - just open it and play. New puzzle every midnight.",
   heading: "Mini",
   standfirst: "A five-by-five crossword, sized for a coffee break.",
   about: [
