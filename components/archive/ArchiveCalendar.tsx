@@ -24,8 +24,8 @@ const pad = (n: number) => n.toString().padStart(2, "0");
    on the scorecard - while the calendar is showing every game at once. */
 const PLAYED_WASH = "rgba(255, 179, 0, 0.16)";
 
-/** #06B6D4 -> rgba(6, 182, 212, a). The accents live as hex in lib/modes so
- *  they can be used as solid ink; a wash needs them transparent. */
+/** #CBD1F6 -> rgba(203, 209, 246, a). The colours live as hex in lib/modes so
+ *  they can be used solid; a wash over manila needs them transparent. */
 function washFrom(hex: string, alpha: number): string {
   const h = hex.replace("#", "");
   const n = parseInt(h, 16);
@@ -42,12 +42,15 @@ function washFrom(hex: string, alpha: number): string {
  * one people have from the first card they played.
  */
 function playedWash(filter: ArchiveFilter): string {
-  // 0.30, not the 0.16 the gold uses, because Word's accent (#FFC400) is a
-  // near-twin of that gold (#FFB300) - at matching alpha, filtering to Word
-  // would look exactly like filtering to nothing, which reads as a broken
-  // button rather than a subtle one. The extra saturation makes "a filter is
-  // on" legible even when the hue barely moves.
-  return filter === "all" ? PLAYED_WASH : washFrom(modeDef(filter).accent, 0.3);
+  // `pastel`, not `accent`. The accent is the trick letter in the wordmark -
+  // Mini's is a strong blue - while the pastel is the colour of the card that
+  // game wears on the hub, which is periwinkle. The card is what a player
+  // recognises, so the card is what the archive should echo.
+  //
+  // 0.6 because the pastels are already muted; at the 0.16 the gold uses they
+  // would barely register over manila, and filtering would look like nothing
+  // happened.
+  return filter === "all" ? PLAYED_WASH : washFrom(modeDef(filter).pastel, 0.6);
 }
 
 export function ArchiveCalendar({ games, hrefFor, filter = "all" }: ArchiveCalendarProps) {
